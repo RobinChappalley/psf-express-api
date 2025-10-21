@@ -21,6 +21,3 @@ EXPOSE 3000
 #             Ex: "npm run dev" lance nodemon si vous l’avez configuré
 CMD ["npm", "run", "dev"]
 
-# [host] REMARQUE: le montage de volumes et le mapping de ports se font
-#        au moment du `docker run` ou via docker-compose (voir plus bas),
-#        pas dans le Dockerfile.
