@@ -5,17 +5,18 @@ import http from "node:http";
 
 import app from "../app.js";
 
-const debug = createDebugger('psf-express-api:server')
+const debug = createDebugger("psf-express-api:server");
 
 // Get port from environment and store in Express
 const port = normalizePort(process.env.PORT || "3000");
+const host = "0.0.0.0";
 app.set("port", port);
 
 // Create HTTP server
 const httpServer = http.createServer(app);
 
 // Listen on provided port, on all network interfaces
-httpServer.listen(port);
+httpServer.listen({ port, host }); //le serveur écoute sur toutes les interfaces réseau du conteneur
 httpServer.on("error", onHttpServerError);
 httpServer.on("listening", onHttpServerListening);
 

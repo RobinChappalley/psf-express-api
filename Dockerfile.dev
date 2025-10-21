@@ -1,0 +1,26 @@
+# [container] Choisit l’image de base avec Node (runtime JS dans le conteneur)
+FROM node:22-alpine
+
+# [container] Définit le répertoire de travail dans l’image/contener
+WORKDIR /app
+
+# [container] Copie les manifestes pour tirer parti du cache de build
+COPY package*.json ./
+
+# [container] Installe TOUTES les dépendances (y compris dev) pour le hot-reload
+#             (en dev on garde nodemon/eslint/etc.)
+RUN npm ci
+
+# [container] Copie le reste du code (sera supplanté par un volume en dev)
+COPY . .
+
+# [container] Expose le port dans l’IMAGE (documentation) et pour certains outils
+EXPOSE 3000
+
+# [container] Définit la commande par défaut (modifiez selon vos scripts)
+#             Ex: "npm run dev" lance nodemon si vous l’avez configuré
+CMD ["npm", "run", "dev"]
+
+# [host] REMARQUE: le montage de volumes et le mapping de ports se font
+#        au moment du `docker run` ou via docker-compose (voir plus bas),
+#        pas dans le Dockerfile.

@@ -1,0 +1,18 @@
+services:
+  api:
+    # [host] Build de l’image à partir du Dockerfile.dev local
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    # [host] Charge les variables d’environnement locales si besoin
+    #env_file: .env
+    # [host]<-> [container] Mappe le port hôte 3000 vers le port 3000 du conteneur
+    ports:
+      - "3000:3000"
+    # [host]<-> [container] Monte le code de l’hôte dans /app pour le hot-reload
+    volumes:
+      - .:/app
+      # [host]<-> [container] Évite d’écraser node_modules du conteneur par un dossier vide de l’hôte
+      - /app/node_modules
+    # [container] Commande de démarrage (assure le watch)
+    command: npm run dev
