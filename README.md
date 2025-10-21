@@ -28,9 +28,13 @@ Cette commande va :
 2. Lancer les conteneurs requis
 3. Démarrer l'application en mode développement
 
+### Bruno
+
+Burno est un [client API Open source](https://www.usebruno.com/), idéal pour documenter les requêtes effectuées. Chaque requête est un fichier .bru qui se trouve dans le dossier "test-requests"
+
 ## Technologies utilisées
 
-- 🚀 Express.js
-- 📦 MongoDB
-- 🔄 Mongoose
-- 🐳 Docker
+- 🚀 [Express.js](https://expressjs.com/)
+- 📦 [MongoDB](https://www.mongodb.com/)
+- 🔄 [Mongoose](https://mongoosejs.com/)
+- 🐳 [Docker](https://www.docker.com/)

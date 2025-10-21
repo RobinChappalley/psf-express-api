@@ -12,7 +12,8 @@ await connectMongo();
 const debug = createDebugger("psf-express-api:server");
 
 // Get port from environment and store in Express
-const port = normalizePort(process.env.PORT || "3000");
+const port = normalizePort(process.env.APP_PORT || "3000");
+console.log(port);
 const host = "0.0.0.0";
 app.set("port", port);
 
