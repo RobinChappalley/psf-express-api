@@ -4,6 +4,10 @@ import createDebugger from "debug";
 import http from "node:http";
 
 import app from "../app.js";
+import { connectMongo } from "../db/db.js";
+
+// Connect to MongoDB
+await connectMongo();
 
 const debug = createDebugger("psf-express-api:server");
 
