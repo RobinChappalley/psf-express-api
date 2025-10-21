@@ -1,11 +1,17 @@
 services:
-  api:
+  express-api:
     # [host] Build de l’image à partir du Dockerfile.dev local
     build:
       context: .
       dockerfile: Dockerfile.dev
     # [host] Charge les variables d’environnement locales si besoin
-    #env_file: .env
+    env_file: .env.dev
+    environment:
+      # Active le polling (nécessaire sur macOS/Windows avec Docker Desktop)
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300" # ms, ajuste si besoin
+      # Pour nodemon (alternative si tu ne veux pas de chokidar) :
+      # NODEMON_USE_POLLING: "1"
     # [host]<-> [container] Mappe le port hôte 3000 vers le port 3000 du conteneur
     ports:
       - "3000:3000"
@@ -13,6 +19,20 @@ services:
     volumes:
       - .:/app
       # [host]<-> [container] Évite d’écraser node_modules du conteneur par un dossier vide de l’hôte
-      - /app/node_modules
     # [container] Commande de démarrage (assure le watch)
     command: npm run dev
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017" # optionnel en dev, utile si tu veux te connecter depuis l’hôte
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:
