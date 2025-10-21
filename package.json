@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node ./bin/start"
+    "dev": "nodemon --watch . --ext js,mjs,json --exec node ./bin/start"
   },
   "dependencies": {
     "debug": "^4.4.1",
