@@ -3,6 +3,7 @@
 ## À propos du projet
 
 Test JM
+Test JM2
 
 Ce projet est une API développée dans le cadre d'un projet scolaire. Il utilise les technologies suivantes :
 
