@@ -2,6 +2,9 @@
 
 ## À propos du projet
 
+Test JM
+Test JM2
+
 Ce projet est une API développée dans le cadre d'un projet scolaire. Il utilise les technologies suivantes :
 
 - Express.js comme framework backend
@@ -38,3 +41,4 @@ Burno est un [client API Open source](https://www.usebruno.com/), idéal pour do
 - 📦 [MongoDB](https://www.mongodb.com/)
 - 🔄 [Mongoose](https://mongoosejs.com/)
 - 🐳 [Docker](https://www.docker.com/)
+  aa
