@@ -1,0 +1,7 @@
+{
+  "date": "",
+  "GPS-track": {},
+  "equipment": [{ "slug": "", "label": "" }, {}],
+  "training": [{ "date": "", "location": "" }, {}],
+  "fundraising": { "date": "", "location": "" }
+}
