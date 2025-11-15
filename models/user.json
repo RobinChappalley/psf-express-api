@@ -1,0 +1,35 @@
+{
+  "id": "",
+  "role": [],
+  "parent-id": "",
+  "children": [],
+  "name": "",
+  "firstname": "",
+  "phone-number": null,
+  "email": null,
+  "address": {
+    "street": "",
+    "city": "",
+    "postal-code": "",
+    "country": ""
+  },
+  "camps-attended": [],
+  "participation-infos": {
+    "tshirt-info": {
+      "size": "",
+      "gender": ""
+    },
+    "allergies": [],
+    "medication": [],
+    "avs-number": "",
+    "id-date": "",
+    "insurance-name": "",
+    "is-cas-member": false,
+    "has-AG": false,
+    "has-half-price": false,
+    "has-photo-consent": false,
+    "is-helicopter-insured": false,
+    "date-of-birth": "",
+    "has-paid": false
+  }
+}
