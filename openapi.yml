@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  description: "This API is awesome."
+  version: "1.0.0"
+  title: "Awesome API"
+paths:
+  /users/{id}:
+    get:
+      summary: Request a user's information.
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the user.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  description: First name of the user.
+                  example: John
+                lastName:
+                  type: string
+                  description: Last name of the user.
+                  example: Doe
