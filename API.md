@@ -25,4 +25,4 @@
 | GET          | /items                             | Récupérer la liste de tous les objets                  |
 | PUT          | /item/{id}                         | Modifier un objet                                      |
 | DELETE       | /item/{id}                         | Supprimer un objet                                     |
-| POST         | /item                              |
+| POST         | /item                              | Ajouter un objet                                       |
