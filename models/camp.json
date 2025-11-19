@@ -31,8 +31,7 @@
       "distance": "",
       "elevation-gain": "",
       "elevation-loss": "",
-      "route-description": "",
-      "equipment": [{ "item_id": "", "quantity": "" }, {}]
+      "route-description": ""
     },
     {}
   ],
