@@ -1,7 +1,26 @@
 {
   "date": "",
   "GPS-track": {},
-  "equipment": [{ "slug": "", "label": "" }, {}],
-  "training": [{ "date": "", "location": "" }, {}],
+  "equipment": [{ "item_id": "", "quantity": "" }, {}],
+  "trainings": [
+    {
+      "date": "",
+      "train-going-time": "",
+      "meeting-time": "",
+      "meeting-point": "",
+      "return-time": "",
+      "train-return-time": "",
+      "distance": "",
+      "elevation-difference": "",
+      "remark": "",
+      "number": "",
+      "responsible-person": {
+        "name": "",
+        "contact": ""
+      },
+      "equipment": [{ "item_id": "", "quantity": "" }, {}]
+    },
+    {}
+  ],
   "fundraising": { "date": "", "location": "" }
 }
