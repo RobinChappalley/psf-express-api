@@ -26,3 +26,8 @@
 | PUT          | /item/{id}                         | Modifier un objet                                      |
 | DELETE       | /item/{id}                         | Supprimer un objet                                     |
 | POST         | /item                              | Ajouter un objet                                       |
+| GET          | /users                             | Récupérer la liste de tous les utilisateurs            |
+| POST         | /user                              | Ajouter un utilisateur                                 |
+| GET          | /users/{id}                        | Récupérer un utilisateur                               |
+| PUT          | /users/{id}                        | Modifier un utilisateur                                |
+| DELETE       | /users/{id}                        | Supprimer un utilisateur                               |
