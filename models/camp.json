@@ -13,7 +13,7 @@
       "distance": "",
       "elevation-difference": "",
       "remark": "",
-      "number": "",
+      "id": "",
       "responsible-person": {
         "name": "",
         "contact": ""
@@ -36,5 +36,5 @@
     },
     {}
   ],
-  "fundraising": { "date": "", "location": "" }
+  "fundraising": [{ "datetime": "", "location": "", "users-id": ["", ""] }, {}]
 }
