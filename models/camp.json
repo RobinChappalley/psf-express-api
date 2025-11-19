@@ -1,7 +1,18 @@
 {
-  "date": "",
+  "id": "",
+  "name": "",
+  "start-date": "",
+  "end-date": "",
+  "subscription-start-date": "",
+  "subscription-deadline": "",
   "GPS-track": {},
-  "equipment": [{ "item_id": "", "quantity": "" }, {}],
+  "items-list": [{ "item_id": "", "quantity": "" }, {}],
+  "information-evening": {
+    "date": "",
+    "time": "",
+    "location": "",
+    "participants": [{ "mail": "", "number-of-participants": "" }, {}]
+  },
   "trainings": [
     {
       "date": "",
@@ -14,11 +25,8 @@
       "elevation-difference": "",
       "remark": "",
       "id": "",
-      "responsible-person": {
-        "name": "",
-        "contact": ""
-      },
-      "equipment": [{ "item_id": "", "quantity": "" }, {}]
+      "responsible-person-id": "",
+      "items-list": [{ "item_id": "", "quantity": "" }, {}]
     },
     {}
   ],
@@ -35,5 +43,14 @@
     },
     {}
   ],
-  "fundraising": [{ "datetime": "", "location": "", "users-id": ["", ""] }, {}]
+  "fundraising": [
+    { "id": "", "datetime": "", "location": "", "users-id": ["", ""] },
+    {}
+  ],
+  "AG": {
+    "date": "",
+    "time": "",
+    "location": "",
+    "participants": [{ "mail": "", "number-of-participants": "" }, {}]
+  }
 }
