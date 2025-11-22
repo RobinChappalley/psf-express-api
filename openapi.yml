@@ -1,0 +1,810 @@
+openapi: 3.0.0
+info:
+  title: Camps API
+  version: 1.0.0
+
+paths:
+  ########################
+  # CAMPS
+  ########################
+
+  /camps:
+    get:
+      tags: [Camps]
+      summary: Récupérer la liste de tous les camps
+      responses:
+        "200":
+          description: Liste de camps
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Camp"
+        "500":
+          description: Erreur interne
+    post:
+      tags: [Camps]
+      summary: Ajouter un camp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Camp"
+      responses:
+        "201":
+          description: Camp créé
+        "400":
+          description: Données invalides
+        "500":
+          description: Erreur interne
+
+  /camps/{id}:
+    get:
+      tags: [Camps]
+      summary: Récupérer un camp
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Camp trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camp"
+        "404": { description: Camp non trouvé }
+    put:
+      tags: [Camps]
+      summary: Mettre à jour un camp
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Camp"
+      responses:
+        "200": { description: Camp mis à jour }
+        "404": { description: Camp non trouvé }
+    delete:
+      tags: [Camps]
+      summary: Supprimer un camp
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: Camp supprimé }
+        "404": { description: Camp non trouvé }
+
+  ########################
+  # CAMP ITEMS
+  ########################
+
+  /camps/{id}/items:
+    get:
+      tags: [Items]
+      summary: Récupérer tous les objets d’un camp
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Liste des objets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampItem"
+    post:
+      tags: [Items]
+      summary: Ajouter un objet à un camp
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampItem"
+      responses:
+        "201": { description: objet ajouté }
+
+  /camps/{id}/item:
+    put:
+      tags: [Items]
+      summary: Mettre à jour un objet d’un camp
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampItem"
+      responses:
+        "200": { description: objet mis à jour }
+    delete:
+      tags: [Items]
+      summary: Supprimer un objet d’un camp
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      responses:
+        "200": { description: objet supprimé }
+
+  ########################
+  # CAMP TRAININGS
+  ########################
+
+  /camps/{id}/trainings:
+    get:
+      tags: [Trainings]
+      summary: Récupérer les entraînements d’un camp
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      responses:
+        "200":
+          description: Liste des entraînements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Training"
+
+    post:
+      tags: [Trainings]
+      summary: Ajouter un entraînement
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Training"
+      responses:
+        "201": { description: Entraînement ajouté }
+
+  /camps/{id}/trainings/{id2}:
+    put:
+      tags: [Trainings]
+      summary: Modifier un entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Training"
+      responses:
+        "200": { description: Entraînement mis à jour }
+    delete:
+      tags: [Trainings]
+      summary: Supprimer un entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Entraînement supprimé }
+
+  /camps/{id}/trainings/{id2}/items:
+    get:
+      tags: [Items]
+      summary: Récupérer les objets d’un entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Liste des objets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampItem"
+    post:
+      tags: [Items]
+      summary: Ajouter un objet d’entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampItem"
+      responses:
+        "201": { description: Objet ajouté }
+
+  /camps/{id}/trainings/{id2}/items/{id3}:
+    put:
+      tags: [Items]
+      summary: Modifier un objet d’entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+        - { in: path, name: id3, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CampItem"
+      responses:
+        "200": { description: Objet modifié }
+    delete:
+      tags: [Items]
+      summary: Supprimer un objet d’entraînement
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+        - { in: path, name: id3, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Objet supprimé }
+
+  ########################
+  # HIKES
+  ########################
+
+  /hikes:
+    get:
+      tags: [Hikes]
+      summary: Récupérer la liste des marches
+      responses:
+        "200":
+          description: Liste des marches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Hike"
+    post:
+      tags: [Hikes]
+      summary: Ajouter une marche
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Hike"
+      responses:
+        "201": { description: Marche ajoutée }
+
+  /hikes/{id}:
+    get:
+      tags: [Hikes]
+      summary: Récupérer une marche
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      responses:
+        "200":
+          description: Marche trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hike"
+        "404": { description: Marche non trouvée }
+    put:
+      tags: [Hikes]
+      summary: Mettre à jour une marche
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Hike"
+      responses:
+        "200": { description: Marche mise à jour }
+    delete:
+      tags: [Hikes]
+      summary: Supprimer une marche
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      responses:
+        "200": { description: Marche supprimée }
+
+  ########################
+  # ITEMS (GLOBAL)
+  ########################
+
+  /items:
+    get:
+      tags: [Items]
+      summary: Récupérer tous les objets
+      responses:
+        "200":
+          description: Liste des objets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+    post:
+      tags: [Items]
+      summary: Ajouter un objet
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Item"
+      responses:
+        "201": { description: Objet ajouté }
+
+  /item/{id}:
+    put:
+      tags: [Items]
+      summary: Modifier un objet
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Item"
+      responses:
+        "200": { description: Objet modifié }
+    delete:
+      tags: [Items]
+      summary: Supprimer un objet
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Objet supprimé }
+
+  ########################
+  # FUNDRAISINGS
+  ########################
+
+  /camps/{id}/fundraisings:
+    get:
+      tags: [Fundraisings]
+      summary: Récupérer toutes les ventes
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Liste des ventes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Fundraising"
+    post:
+      tags: [Fundraisings]
+      summary: Ajouter une vente
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Fundraising"
+      responses:
+        "201": { description: Vente ajoutée }
+
+  /camps/{id}/fundraisings/{id2}:
+    get:
+      tags: [Fundraisings]
+      summary: Récupérer une vente
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Vente trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fundraising"
+    put:
+      tags: [Fundraisings]
+      summary: Modifier une vente
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Fundraising"
+      responses:
+        "200": { description: Vente modifiée }
+    delete:
+      tags: [Fundraisings]
+      summary: Supprimer une vente
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Vente supprimée }
+
+  ########################
+  # STAGES
+  ########################
+
+  /camps/{id}/stages:
+    get:
+      tags: [Étapes]
+      summary: Récupérer les étapes
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Liste des étapes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Stage"
+    post:
+      tags: [Étapes]
+      summary: Ajouter une étape
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Stage"
+      responses:
+        "201": { description: Étape ajoutée }
+
+  /camps/{id}/stages/{id2}:
+    get:
+      tags: [Étapes]
+      summary: Récupérer une étape
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Étape trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+    put:
+      tags: [Étapes]
+      summary: Modifier une étape
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Stage"
+      responses:
+        "200": { description: Étape modifiée }
+    delete:
+      tags: [Étapes]
+      summary: Supprimer une étape
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string } }
+        - { in: path, name: id2, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Étape supprimée }
+
+  ########################
+  # AG
+  ########################
+
+  /camps/{id}/ag:
+    get:
+      tags: [AG]
+      summary: Récupérer une AG
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: AG trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AG"
+    post:
+      tags: [AG]
+      summary: Ajouter une AG
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AG"
+      responses:
+        "201": { description: AG ajoutée }
+
+    put:
+      tags: [AG]
+      summary: Modifier une AG
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AG"
+      responses:
+        "200": { description: AG modifiée }
+
+    delete:
+      tags: [AG]
+      summary: Supprimer une AG
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: AG supprimée }
+
+  ########################
+  # INFORMATION EVENING
+  ########################
+
+  /camps/{id}/information-evening:
+    get:
+      tags: [InformationEvening]
+      summary: Récupérer une soirée d’information
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Soirée trouvée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InformationEvening"
+
+    post:
+      tags: [InformationEvening]
+      summary: Ajouter une soirée d’information
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InformationEvening"
+      responses:
+        "201": { description: IE ajoutée }
+
+    put:
+      tags: [InformationEvening]
+      summary: Modifier une soirée d’information
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InformationEvening"
+      responses:
+        "200": { description: IE modifiée }
+
+    delete:
+      tags: [InformationEvening]
+      summary: Supprimer une soirée d’information
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: IE supprimée }
+
+#############################
+# SCHEMAS
+#############################
+
+components:
+  schemas:
+    ####################################
+    # CAMP
+    ####################################
+    Camp:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        start-date: { type: string, format: date }
+        end-date: { type: string, format: date }
+        subscription-start-date: { type: string, format: date }
+        subscription-deadline: { type: string, format: date }
+        GPS-track:
+          type: object
+        items-list:
+          type: array
+          items:
+            $ref: "#/components/schemas/CampItem"
+        information-evening:
+          $ref: "#/components/schemas/InformationEvening"
+        trainings:
+          type: array
+          items:
+            $ref: "#/components/schemas/Training"
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stage"
+        fundraising:
+          type: array
+          items:
+            $ref: "#/components/schemas/Fundraising"
+        AG:
+          $ref: "#/components/schemas/AG"
+
+    CampItem:
+      type: object
+      properties:
+        item_id: { type: string }
+        quantity: { type: string }
+
+    ####################################
+    # TRAINING
+    ####################################
+    Training:
+      type: object
+      properties:
+        date: { type: string }
+        train-going-time: { type: string }
+        meeting-time: { type: string }
+        meeting-point: { type: string }
+        return-time: { type: string }
+        train-return-time: { type: string }
+        distance: { type: string }
+        elevation-difference: { type: string }
+        remark: { type: string }
+        id: { type: string }
+        responsible-person-id: { type: string }
+        items-list:
+          type: array
+          items:
+            $ref: "#/components/schemas/CampItem"
+
+    ####################################
+    # STAGE
+    ####################################
+    Stage:
+      type: object
+      properties:
+        date: { type: string }
+        number: { type: string }
+        start-point: { type: string }
+        end-point: { type: string }
+        distance: { type: string }
+        elevation-gain: { type: string }
+        elevation-loss: { type: string }
+        route-description: { type: string }
+
+    ####################################
+    # FUNDRAISING
+    ####################################
+    Fundraising:
+      type: object
+      properties:
+        id: { type: string }
+        datetime: { type: string }
+        location: { type: string }
+        users-id:
+          type: array
+          items: { type: string }
+
+    ####################################
+    # AG
+    ####################################
+    AG:
+      type: object
+      properties:
+        date: { type: string }
+        time: { type: string }
+        location: { type: string }
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+
+    ####################################
+    # INFORMATION EVENING
+    ####################################
+    InformationEvening:
+      type: object
+      properties:
+        date: { type: string }
+        time: { type: string }
+        location: { type: string }
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/Participant"
+
+    Participant:
+      type: object
+      properties:
+        mail: { type: string }
+        number-of-participants: { type: string }
+
+    ####################################
+    # HIKE
+    ####################################
+    Hike:
+      type: object
+      properties:
+        GPS-track: { type: object }
+        photos:
+          type: array
+          items:
+            type: object
+            properties:
+              file: { type: string }
+        user-id: { type: string }
+        date: { type: string }
+        number: { type: string }
+        start-point: { type: string }
+        end-point: { type: string }
+        distance: { type: string }
+        elevation-gain: { type: string }
+        elevation-loss: { type: string }
+        route-description: { type: string }
+
+    ####################################
+    # ITEM (GLOBAL)
+    ####################################
+    Item:
+      type: object
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+
+tags:
+  - name: Camps
+    description: Gestion des camps
+  - name: Trainings
+    description: Entraînements liés aux camps
+  - name: Items
+    description: Objets disponibles
+  - name: Hikes
+    description: Randonnées effectuées
+  - name: Étapes
+    description: Étapes du camp
+  - name: Fundraisings
+    description: Activités de financement
+  - name: AG
+    description: Assemblées générales du camp
+  - name: InformationEvening
+    description: Soirées d’information du camp
