@@ -7,8 +7,8 @@
 | DELETE       | /camps/{id}                           | Supprimer un camp                                      | Robin  |
 | GET          | /camps/{id}/items                     | Récupérer tous les équipement d'un camp                | Robin  |
 | POST         | /camps/{id}/item                      | Ajouter un équipement pour un camp                     | Robin  |
-| PUT          | /camps/{id}/item                      | Mettre à jour un équipement d'un camp                  | Robin  |
-| DELETE       | /camps/{id}/item                      | Supprimer un équipement                                | Robin  |
+| PUT          | /camps/{id}/item/{id}                 | Mettre à jour un équipement d'un camp                  | Robin  |
+| DELETE       | /camps/{id}/item/{id}                 | Supprimer un équipement d'un camp                      | Robin  |
 | GET          | /camps/{id}/trainings                 | Récupérer la liste de tous les entraînements d'un camp | Robin  |
 | POST         | /camps/{id}/training                  | Ajouter un entraînement d'un camp                      | Robin  |
 | PUT          | /camps/{id}/trainings/{id}            | Modifier un entraînement d'un camp                     | Robin  |
