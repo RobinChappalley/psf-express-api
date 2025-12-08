@@ -3,13 +3,12 @@
   "name": "",
   "start-date": "",
   "end-date": "",
-  "subscription-start-date": "",
-  "subscription-deadline": "",
+  "subscription-start-date-time": "",
+  "subscription-deadline-date-time": "",
   "GPS-track": {},
   "items-list": [{ "item_id": "", "quantity": "" }, {}],
   "information-evening": {
-    "date": "",
-    "time": "",
+    "date-time": "",
     "location": "",
     "participants": [{ "mail": "", "number-of-participants": "" }, {}]
   },
@@ -44,12 +43,11 @@
     {}
   ],
   "fundraising": [
-    { "id": "", "datetime": "", "location": "", "users-id": ["", ""] },
+    { "id": "", "date-time": "", "location": "", "users-id": ["", ""] },
     {}
   ],
   "AG": {
-    "date": "",
-    "time": "",
+    "date-time": "",
     "location": "",
     "participants": [{ "mail": "", "number-of-participants": "" }, {}]
   }
