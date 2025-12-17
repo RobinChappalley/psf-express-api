@@ -5,6 +5,43 @@ info:
 
 paths:
   ########################
+  # AUTHENTICATION
+  ########################
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Connexion utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Connexion réussie
+        "400":
+          description: Données invalides
+        "401":
+          description: Identifiants invalides
+        "500":
+          description: Erreur interne du serveur
+
+  /logout:
+    post:
+      tags: [Authentication]
+      summary: Déconnexion utilisateur
+      responses:
+        "200":
+          description: Déconnexion réussie
+        "500":
+          description: Erreur interne du serveur
+
+  ########################
   # CAMPS
   ########################
 
@@ -1497,6 +1534,8 @@ components:
         description: { type: string }
 
 tags:
+  - name: Authentication
+    description: Authentification utilisateur
   - name: Camps
     description: Gestion des camps
   - name: Trainings
