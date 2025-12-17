@@ -5,6 +5,43 @@ info:
 
 paths:
   ########################
+  # AUTHENTICATION
+  ########################
+
+  /login:
+    post:
+      tags: [Authentication]
+      summary: Connexion utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Connexion réussie
+        "400":
+          description: Données invalides
+        "401":
+          description: Identifiants invalides
+        "500":
+          description: Erreur interne du serveur
+
+  /logout:
+    post:
+      tags: [Authentication]
+      summary: Déconnexion utilisateur
+      responses:
+        "200":
+          description: Déconnexion réussie
+        "500":
+          description: Erreur interne du serveur
+
+  ########################
   # CAMPS
   ########################
 
@@ -22,7 +59,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Camp"
         "500":
-          description: Erreur interne
+          description: Erreur interne du serveur
     post:
       tags: [Camps]
       summary: Ajouter un camp
@@ -31,14 +68,25 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Camp"
+              type: object
+              properties:
+                name: { type: string }
+                start-date: { type: string, format: date }
+                end-date: { type: string, format: date }
+                subscription-start-date: { type: string, format: date }
+                subscription-deadline: { type: string, format: date }
+                GPS-track: { type: object }
       responses:
         "201":
           description: Camp créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camp"
         "400":
           description: Données invalides
         "500":
-          description: Erreur interne
+          description: Erreur interne du serveur
 
   /camps/{id}:
     get:
@@ -49,6 +97,7 @@ paths:
           name: id
           required: true
           schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Camp trouvé
@@ -56,7 +105,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Camp"
-        "404": { description: Camp non trouvé }
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
     put:
       tags: [Camps]
       summary: Mettre à jour un camp
@@ -65,14 +117,31 @@ paths:
           name: id
           required: true
           schema: { type: string }
+          description: ID du camp
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Camp"
+              type: object
+              properties:
+                name: { type: string }
+                start-date: { type: string, format: date }
+                end-date: { type: string, format: date }
+                subscription-start-date: { type: string, format: date }
+                subscription-deadline: { type: string, format: date }
+                GPS-track: { type: object }
       responses:
-        "200": { description: Camp mis à jour }
-        "404": { description: Camp non trouvé }
+        "200":
+          description: Camp mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Camp"
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [Camps]
       summary: Supprimer un camp
@@ -81,9 +150,14 @@ paths:
           name: id
           required: true
           schema: { type: string }
+          description: ID du camp
       responses:
-        "200": { description: Camp supprimé }
-        "404": { description: Camp non trouvé }
+        "200":
+          description: Camp supprimé
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   ########################
   # CAMP ITEMS
@@ -92,12 +166,13 @@ paths:
   /camps/{id}/items:
     get:
       tags: [Items]
-      summary: Récupérer tous les objets d’un camp
+      summary: Récupérer tous les objets d'un camp
       parameters:
         - in: path
           name: id
           required: true
           schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Liste des objets
@@ -107,48 +182,90 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CampItem"
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
     post:
       tags: [Items]
       summary: Ajouter un objet à un camp
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CampItem"
+              type: object
+              properties:
+                item_id: { type: string }
+                quantity: { type: string }
       responses:
-        "201": { description: objet ajouté }
+        "201":
+          description: Objet ajouté
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampItem"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   /camps/{id}/item:
     put:
       tags: [Items]
-      summary: Mettre à jour un objet d’un camp
+      summary: Mettre à jour un objet d'un camp
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CampItem"
+              type: object
+              properties:
+                item_id: { type: string }
+                quantity: { type: string }
       responses:
-        "200": { description: objet mis à jour }
+        "200":
+          description: Objet mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampItem"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp ou objet non trouvé
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [Items]
-      summary: Supprimer un objet d’un camp
+      summary: Supprimer un objet d'un camp
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
-        "200": { description: objet supprimé }
+        "200":
+          description: Objet supprimé
+        "404":
+          description: Camp ou objet non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   ########################
   # CAMP TRAININGS
@@ -157,12 +274,13 @@ paths:
   /camps/{id}/trainings:
     get:
       tags: [Trainings]
-      summary: Récupérer les entraînements d’un camp
+      summary: Récupérer les entraînements d'un camp
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Liste des entraînements
@@ -172,53 +290,144 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Training"
-
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
     post:
       tags: [Trainings]
       summary: Ajouter un entraînement
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Training"
+              type: object
+              properties:
+                date: { type: string }
+                train-going-time: { type: string }
+                meeting-time: { type: string }
+                meeting-point: { type: string }
+                return-time: { type: string }
+                train-return-time: { type: string }
+                distance: { type: string }
+                elevation-difference: { type: string }
+                remark: { type: string }
+                responsible-person-id: { type: string }
       responses:
-        "201": { description: Entraînement ajouté }
+        "201":
+          description: Entraînement ajouté
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Training"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   /camps/{id}/trainings/{id2}:
     put:
       tags: [Trainings]
       summary: Modifier un entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Training"
+              type: object
+              properties:
+                date: { type: string }
+                train-going-time: { type: string }
+                meeting-time: { type: string }
+                meeting-point: { type: string }
+                return-time: { type: string }
+                train-return-time: { type: string }
+                distance: { type: string }
+                elevation-difference: { type: string }
+                remark: { type: string }
+                responsible-person-id: { type: string }
       responses:
-        "200": { description: Entraînement mis à jour }
+        "200":
+          description: Entraînement mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Training"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp ou entraînement non trouvé
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [Trainings]
       summary: Supprimer un entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
       responses:
-        "200": { description: Entraînement supprimé }
+        "200":
+          description: Entraînement supprimé
+        "404":
+          description: Camp ou entraînement non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   /camps/{id}/trainings/{id2}/items:
     get:
       tags: [Items]
-      summary: Récupérer les objets d’un entraînement
+      summary: Récupérer les objets d'un entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
       responses:
         "200":
           description: Liste des objets
@@ -228,44 +437,130 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CampItem"
+        "404":
+          description: Camp ou entraînement non trouvé
+        "500":
+          description: Erreur interne du serveur
     post:
       tags: [Items]
-      summary: Ajouter un objet d’entraînement
+      summary: Ajouter un objet d'entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CampItem"
+              type: object
+              properties:
+                item_id: { type: string }
+                quantity: { type: string }
       responses:
-        "201": { description: Objet ajouté }
+        "201":
+          description: Objet ajouté
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampItem"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp ou entraînement non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   /camps/{id}/trainings/{id2}/items/{id3}:
     put:
       tags: [Items]
-      summary: Modifier un objet d’entraînement
+      summary: Modifier un objet d'entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
-        - { in: path, name: id3, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
+        - {
+            in: path,
+            name: id3,
+            required: true,
+            schema: { type: string },
+            description: ID de l'objet,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CampItem"
+              type: object
+              properties:
+                quantity: { type: string }
       responses:
-        "200": { description: Objet modifié }
+        "200":
+          description: Objet modifié
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampItem"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp, entraînement ou objet non trouvé
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [Items]
-      summary: Supprimer un objet d’entraînement
+      summary: Supprimer un objet d'entraînement
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
-        - { in: path, name: id3, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'entraînement,
+          }
+        - {
+            in: path,
+            name: id3,
+            required: true,
+            schema: { type: string },
+            description: ID de l'objet,
+          }
       responses:
-        "200": { description: Objet supprimé }
+        "200":
+          description: Objet supprimé
+        "404":
+          description: Camp, entraînement ou objet non trouvé
+        "500":
+          description: Erreur interne du serveur
 
   ########################
   # HIKES
@@ -284,16 +579,39 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Hike"
+        "500":
+          description: Erreur interne du serveur
     post:
       tags: [Hikes]
       summary: Ajouter une marche
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Hike"
+              type: object
+              properties:
+                user-id: { type: string }
+                date: { type: string }
+                number: { type: string }
+                start-point: { type: string }
+                end-point: { type: string }
+                distance: { type: string }
+                elevation-gain: { type: string }
+                elevation-loss: { type: string }
+                route-description: { type: string }
+                GPS-track: { type: object }
       responses:
-        "201": { description: Marche ajoutée }
+        "201":
+          description: Marche ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hike"
+        "400":
+          description: Données invalides
+        "500":
+          description: Erreur interne du serveur
 
   /hikes/{id}:
     get:
@@ -302,8 +620,9 @@ paths:
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID de la marche
       responses:
         "200":
           description: Marche trouvée
@@ -311,32 +630,65 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Hike"
-        "404": { description: Marche non trouvée }
+        "404":
+          description: Marche non trouvée
+        "500":
+          description: Erreur interne du serveur
     put:
       tags: [Hikes]
       summary: Mettre à jour une marche
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID de la marche
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Hike"
+              type: object
+              properties:
+                user-id: { type: string }
+                date: { type: string }
+                number: { type: string }
+                start-point: { type: string }
+                end-point: { type: string }
+                distance: { type: string }
+                elevation-gain: { type: string }
+                elevation-loss: { type: string }
+                route-description: { type: string }
+                GPS-track: { type: object }
       responses:
-        "200": { description: Marche mise à jour }
+        "200":
+          description: Marche mise à jour
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hike"
+        "400":
+          description: Données invalides
+        "404":
+          description: Marche non trouvée
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [Hikes]
       summary: Supprimer une marche
       parameters:
         - in: path
           name: id
-          schema: { type: string }
           required: true
+          schema: { type: string }
+          description: ID de la marche
       responses:
-        "200": { description: Marche supprimée }
+        "200":
+          description: Marche supprimée
+        "404":
+          description: Marche non trouvée
+        "500":
+          description: Erreur interne du serveur
 
   ########################
   # ITEMS (GLOBAL)
@@ -363,10 +715,15 @@ paths:
       tags: [Items]
       summary: Ajouter un objet au répertoire
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Item"
+              type: object
+              properties:
+                slug: { type: string }
+                name: { type: string }
+                description: { type: string }
       responses:
         "201": { description: Objet ajouté au répertoire }
         "400":
@@ -381,31 +738,58 @@ paths:
       tags: [Items]
       summary: Modifier un objet du répertoire
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID de l'objet,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Item"
+              type: object
+              properties:
+                slug: { type: string }
+                name: { type: string }
+                description: { type: string }
       responses:
-        "200": { description: Objet modifié }
+        "200":
+          description: Objet modifié
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
         "400":
           description: Données invalides
+        "404":
+          description: Objet non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
     delete:
       tags: [Items]
       summary: Supprimer un objet du répertoire
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID de l'objet,
+          }
       responses:
-        "200": { description: Objet supprimé du répertoire }
+        "200":
+          description: Objet supprimé du répertoire
+        "404":
+          description: Objet non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
 
   ########################
   # FUNDRAISINGS
@@ -416,7 +800,13 @@ paths:
       tags: [Fundraisings]
       summary: Récupérer les ventes pour un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
         "200":
           description: Liste des ventes pour un camp
@@ -425,37 +815,69 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Fundraising
+                  $ref: "#/components/schemas/Fundraising"
         "403":
           description: Accès refusé
         "500":
           description: Erreur interne au serveur
+        "404":
+          description: Camp non trouvé
     post:
       tags: [Fundraisings]
       summary: Ajouter une vente à un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Fundraising"
+              type: object
+              properties:
+                datetime: { type: string }
+                location: { type: string }
+                users-id:
+                  type: array
+                  items: { type: string }
       responses:
-        "201": { description: Vente ajoutée au camp }
+        "201":
+          description: Vente ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fundraising"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
 
   /camps/{id}/fundraisings/{id2}:
     get:
       tags: [Fundraisings]
       summary: Récupérer une vente d'un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de la vente,
+          }
       responses:
         "200":
           description: Vente trouvée
@@ -463,43 +885,86 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Fundraising"
+        "404":
+          description: Camp ou vente non trouvé
+        "500":
+          description: Erreur interne du serveur
         "400":
           description: Données invalides
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
     put:
       tags: [Fundraisings]
       summary: Modifier une vente
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de la vente,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Fundraising"
+              type: object
+              properties:
+                datetime: { type: string }
+                location: { type: string }
+                users-id:
+                  type: array
+                  items: { type: string }
       responses:
-        "200": { description: Vente modifiée }
+        "200":
+          description: Vente modifiée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fundraising"
         "400":
           description: Données invalides
+        "404":
+          description: Camp ou vente non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
     delete:
       tags: [Fundraisings]
       summary: Supprimer une vente
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de la vente,
+          }
       responses:
-        "200": { description: Vente supprimée }
+        "200":
+          description: Vente supprimée
+        "404":
+          description: Camp ou vente non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
 
   ########################
   # STAGES
@@ -510,7 +975,13 @@ paths:
       tags: [Étapes]
       summary: Récupérer les étapes d'un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
         "200":
           description: Liste des étapes d'un camp
@@ -520,36 +991,71 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Stage"
+        "404":
+          description: Camp non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
     post:
       tags: [Étapes]
       summary: Ajouter une étape à un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Stage"
+              type: object
+              properties:
+                date: { type: string }
+                number: { type: string }
+                start-point: { type: string }
+                end-point: { type: string }
+                distance: { type: string }
+                elevation-gain: { type: string }
+                elevation-loss: { type: string }
+                route-description: { type: string }
       responses:
-        "201": { description: Étape ajoutée au camp}
+        "201":
+          description: Étape ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
 
   /camps/{id}/stages/{id2}:
     get:
       tags: [Étapes]
       summary: Récupérer une étape d'un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'étape,
+          }
       responses:
         "200":
           description: Étape trouvée
@@ -557,41 +1063,83 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Stage"
+        "404":
+          description: Camp ou étape non trouvé
+        "500":
+          description: Erreur interne du serveur
         "403":
           description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
     put:
       tags: [Étapes]
       summary: Modifier une étape
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'étape,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Stage"
+              type: object
+              properties:
+                date: { type: string }
+                number: { type: string }
+                start-point: { type: string }
+                end-point: { type: string }
+                distance: { type: string }
+                elevation-gain: { type: string }
+                elevation-loss: { type: string }
+                route-description: { type: string }
       responses:
-        "200": { description: Étape modifiée }
+        "200":
+          description: Étape modifiée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp ou étape non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
     delete:
       tags: [Étapes]
       summary: Supprimer une étape d'un camp
       parameters:
-        - { in: path, name: id, required: true, schema: { type: string } }
-        - { in: path, name: id2, required: true, schema: { type: string } }
+        - {
+            in: path,
+            name: id,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
+        - {
+            in: path,
+            name: id2,
+            required: true,
+            schema: { type: string },
+            description: ID de l'étape,
+          }
       responses:
-        "200": { description: Étape supprimée du camp}
-        "403":
-          description: Accès refusé
+        "200":
+          description: Étape supprimée
+        "404":
+          description: Camp ou étape non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
 
   ########################
   # AG
@@ -602,7 +1150,13 @@ paths:
       tags: [AG]
       summary: Récupérer l'AG d'un camp
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
         "200":
           description: AG trouvée
@@ -610,58 +1164,104 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AG"
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp ou AG non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
     post:
       tags: [AG]
       summary: Ajouter une AG à un camp
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AG"
+              type: object
+              properties:
+                date: { type: string }
+                time: { type: string }
+                location: { type: string }
+                participants:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Participant"
       responses:
-        "201": { description: AG ajoutée au camp }
+        "201":
+          description: AG ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AG"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
     put:
       tags: [AG]
       summary: Modifier l'AG d'un camp
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AG"
+              type: object
+              properties:
+                date: { type: string }
+                time: { type: string }
+                location: { type: string }
+                participants:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Participant"
       responses:
-        "200": { description: AG modifiée }
+        "200":
+          description: AG modifiée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AG"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp ou AG non trouvé
         "500":
-          description: Erreur interne au serveur
-
+          description: Erreur interne du serveur
     delete:
       tags: [AG]
       summary: Supprimer une AG
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
-        "200": { description: AG supprimée }
-        "403":
-          description: Accès refusé
+        "200":
+          description: AG supprimée
+        "404":
+          description: Camp ou AG non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
 
   ########################
   # INFORMATION EVENING
@@ -670,9 +1270,15 @@ paths:
   /camps/{id}/information-evening:
     get:
       tags: [InformationEvening]
-      summary: Récupérer la soirée d’information d'un camp
+      summary: Récupérer une soirée d'information
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
         "200":
           description: Soirée trouvée
@@ -680,60 +1286,95 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/InformationEvening"
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp ou IE non trouvé
         "500":
-          description: Erreur interne au serveur
-
+          description: Erreur interne du serveur
     post:
       tags: [InformationEvening]
       summary: Ajouter une soirée d’information à un camp
+      summary: Ajouter une soirée d'information
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InformationEvening"
+              type: object
+              properties:
+                date: { type: string }
+                time: { type: string }
+                location: { type: string }
+                participants:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Participant"
       responses:
-        "201": { description: Soirée d'information ajoutée }
+        "201":
+          description: IE ajoutée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InformationEvening"
         "400":
           description: Données invalides
-        "403":
-          description: Accès refusé
+        "404":
+          description: Camp non trouvé
         "500":
-          description: Erreur interne au serveur
-
+          description: Erreur interne du serveur
     put:
       tags: [InformationEvening]
-      summary: Modifier une soirée d’information
+      summary: Modifier une soirée d'information
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InformationEvening"
+              type: object
+              properties:
+                date: { type: string }
+                time: { type: string }
+                location: { type: string }
+                participants:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/Participant"
       responses:
-        "200": { description: Soirée d'information modifiée }
-        "400":
-          description: Données invalides
-        "403":
-          description: Accès refusé
-        "500":
-          description: Erreur interne au serveur
+        "200": { description: IE modifiée }
 
     delete:
       tags: [InformationEvening]
-      summary: Supprimer une soirée d’information
+      summary: Supprimer une soirée d'information
       parameters:
-        - { name: id, in: path, required: true, schema: { type: string } }
+        - {
+            name: id,
+            in: path,
+            required: true,
+            schema: { type: string },
+            description: ID du camp,
+          }
       responses:
-        "200": { description: Soirée d'information supprimée }
-        "403":
-          description: Accès refusé
+        "200":
+          description: IE supprimée
+        "404":
+          description: Camp ou IE non trouvé
         "500":
-          description: Erreur interne au serveur
+          description: Erreur interne du serveur
 
 #############################
 # SCHEMAS
@@ -901,6 +1542,8 @@ components:
         description: { type: string }
 
 tags:
+  - name: Authentication
+    description: Authentification utilisateur
   - name: Camps
     description: Gestion des camps
   - name: Trainings
@@ -916,4 +1559,4 @@ tags:
   - name: AG
     description: Assemblées générales du camp
   - name: InformationEvening
-    description: Soirées d’information du camp
+    description: Soirées d'information du camp
