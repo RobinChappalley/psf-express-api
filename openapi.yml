@@ -697,21 +697,23 @@ paths:
   /items:
     get:
       tags: [Items]
-      summary: Récupérer tous les objets
+      summary: Récupérer tous les objets du répertoire
       responses:
         "200":
-          description: Liste des objets
+          description: Liste de tous les objets du répertoire
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Item"
+        "403":
+          description: Accès refusé
         "500":
-          description: Erreur interne du serveur
+          description: Erreur interne au serveur
     post:
       tags: [Items]
-      summary: Ajouter un objet
+      summary: Ajouter un objet au répertoire
       requestBody:
         required: true
         content:
@@ -723,21 +725,18 @@ paths:
                 name: { type: string }
                 description: { type: string }
       responses:
-        "201":
-          description: Objet ajouté
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Item"
+        "201": { description: Objet ajouté au répertoire }
         "400":
           description: Données invalides
+        "403":
+          description: Accès refusé
         "500":
-          description: Erreur interne du serveur
+          description: Erreur interne au serveur
 
   /item/{id}:
     put:
       tags: [Items]
-      summary: Modifier un objet
+      summary: Modifier un objet du répertoire
       parameters:
         - {
             in: path,
@@ -769,9 +768,11 @@ paths:
           description: Objet non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
     delete:
       tags: [Items]
-      summary: Supprimer un objet
+      summary: Supprimer un objet du répertoire
       parameters:
         - {
             in: path,
@@ -782,11 +783,13 @@ paths:
           }
       responses:
         "200":
-          description: Objet supprimé
+          description: Objet supprimé du répertoire
         "404":
           description: Objet non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
 
   ########################
   # FUNDRAISINGS
@@ -795,7 +798,7 @@ paths:
   /camps/{id}/fundraisings:
     get:
       tags: [Fundraisings]
-      summary: Récupérer toutes les ventes
+      summary: Récupérer les ventes pour un camp
       parameters:
         - {
             in: path,
@@ -806,20 +809,22 @@ paths:
           }
       responses:
         "200":
-          description: Liste des ventes
+          description: Liste des ventes pour un camp
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/Fundraising"
+        "403":
+          description: Accès refusé
+        "500":
+          description: Erreur interne au serveur
         "404":
           description: Camp non trouvé
-        "500":
-          description: Erreur interne du serveur
     post:
       tags: [Fundraisings]
-      summary: Ajouter une vente
+      summary: Ajouter une vente à un camp
       parameters:
         - {
             in: path,
@@ -857,7 +862,7 @@ paths:
   /camps/{id}/fundraisings/{id2}:
     get:
       tags: [Fundraisings]
-      summary: Récupérer une vente
+      summary: Récupérer une vente d'un camp
       parameters:
         - {
             in: path,
@@ -884,6 +889,10 @@ paths:
           description: Camp ou vente non trouvé
         "500":
           description: Erreur interne du serveur
+        "400":
+          description: Données invalides
+        "403":
+          description: Accès refusé
     put:
       tags: [Fundraisings]
       summary: Modifier une vente
@@ -927,6 +936,8 @@ paths:
           description: Camp ou vente non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
     delete:
       tags: [Fundraisings]
       summary: Supprimer une vente
@@ -952,6 +963,8 @@ paths:
           description: Camp ou vente non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
 
   ########################
   # STAGES
@@ -960,7 +973,7 @@ paths:
   /camps/{id}/stages:
     get:
       tags: [Étapes]
-      summary: Récupérer les étapes
+      summary: Récupérer les étapes d'un camp
       parameters:
         - {
             in: path,
@@ -971,7 +984,7 @@ paths:
           }
       responses:
         "200":
-          description: Liste des étapes
+          description: Liste des étapes d'un camp
           content:
             application/json:
               schema:
@@ -982,9 +995,11 @@ paths:
           description: Camp non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
     post:
       tags: [Étapes]
-      summary: Ajouter une étape
+      summary: Ajouter une étape à un camp
       parameters:
         - {
             in: path,
@@ -1025,7 +1040,7 @@ paths:
   /camps/{id}/stages/{id2}:
     get:
       tags: [Étapes]
-      summary: Récupérer une étape
+      summary: Récupérer une étape d'un camp
       parameters:
         - {
             in: path,
@@ -1052,6 +1067,8 @@ paths:
           description: Camp ou étape non trouvé
         "500":
           description: Erreur interne du serveur
+        "403":
+          description: Accès refusé
     put:
       tags: [Étapes]
       summary: Modifier une étape
@@ -1100,7 +1117,7 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Étapes]
-      summary: Supprimer une étape
+      summary: Supprimer une étape d'un camp
       parameters:
         - {
             in: path,
@@ -1131,7 +1148,7 @@ paths:
   /camps/{id}/ag:
     get:
       tags: [AG]
-      summary: Récupérer une AG
+      summary: Récupérer l'AG d'un camp
       parameters:
         - {
             name: id,
@@ -1153,7 +1170,7 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [AG]
-      summary: Ajouter une AG
+      summary: Ajouter une AG à un camp
       parameters:
         - {
             name: id,
@@ -1191,7 +1208,7 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [AG]
-      summary: Modifier une AG
+      summary: Modifier l'AG d'un camp
       parameters:
         - {
             name: id,
@@ -1275,6 +1292,7 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [InformationEvening]
+      summary: Ajouter une soirée d’information à un camp
       summary: Ajouter une soirée d'information
       parameters:
         - {
@@ -1337,18 +1355,8 @@ paths:
                   items:
                     $ref: "#/components/schemas/Participant"
       responses:
-        "200":
-          description: IE modifiée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InformationEvening"
-        "400":
-          description: Données invalides
-        "404":
-          description: Camp ou IE non trouvé
-        "500":
-          description: Erreur interne du serveur
+        "200": { description: IE modifiée }
+
     delete:
       tags: [InformationEvening]
       summary: Supprimer une soirée d'information
