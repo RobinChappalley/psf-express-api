@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
+const itemSchema = new Schema({
+  item: {
+    type: Schema.Types.ObjectId,
+    ref: "Item",
+  },
+  quantity: Number,
+});
+
 const infoEveningSchema = new Schema({
   dateTime: Date,
   location: String,
@@ -18,12 +26,13 @@ const infoEveningSchema = new Schema({
 });
 
 const trainingSchema = new Schema({
+  number: { type: Number, required: true, unique: true },
   date: Date,
   trainGoingTime: String,
+  trainReturnTime: String,
   meetingTime: String,
   meetingPoint: String,
   returnTime: String,
-  trainReturnTime: String,
   distance: Number,
   elevationGain: Number,
   elevationLoss: Number,
@@ -44,6 +53,7 @@ const trainingSchema = new Schema({
 });
 
 const fundraisingSchema = new Schema({
+  number: { type: Number, required: true, unique: true },
   dateTime: Date,
   location: String,
   participants: [
@@ -71,8 +81,8 @@ const generalMeetingSchema = new Schema({
 });
 
 const stageSchema = new Schema({
+  number: { type: Number, required: true, unique: true },
   date: Date,
-  number: Number,
   startPoint: String,
   endPoint: String,
   distance: Number,
@@ -82,24 +92,23 @@ const stageSchema = new Schema({
 });
 
 const campSchema = new Schema({
-  title: String,
+  title: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   startDate: Date,
   endDate: Date,
-  subscriptionStartDatetime: Date,
-  subscriptionEndDatetime: Date,
+  subStartDatetime: Date,
+  subEndDatetime: Date,
   gpsTrack: {},
-  itemsList: [
-    {
-      itemId: {
-        type: Schema.Types.ObjectId,
-        ref: "Item",
-      },
-      quantity: Number,
-    },
-  ],
+  itemsList: [itemSchema],
   infoEvening: infoEveningSchema,
   trainings: [trainingSchema],
-  fundraising: [fundraisingSchema],
+  fundraisings: [fundraisingSchema],
   generalMeeting: generalMeetingSchema,
   stages: [stageSchema],
 });
+
+const CampModel = mongoose.model("Camp", campSchema);
+module.exports = CampModel;
