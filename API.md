@@ -1,4 +1,4 @@
-| Méthode HTTP | Point de terminaison                  | Description                                            |
+| Méthode HTTP | Point de terminaison                  | Description                                            | Codeur |
 | ------------ | ------------------------------------- | ------------------------------------------------------ | ------ |
 | GET          | /camps/{id}                           | Récupérer un camp                                      | Robin  |
 | GET          | /camps                                | Récupérer la liste de tous les camps                   | Robin  |
@@ -44,3 +44,8 @@
 | PUT          | /camps/{id}/information-evening       | Modifier une IE                                        | Joanah |
 | DELETE       | /camps/{id}/information-evening       | Supprimer une IE                                       | Joanah |
 | POST         | /camps/{id}/information-evening       | Ajouter une IE                                         | Joanah |
+| GET          | /users                                | Récupérer la liste de tous les utilisateurs            | Robin  |
+| POST         | /user                                 | Ajouter un utilisateur                                 | Robin  |
+| GET          | /users/{id}                           | Récupérer un utilisateur                               | Robin  |
+| PUT          | /users/{id}                           | Modifier un utilisateur                                | Robin  |
+| DELETE       | /users/{id}                           | Supprimer un utilisateur                               | Robin  |
