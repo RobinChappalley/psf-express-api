@@ -1,5 +1,7 @@
 | Méthode HTTP | Point de terminaison                  | Description                                            | Codeur |
 | ------------ | ------------------------------------- | ------------------------------------------------------ | ------ |
+| POST         | /login                                | Se connecter                                           | Robin  |
+| POST         | /logout                               | Se déconnecter                                         | Robin  |
 | GET          | /camps/{id}                           | Récupérer un camp                                      | Robin  |
 | GET          | /camps                                | Récupérer la liste de tous les camps                   | Robin  |
 | POST         | /camp                                 | Ajouter un camp                                        | Robin  |
