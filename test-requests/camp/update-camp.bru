@@ -1,0 +1,22 @@
+meta {
+  name: Update camp
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://localhost:{{APP_PORT}}/camps/1
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "name": "Camp d'été 2024 - Modifié",
+    "start-date": "2024-07-01",
+    "end-date": "2024-07-15",
+    "subscription-start-date": "2024-05-01",
+    "subscription-deadline": "2024-06-15",
+    "GPS-track": {}
+  }
+}
