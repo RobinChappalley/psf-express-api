@@ -1,4 +1,3 @@
-sdfadxy
 # API Express.js avec MongoDB
 
 ## À propos du projet
