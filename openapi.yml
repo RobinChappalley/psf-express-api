@@ -1293,7 +1293,6 @@ paths:
     post:
       tags: [InformationEvening]
       summary: Ajouter une soirée d’information à un camp
-      summary: Ajouter une soirée d'information
       parameters:
         - {
             name: id,
