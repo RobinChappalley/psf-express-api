@@ -1375,6 +1375,114 @@ paths:
         "500":
           description: Erreur interne du serveur
 
+  ########################
+  # USERS
+  ########################
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Récupérer la liste de tous les utilisateurs
+      responses:
+        "200":
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "500":
+          description: Erreur interne du serveur
+
+  /user:
+    post:
+      tags: [Users]
+      summary: Ajouter un utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: Utilisateur créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Données invalides
+        "500":
+          description: Erreur interne du serveur
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Récupérer un utilisateur
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      responses:
+        "200":
+          description: Utilisateur trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+    put:
+      tags: [Users]
+      summary: Modifier un utilisateur
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: Utilisateur modifié
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Données invalides
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+    delete:
+      tags: [Users]
+      summary: Supprimer un utilisateur
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      responses:
+        "200":
+          description: Utilisateur supprimé
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+
 #############################
 # SCHEMAS
 #############################
@@ -1540,6 +1648,63 @@ components:
         name: { type: string }
         description: { type: string }
 
+    ####################################
+    # USER
+    ####################################
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        role:
+          type: array
+          items: { type: string }
+        parent-id: { type: string }
+        children:
+          type: array
+          items: { type: string }
+        name: { type: string }
+        firstname: { type: string }
+        phone-number:
+          type: string
+          nullable: true
+        email:
+          type: string
+          nullable: true
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city: { type: string }
+            postal-code: { type: string }
+            country: { type: string }
+        camps-attended:
+          type: array
+          items: { type: string }
+        participation-infos:
+          type: object
+          properties:
+            tshirt-info:
+              type: object
+              properties:
+                size: { type: string }
+                gender: { type: string }
+            allergies:
+              type: array
+              items: { type: string }
+            medication:
+              type: array
+              items: { type: string }
+            avs-number: { type: string }
+            id-date: { type: string }
+            insurance-name: { type: string }
+            is-cas-member: { type: boolean }
+            has-AG: { type: boolean }
+            has-half-price: { type: boolean }
+            has-photo-consent: { type: boolean }
+            is-helicopter-insured: { type: boolean }
+            date-of-birth: { type: string, format: date }
+            has-paid: { type: boolean }
+
 tags:
   - name: Authentication
     description: Authentification utilisateur
@@ -1559,3 +1724,6 @@ tags:
     description: Assemblées générales du camp
   - name: InformationEvening
     description: Soirées d'information du camp
+
+  - name: Users
+    description: Gestion des utilisateurs
