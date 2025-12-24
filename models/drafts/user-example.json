@@ -1,0 +1,127 @@
+{
+  "membres": [
+    {
+      "id": "1",
+      "role": ["child"],
+      "parent-id": "parent-id",
+      "children": [],
+      "name": "Doe",
+      "firstname": "John",
+      "phone-number": null,
+      "email": null,
+      "address": {
+        "street": "123 Main St",
+        "city": "Anytown",
+        "postal-code": "12345",
+        "country": "Switzerland"
+      },
+      "camps-attended": ["id-camp-2022", "id-camp-2023"],
+      "participation-infos": {
+        "tshirt-info": {
+          "size": "L",
+          "gender": "male"
+        },
+        "allergies": ["peanuts", "gluten"],
+        "medication": ["ibuprofen"],
+        "avs-number": "756.1234.5678.97",
+        "id-date": "2020-01-01",
+        "insurance-name": "HealthCare Inc.",
+        "is-cas-member": true,
+        "has-AG": false,
+        "has-half-price": false,
+        "has-photo-consent": true,
+        "is-helicopter-insured": true,
+        "date-of-birth": "2010-05-15",
+        "has-paid": true
+      }
+    },
+    {
+      "id": "2",
+      "role": ["parent"],
+      "parent-id": null,
+      "children": [1],
+      "name": "Doe",
+      "firstname": "Jane",
+      "phone-number": "+41812345678",
+      "email": "pauldoe@example.com",
+      "address": {
+        "street": "3456 Main Road",
+        "city": "Anytown",
+        "postal-code": "12345",
+        "country": "F"
+      },
+      "camps-attended": [],
+      "participation-infos": null
+    },
+    {
+      "id": "3",
+      "role": ["accompagnant", "ou", "préaccompagnant"],
+      "parent-id": null,
+      "children": [],
+      "name": "Doe",
+      "firstname": "Paul",
+      "phone-number": "+41812345677",
+      "email": "aosdfj@gmail.com",
+      "address": {
+        "street": "123 boss St",
+        "city": "echallens",
+        "postal-code": "1040",
+        "country": "Switzerland"
+      },
+      "camps-attended": ["id-camp-2022", "id-camp-2023"],
+      "participation-infos": {
+        "tshirt-info": {
+          "size": "L",
+          "gender": "male"
+        },
+        "allergies": ["peanuts", "gluten"],
+        "medication": ["ibuprofen"],
+        "avs-number": "756.1234.5678.97",
+        "id-date": "2020-01-01",
+        "insurance-name": "HealthCare Inc.",
+        "is-cas-member": true,
+        "has-AG": false,
+        "has-half-price": false,
+        "has-photo-consent": true,
+        "is-helicopter-insured": true,
+        "date-of-birth": "2010-05-15",
+        "has-paid": true
+      }
+    },
+    {
+      "id": "4",
+      "role": ["admin"],
+      "parent-id": null,
+      "children": [1, 5],
+      "name": "Chappalley",
+      "firstname": "Robin",
+      "phone-number": null,
+      "email": null,
+      "address": {
+        "street": "123 Boss St",
+        "city": "Anytown",
+        "postal-code": "12345",
+        "country": "Switzerland"
+      },
+      "camps-attended": ["id-camp-2022", "id-camp-2023"],
+      "participation-infos": {
+        "tshirt-info": {
+          "size": "L",
+          "gender": "male"
+        },
+        "allergies": ["peanuts", "gluten"],
+        "medication": ["ibuprofen"],
+        "avs-number": "756.1234.5678.97",
+        "id-date": "2020-01-01",
+        "insurance-name": "HealthCare Inc.",
+        "is-cas-member": true,
+        "has-AG": false,
+        "has-half-price": false,
+        "has-photo-consent": true,
+        "is-helicopter-insured": true,
+        "date-of-birth": "2010-05-15",
+        "has-paid": true
+      }
+    }
+  ]
+}

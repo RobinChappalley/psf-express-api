@@ -7,6 +7,7 @@ import swaggerUi from "swagger-ui-express";
 
 import indexRouter from "./routes/index.js";
 import usersRouter from "./routes/users.js";
+import campsRouter from "./routes/camps.js";
 
 const app = express();
 // Parse the OpenAPI document.
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/camps", campsRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
