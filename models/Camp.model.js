@@ -111,4 +111,5 @@ const campSchema = new Schema({
 });
 
 const CampModel = mongoose.model("Camp", campSchema);
-module.exports = CampModel;
+export default CampModel;
+//module.exports = CampModel;
