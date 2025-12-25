@@ -5,9 +5,13 @@ class CampController {
   async createCamp(req, res) {
     try {
       const newCamp = new CampModel(req.body);
+      console.log("🟡 newCamp created, about to save...");
       const savedCamp = await newCamp.save();
+      console.log("🟢 Camp saved successfully!");
       res.status(201).json(savedCamp);
     } catch (error) {
+      console.log("🔴 ERROR in createCamp:", error.message);
+      console.log("Full error:", error);
       res.status(400).json({ message: error.message });
     }
   }
