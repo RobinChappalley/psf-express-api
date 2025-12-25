@@ -1,0 +1,123 @@
+meta {
+  name: Create camp complete
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/camps
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Camp d'été 2024 - Alpes",
+    "startDate": "2024-07-01T08:00:00Z",
+    "endDate": "2024-07-15T18:00:00Z",
+    "subStartDatetime": "2024-05-01T09:00:00Z",
+    "subEndDatetime": "2024-06-15T17:00:00Z",
+    "gpsTrack": {
+      "latitude": 45.2517,
+      "longitude": 5.7251,
+      "elevation": 2400
+    },
+    "itemsList": [
+      {
+        "item": "607f1f77bcf86cd799439010",
+        "quantity": 10
+      },
+      {
+        "item": "607f1f77bcf86cd799439011",
+        "quantity": 5
+      }
+    ],
+    "infoEvening": {
+      "dateTime": "2024-07-08T19:00:00Z",
+      "location": "Salle principale du refuge",
+      "participants": [
+        {
+          "email": "participant1@example.com",
+          "nbOfParticipants": 3
+        },
+        {
+          "email": "participant2@example.com",
+          "nbOfParticipants": 2
+        }
+      ]
+    },
+    "trainings": [
+      {
+        "number": 1,
+        "date": "2024-07-03T06:00:00Z",
+        "trainGoingTime": "08:00",
+        "trainReturnTime": "18:00",
+        "meetingTime": "07:45",
+        "meetingPoint": "Gare SNCF, Chamonix",
+        "returnTime": "19:00",
+        "distance": 15.5,
+        "elevationGain": 1200,
+        "elevationLoss": 1200,
+        "responsiblePerson": "607f1f77bcf86cd799439001",
+        "itemsList": [
+          {
+            "itemId": "607f1f77bcf86cd799439010",
+            "quantity": 20
+          }
+        ],
+        "remark": "Entraînement préparatoire avant le camp principal"
+      }
+    ],
+    "fundraisings": [
+      {
+        "number": 1,
+        "dateTime": "2024-06-10T10:00:00Z",
+        "location": "Centre-ville, Place principale",
+        "participants": [
+          "607f1f77bcf86cd799439002",
+          "607f1f77bcf86cd799439003"
+        ]
+      }
+    ],
+    "generalMeeting": {
+      "dateTime": "2024-06-20T19:30:00Z",
+      "location": "Salle de réunion, 15 rue de la Paix",
+      "participants": [
+        {
+          "email": "member1@example.com",
+          "nbOfParticipants": 1
+        },
+        {
+          "email": "member2@example.com",
+          "nbOfParticipants": 1
+        },
+        {
+          "email": "member3@example.com",
+          "nbOfParticipants": 2
+        }
+      ]
+    },
+    "stages": [
+      {
+        "number": 1,
+        "date": "2024-07-02T06:00:00Z",
+        "startPoint": "Chamonix",
+        "endPoint": "Montenvers",
+        "distance": 8.5,
+        "elevationGain": 900,
+        "elevationLoss": 0,
+        "routeDescription": "Sentier balisé en forêt puis alpestre, vue sur la Mer de Glace"
+      },
+      {
+        "number": 2,
+        "date": "2024-07-03T06:00:00Z",
+        "startPoint": "Montenvers",
+        "endPoint": "Col du Brévent",
+        "distance": 12.0,
+        "elevationGain": 1100,
+        "elevationLoss": 500,
+        "routeDescription": "Itinéraire montagnard avec passages rocheux"
+      }
+    ]
+  }
+}

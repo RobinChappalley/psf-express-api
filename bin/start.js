@@ -13,7 +13,7 @@ const debug = createDebugger("psf-express-api:server");
 
 // Get port from environment and store in Express
 const port = normalizePort(process.env.APP_PORT || "3000");
-console.log(port);
+console.log("Le backend tourne sur le port", port);
 const host = "0.0.0.0";
 app.set("port", port);
 

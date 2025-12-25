@@ -18,4 +18,5 @@ const hikeSchema = new Schema({
 });
 
 const HikeModel = mongoose.model("Hike", hikeSchema);
-module.exports = HikeModel;
+export default HikeModel;
+//module.exports = HikeModel;
