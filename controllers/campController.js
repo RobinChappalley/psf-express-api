@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CampModel from "../models/Camp.model.js";
 class CampController {
   // Create a new camp
@@ -14,16 +15,19 @@ class CampController {
     try {
       const camps = await CampModel.find();
       res.status(200).json(camps);
+      if (!camps) {
+        return res.status(404).json({ error: "No camps found" });
+      }
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
   async getCampById(req, res) {
     try {
-      const camp = await CampModel.findById(req.params.id);
-      if (!camp) {
+      if (!mongoose.isValidObjectId(req.params.id)) {
         return res.status(404).json({ error: "Camp not found" });
       }
+      const camp = await CampModel.findById(req.params.id);
       res.status(200).json(camp);
     } catch (error) {
       res.status(500).json({ message: error.message });
@@ -32,6 +36,9 @@ class CampController {
 
   async updateCamp(req, res) {
     try {
+      if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(404).json({ error: "Camp not found" });
+      }
       const updatedCamp = await CampModel.findByIdAndUpdate(
         req.params.id,
         req.body,
@@ -48,6 +55,9 @@ class CampController {
 
   async deleteCamp(req, res) {
     try {
+      if (!mongoose.isValidObjectId(req.params.id)) {
+        return res.status(404).json({ error: "Camp not found" });
+      }
       const deletedCamp = await CampModel.findByIdAndDelete(req.params.id);
       if (!deletedCamp) {
         return res.status(404).json({ error: "Camp not found" });

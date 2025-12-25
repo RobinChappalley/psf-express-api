@@ -1,4 +1,5 @@
 import express from "express";
+import validateCamp from "../validators/campValidator.js";
 import CampController from "../controllers/campController.js";
 
 const router = express.Router();
@@ -7,7 +8,7 @@ const router = express.Router();
  * POST /camp
  * Ajouter un camp
  */
-router.post("/", function (req, res, next) {
+router.post("/", validateCamp, function (req, res, next) {
   CampController.createCamp(req, res);
 });
 
@@ -23,11 +24,7 @@ router.get("/", function (req, res, next) {
  * Récupérer un camp
  */
 router.get("/:id", function (req, res, next) {
-  const camp = camps.find((c) => c.id === req.params.id);
-  if (!camp) {
-    return res.status(404).json({ error: "Camp not found" });
-  }
-  res.json(camp);
+  CampController.getCampById(req, res);
 });
 
 /**
@@ -35,12 +32,7 @@ router.get("/:id", function (req, res, next) {
  * Mettre à jour un camp
  */
 router.put("/:id", function (req, res, next) {
-  const camp = camps.find((c) => c.id === req.params.id);
-  if (!camp) {
-    return res.status(404).json({ error: "Camp not found" });
-  }
-  Object.assign(camp, req.body);
-  res.json(camp);
+  CampController.updateCamp(req, res);
 });
 
 /**
