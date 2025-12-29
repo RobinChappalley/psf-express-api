@@ -1,12 +1,15 @@
 import express from "express";
 import UserController from "../controllers/userController.js";
+import { validateCreateCamp } from "../validators/campValidator.js";
 
 const router = express.Router();
 
-router.get("/", function (req, res, next) {
-  res.send("Got a response from the users route");
-});
+/**
+ * POST /user
+ * Ajouter un utilisateur
+ */
+router.post("/user", validateCreateCamp, UserController.createUser);
 
-router.post("/", UserController.createUser);
+router.get("/users", UserController.getAllUsers);
 
 export default router;
