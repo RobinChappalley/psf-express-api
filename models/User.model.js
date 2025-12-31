@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
+console.log("📦 User.model.js is being loaded...");
+
 const addressSchema = new Schema({
   street: String,
   city: String,

@@ -1,5 +1,4 @@
 import { body, validationResult } from "express-validator";
-import { validateUpdateCamp } from "./campValidator";
 
 // Email regex: must contain @ and . at the end
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +35,7 @@ export const validateCreateUser = [
   //Ajouter validation UNIQUE
 
   //Phone number validation
-  body("phonNumber")
+  body("phoneNumber")
     .optional()
     .isString()
     .trim()
@@ -99,6 +98,7 @@ export const validateCreateUser = [
     .withMessage("Birthdate must be a valid ISO8601 date"),
 
   body("participationInfo.tshirtInfo")
+    .optional()
     .isObject()
     .withMessage("T-shirt info must be an object"),
 
@@ -173,3 +173,16 @@ export const validateCreateUser = [
     .isBoolean()
     .withMessage("hasPaid must be a boolean"),
 ];
+
+// Middleware to handle validation errors
+export const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+
+  console.log("Validation result:", errors);
+  console.log("Validation errors:", errors.array());
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
