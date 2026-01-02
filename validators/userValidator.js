@@ -1,4 +1,4 @@
-import { body, validationResult } from "express-validator";
+import { body } from "express-validator";
 
 // Email regex: must contain @ and . at the end
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -8,6 +8,19 @@ const phoneRegex = /^(\+|00)[1-9]\d{1,3}[\d\s\-]{6,14}$/;
 
 export const validateCreateUser = [
   //Role validation
+
+  body("role")
+    .optional() // Permet de ne pas envoyer le rôle (et laisser le défaut mongoose agir)
+    .isArray()
+    .withMessage("Role must be an array."),
+
+  body("role.*")
+    .optional()
+    .isString()
+    .isIn(["admin", "accompagnant", "parent", "enfant"]) // Optionnel : valide aussi que les valeurs sont correctes
+    .withMessage(
+      "Rôle not valid. Must be one of: admin, accompagnant, parent, enfant."
+    ),
 
   //Names validation
   body("lastname")
@@ -28,11 +41,16 @@ export const validateCreateUser = [
 
   //Email validation
   body("email")
-    .optional()
     .isString()
     .matches(emailRegex)
     .withMessage("User email must contain @ and a domain with ."),
-  //Ajouter validation UNIQUE
+
+  //Password validation
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
 
   //Phone number validation
   body("phoneNumber")
@@ -173,16 +191,3 @@ export const validateCreateUser = [
     .isBoolean()
     .withMessage("hasPaid must be a boolean"),
 ];
-
-// Middleware to handle validation errors
-export const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-
-  console.log("Validation result:", errors);
-  console.log("Validation errors:", errors.array());
-
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};

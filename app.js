@@ -6,6 +6,7 @@ import yaml from "js-yaml";
 import swaggerUi from "swagger-ui-express";
 
 import indexRouter from "./routes/index.js";
+import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import campsRouter from "./routes/camps.js";
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/", indexRouter);
+app.use("/", authRouter);
 app.use("/users", usersRouter);
 app.use("/camps", campsRouter);
 

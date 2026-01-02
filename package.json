@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --watch . --ext js,mjs,json --exec node ./bin/start",
-    "test": "cross-env MONGO_URI=mongodb://test:rando@mongo:27017/psf-app-test?authSource=admin DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest"
+    "test": "cross-env NODE_ENV=test DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "debug": "^4.4.1",
     "express": "^5.1.0",
     "express-validator": "^7.3.1",
     "http-errors": "^2.0.0",
     "js-yaml": "^4.1.1",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.19.2",
     "morgan": "^1.10.1",
     "swagger-ui-express": "^5.0.1"

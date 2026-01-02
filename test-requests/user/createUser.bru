@@ -1,0 +1,16 @@
+meta {
+  name: createUser
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/login
+  body: json
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
