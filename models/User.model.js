@@ -63,6 +63,7 @@ const userSchema = new Schema({
     lowercase: true,
     trim: true,
     unique: true,
+    sparse: true,
   },
   phoneNumber: { type: String },
   address: addressSchema,
