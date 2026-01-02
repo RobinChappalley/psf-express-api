@@ -16,13 +16,11 @@ describe("POST /login", function () {
 
   beforeAll(async () => {
     await connectMongo();
+    await cleanDatabase();
+    await User.create(validUser);
   });
   afterAll(async () => {
     await mongoose.connection.close();
-  });
-  beforeEach(async () => {
-    await User.deleteMany({});
-    await User.create(validUser);
   });
 
   it("should login successfully with valid credentials", async function () {
