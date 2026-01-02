@@ -10,5 +10,3 @@ db.createUser({
     },
   ],
 });
-
-console.log("Les bases de données ont été initialisées !");
