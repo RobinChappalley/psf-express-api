@@ -1,13 +1,20 @@
-import { body } from "express-validator";
-
-// Email regex: must contain @ and . at the end
-const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { body, validationResult } from "express-validator";
+import UserModel from "../models/User.model.js";
 
 //Phone regex
 const phoneRegex = /^(\+|00)[1-9]\d{1,3}[\d\s\-]{6,14}$/;
 
 export const validateCreateUser = [
   //Role validation
+  body("role")
+    .isArray({ min: 1 })
+    .withMessage("Role must be an array with at least one entry"),
+
+  body("role.*")
+    .isIn(["admin", "accompagnant", "parent", "enfant"])
+    .withMessage(
+      "Each role must be one of: admin, accompagnant, parent, enfant"
+    ),
 
   body("role")
     .optional() // Permet de ne pas envoyer le rôle (et laisser le défaut mongoose agir)
@@ -41,9 +48,18 @@ export const validateCreateUser = [
 
   //Email validation
   body("email")
-    .isString()
-    .matches(emailRegex)
-    .withMessage("User email must contain @ and a domain with ."),
+    .optional()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("User email must contain @ and a domain with .")
+    .bail()
+    .custom(async (email) => {
+      const user = await UserModel.findOne({ email });
+      if (user) {
+        throw new Error("This email is already used");
+      }
+      return true;
+    }),
 
   //Password validation
   body("password")
@@ -66,7 +82,8 @@ export const validateCreateUser = [
   body("address")
     .optional()
     .isObject()
-    .withMessage("Address must be an object"),
+    .withMessage("Address must be an object")
+    .bail(),
 
   body("address.street")
     .optional()
@@ -92,15 +109,26 @@ export const validateCreateUser = [
   body("parent")
     .optional()
     .isMongoId()
-    .withMessage("Parent reference must be a valid MongoDB ObjectId"),
+    .withMessage("Parent reference must be a valid MongoDB ObjectId")
+    .bail()
+    .custom(async (parent) => {
+      const user = await UserModel.findById(parent);
+      if (!user) {
+        throw new Error("This user doesn't exist");
+      }
+      if (user.role === "enfant") {
+        throw new Error("A user with the role ENFANT can not be a parent");
+      }
+      return true;
+    }),
 
   body("children")
     .optional()
     .isArray()
-    .withMessage("Children must be an array."),
+    .withMessage("Children must be an array.")
+    .bail(),
 
   body("children.*")
-    .optional()
     .isMongoId()
     .withMessage("A child reference must be a valid MongoDB ObjectId"),
 
@@ -108,17 +136,20 @@ export const validateCreateUser = [
   body("participationInfo")
     .optional()
     .isObject()
-    .withMessage("Address must be an object"),
+    .withMessage("ParticipationInfo must be an object")
+    .bail(),
 
   body("participationInfo.birthDate")
     .optional()
     .isISO8601()
+    .toDate()
     .withMessage("Birthdate must be a valid ISO8601 date"),
 
   body("participationInfo.tshirtInfo")
     .optional()
     .isObject()
-    .withMessage("T-shirt info must be an object"),
+    .withMessage("T-shirt info must be an object")
+    .bail(),
 
   body("participationInfo.tshirtInfo.size")
     .optional()
@@ -133,20 +164,20 @@ export const validateCreateUser = [
   body("participationInfo.allergies")
     .optional()
     .isArray()
-    .withMessage("Allergies must be an array of strings"),
+    .withMessage("Allergies must be an array")
+    .bail(),
 
   body("participationInfo.allergies.*")
-    .optional()
     .isString()
     .withMessage("Each allergy must be a string"),
 
   body("participationInfo.medication")
     .optional()
     .isArray()
-    .withMessage("Medication must be an array of strings"),
+    .withMessage("Medication must be an array of strings")
+    .bail(),
 
   body("participationInfo.medication.*")
-    .optional()
     .isString()
     .withMessage("Each medication must be a string"),
 
@@ -174,20 +205,34 @@ export const validateCreateUser = [
   body("participationInfo.isCASMember")
     .optional()
     .isBoolean()
+    .toBoolean()
     .withMessage("isCASMember must be a boolean"),
 
   body("participationInfo.isHelicopterInsured")
     .optional()
     .isBoolean()
+    .toBoolean()
     .withMessage("isHelicopterInsured must be a boolean"),
 
   body("participationInfo.hasPhotoConsent")
     .optional()
     .isBoolean()
+    .toBoolean()
     .withMessage("hasPhotoConsent must be a boolean"),
 
   body("participationInfo.hasPaid")
     .optional()
     .isBoolean()
+    .toBoolean()
     .withMessage("hasPaid must be a boolean"),
 ];
+
+// Middleware to handle validation errors
+export const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
