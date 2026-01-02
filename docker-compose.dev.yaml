@@ -27,13 +27,16 @@ services:
     ports:
       - "${MONGO_PORT:-27017}:${MONGO_PORT:-27017}"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME:-root}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD:-example}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-example}
+      DEV_DB: ${MONGO_DEV_DB:-mydb}
+      TEST_DB: ${MONGO_TEST_DB:-psf-app-test}
       MONGO_LOG_LEVEL: warn
 
     # nom du volume (peut être remplacé via MONGO_VOLUME)
     volumes:
       - "${MONGO_VOLUME:-mongo_data}:/data/db"
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
 
 # volumes nommés optionnels (si tu veux en déclarer un par défaut)
 volumes:
