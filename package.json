@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --watch . --ext js,mjs,json --exec node ./bin/start",
-    "test": "cross-env MONGO_URI=mongodb://mongo:27017/psf-app-test DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest"
+    "test": "cross-env MONGO_URI=mongodb://test:rando@mongo:27017/psf-app-test?authSource=admin DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest"
   },
   "dependencies": {
     "debug": "^4.4.1",
