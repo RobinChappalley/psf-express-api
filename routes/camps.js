@@ -2,8 +2,8 @@ import express from "express";
 import {
   validateCreateCamp,
   validateUpdateCamp,
-  handleValidationErrors,
 } from "../validators/campValidator.js";
+import { handleValidationErrors } from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
 
 const router = express.Router();

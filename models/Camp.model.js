@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-console.log("📦 Camp.model.js is being loaded...");
+//console.log("📦 Camp.model.js is being loaded...");
 
 const itemSchema = new Schema({
   item: {

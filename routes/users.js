@@ -1,9 +1,7 @@
 import express from "express";
+import { validateCreateUser } from "../validators/userValidator.js";
+import { handleValidationErrors } from "../middlewares/handleValidationErrors.js";
 import UserController from "../controllers/userController.js";
-import {
-  validateCreateUser,
-  handleValidationErrors,
-} from "../validators/userValidator.js";
 
 const router = express.Router();
 
@@ -11,13 +9,17 @@ const router = express.Router();
  * POST /user
  * Ajouter un utilisateur
  */
+router.get("/", function (req, res) {
+  UserController.getAllUsers(req, res);
+});
+
 router.post(
   "/",
   validateCreateUser,
   handleValidationErrors,
-  UserController.createUser
+  function (req, res) {
+    UserController.createUser(req, res);
+  }
 );
-
-router.get("/", UserController.getAllUsers);
 
 export default router;

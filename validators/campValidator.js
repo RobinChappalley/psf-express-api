@@ -1,4 +1,4 @@
-import { body, validationResult } from "express-validator";
+import { body } from "express-validator";
 
 // Email regex: must contain @ and . at the end
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -588,12 +588,3 @@ export const validateUpdateCamp = [
     .isString()
     .withMessage("Route description must be a string"),
 ];
-
-// Middleware to handle validation errors
-export const handleValidationErrors = (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
-};
