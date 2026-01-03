@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import UserModel from "../models/User.model.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
