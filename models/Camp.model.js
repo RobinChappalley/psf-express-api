@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
-//console.log("📦 Camp.model.js is being loaded...");
-
 const itemSchema = new Schema({
   item: {
     type: Schema.Types.ObjectId,
@@ -123,40 +121,29 @@ const campSchema = new Schema({
 
 // Hook PRE-SAVE sur le MAIN schema pour traiter les sous-documents
 campSchema.pre("save", function (next) {
-  console.log("🔴 MAIN SCHEMA PRE-SAVE triggered");
-
   // Traiter les trainings
   if (this.trainings && this.trainings.length > 0) {
-    console.log("Processing trainings...");
     this.trainings.forEach((training, index) => {
-      console.log(`  Training ${index}: date =`, training.date);
       if (training.date) {
         training.year = new Date(training.date).getFullYear();
-        console.log(`  Training ${index}: year set to`, training.year);
       }
     });
   }
 
   // Traiter les fundraisings
   if (this.fundraisings && this.fundraisings.length > 0) {
-    console.log("Processing fundraisings...");
     this.fundraisings.forEach((fundraising, index) => {
-      console.log(`  Fundraising ${index}: dateTime =`, fundraising.dateTime);
       if (fundraising.dateTime) {
         fundraising.year = new Date(fundraising.dateTime).getFullYear();
-        console.log(`  Fundraising ${index}: year set to`, fundraising.year);
       }
     });
   }
 
   // Traiter les stages
   if (this.stages && this.stages.length > 0) {
-    console.log("Processing stages...");
     this.stages.forEach((stage, index) => {
-      console.log(`  Stage ${index}: date =`, stage.date);
       if (stage.date) {
         stage.year = new Date(stage.date).getFullYear();
-        console.log(`  Stage ${index}: year set to`, stage.year);
       }
     });
   }
