@@ -1,6 +1,7 @@
 import { body, validationResult } from "express-validator";
 import UserModel from "../models/User.model.js";
 import CampModel from "../models/Camp.model.js";
+import validateObjectId from "./commonValidator.js";
 
 //Phone regex
 const phoneRegex = /^(\+|00)[1-9]\d{1,3}[\d\s\-]{6,14}$/;
@@ -240,7 +241,7 @@ export const validateCreateUser = [
 
 export const validateUpdateUser = [
   //Same validations as create, but all optional, and email must be unique except for the current user
-
+  ...validateObjectId(),
   //Role validation
   body("role")
     .optional()
