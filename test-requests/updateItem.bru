@@ -1,0 +1,22 @@
+meta {
+  name: updateItem
+  type: http
+  seq: 6
+}
+
+put {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/items/695927dd6836ae58c50482f9
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "slug":"sac-a-dos-20-l"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
