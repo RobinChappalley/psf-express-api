@@ -9,7 +9,15 @@ import ItemController from "../controllers/itemController.js";
 
 const router = express.Router();
 
+//ici on est donc à http://{{APP_HOST}}:{{APP_PORT}}/items
+
 router.get("/", ItemController.getAllItems);
+router.get(
+  "/:id",
+  validateIdParam,
+  validateRequest,
+  ItemController.getItemById
+);
 
 router.post(
   "/",

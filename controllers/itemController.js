@@ -10,7 +10,7 @@ class ItemController {
 
   async getItemById(req, res) {
     const data = matchedData(req);
-    const item = await ItemModel.findById(req.params.id);
+    const item = await ItemModel.findById(data.id);
     res.status(200).json(item);
   }
   async createItem(req, res) {
