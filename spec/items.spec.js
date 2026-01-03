@@ -110,7 +110,6 @@ describe("POST /items", function () {
     });
 
     it("should retrieve a specific item by ID", async function () {
-      console.log("Testing GET /items/:id with ID:", getTestItem._id);
       const res = await supertest(app)
         .get(`/items/${getTestItem._id}`)
         .expect(200)

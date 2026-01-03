@@ -204,7 +204,6 @@ describe("Camp Items API", function () {
 
       // Verify item was removed
       const updatedCamp = await CampModel.findById(testCamp._id);
-      console.log("Items List after deletion:", updatedCamp.itemsList);
       expect(updatedCamp.itemsList.length).toBe(0);
     });
 
