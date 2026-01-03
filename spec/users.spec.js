@@ -17,6 +17,53 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
+describe("GET /users", function () {
+  it("should retrieve all users", async function () {
+    const res = await supertest(app)
+      .get("/users")
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toBeInstanceOf(Array);
+    if (res.body.length > 0) {
+      expect(res.body[0]).toHaveProperty("_id");
+      expect(res.body[0]).toHaveProperty("lastname");
+      expect(res.body[0]).toHaveProperty("firstname");
+    }
+  });
+});
+
+describe("GET /users/:id", function () {
+  //Document for testing
+  let createdUser;
+
+  beforeEach(async () => {
+    await cleanDatabase();
+
+    // Create a user for testing
+    const res = await supertest(app)
+      .post("/users")
+      .send({
+        lastname: "Doe",
+        firstname: "John",
+      })
+      .expect(201);
+
+    createdUser = res.body;
+  });
+
+  it("should retrieve a user by id", async () => {
+    const res = await supertest(app)
+      .get(`/users/${createdUser._id}`)
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toHaveProperty("_id", createdUser._id);
+    expect(res.body.lastname).toBe("Doe");
+    expect(res.body.firstname).toBe("John");
+  });
+});
+
 describe("POST /users", function () {
   //Documents to use as references (parent, children, camps)
   let parentUser;
@@ -156,18 +203,69 @@ describe("POST /users", function () {
   });
 });
 
-describe("GET /users", function () {
-  it("should retrieve all users", async function () {
+describe("PUT /users/:id", function () {
+  //Document for testing
+  let createdUser;
+
+  beforeEach(async () => {
+    await cleanDatabase();
+
+    // Create a user for testing
     const res = await supertest(app)
-      .get("/users")
+      .post("/users")
+      .send({
+        lastname: "Doe",
+        firstname: "John",
+      })
+      .expect(201);
+
+    createdUser = res.body;
+  });
+
+  it("should update a user by id", async () => {
+    const res = await supertest(app)
+      .put(`/users/${createdUser._id}`)
+      .send({
+        firstname: "Jane",
+      })
       .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toBeInstanceOf(Array);
-    if (res.body.length > 0) {
-      expect(res.body[0]).toHaveProperty("_id");
-      expect(res.body[0]).toHaveProperty("lastname");
-      expect(res.body[0]).toHaveProperty("firstname");
-    }
+    expect(res.body).toHaveProperty("_id", createdUser._id);
+    expect(res.body.firstname).toBe("Jane");
+    expect(res.body.lastname).toBe("Doe");
+  });
+});
+
+describe("DELETE /users/:id", () => {
+  //Document for testing
+  let createdUser;
+
+  beforeEach(async () => {
+    await cleanDatabase();
+
+    // Create a user for testing
+    const res = await supertest(app)
+      .post("/users")
+      .send({
+        lastname: "Doe",
+        firstname: "John",
+      })
+      .expect(201);
+
+    createdUser = res.body;
+  });
+
+  it("should delete a user by id", async () => {
+    const res = await supertest(app)
+      .delete(`/users/${createdUser._id}`)
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toHaveProperty("message", "User successfully deleted");
+    expect(res.body.user).toHaveProperty("_id", createdUser._id);
+
+    // Check if user has really been deleted
+    await supertest(app).get(`/users/${createdUser._id}`).expect(404);
   });
 });
