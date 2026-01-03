@@ -70,7 +70,6 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
     select: false,
   },
   phoneNumber: { type: String },
@@ -95,7 +94,7 @@ const userSchema = new Schema({
 });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.password || !this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, hashRounds);
   next();
 });
