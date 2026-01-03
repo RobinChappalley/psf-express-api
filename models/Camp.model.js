@@ -68,7 +68,7 @@ const fundraisingSchema = new Schema({
   ],
 });
 
-fundraisingSchema.index({ number: 1, year: 1 }, { unique: true });
+fundraisingSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const generalMeetingSchema = new Schema({
   dateTime: Date,
@@ -98,7 +98,7 @@ const stageSchema = new Schema({
   routeDescription: String,
 });
 
-stageSchema.index({ number: 1, year: 1 }, { unique: true });
+stageSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const campSchema = new Schema({
   title: {

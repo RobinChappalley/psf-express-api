@@ -4,7 +4,7 @@ const { Schema } = mongoose;
 
 const hashRounds = 12;
 
-//console.log("📦 User.model.js is being loaded...");
+console.log("📦 User.model.js is being loaded...");
 
 const addressSchema = new Schema({
   street: String,
@@ -70,7 +70,6 @@ const userSchema = new Schema({
   },
   password: {
     type: String,
-    required: true,
     select: false,
   },
   phoneNumber: { type: String },
@@ -95,7 +94,7 @@ const userSchema = new Schema({
 });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+  if (!this.password || !this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, hashRounds);
   next();
 });
@@ -104,6 +103,14 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
+userSchema.pre("save", function (next) {
+  if (this.phoneNumber) {
+    this.phoneNumber = this.phoneNumber
+      .replace(/^00/, "+")
+      .replace(/[\s\-\(\)]/g, "");
+  }
+  next();
+});
+
 const UserModel = mongoose.model("User", userSchema);
 export default UserModel;
-//module.exports = UserModel;
