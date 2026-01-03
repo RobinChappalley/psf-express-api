@@ -3,7 +3,7 @@ import {
   validateCreateItem,
   validateUpdateItem,
 } from "../validators/itemValidator.js";
-import validateIdParam from "../validators/commonValidator.js";
+import validateObjectId from "../validators/commonValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import ItemController from "../controllers/itemController.js";
 
@@ -14,7 +14,7 @@ const router = express.Router();
 router.get("/", ItemController.getAllItems);
 router.get(
   "/:id",
-  validateIdParam,
+  validateObjectId(),
   validateRequest,
   ItemController.getItemById
 );
@@ -35,7 +35,7 @@ router.put(
 
 router.delete(
   "/:id",
-  validateIdParam,
+  validateObjectId(),
   validateRequest,
   ItemController.deleteItem
 );
