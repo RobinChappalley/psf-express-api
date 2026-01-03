@@ -5,7 +5,7 @@ import {
 } from "../validators/hikeValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import HikeController from "../controllers/hikeController.js";
-import validateIdParam from "../validators/commonValidator.js";
+import validateObjectId from "../validators/commonValidator.js";
 const router = express.Router();
 
 router.get("/", HikeController.getAllHikes);
@@ -19,7 +19,7 @@ router.post(
 
 router.get(
   "/:id",
-  validateIdParam,
+  validateObjectId,
   validateRequest,
   HikeController.getHikeById
 );
@@ -33,7 +33,7 @@ router.put(
 
 router.delete(
   "/:id",
-  validateIdParam,
+  validateObjectId,
   validateRequest,
   HikeController.deleteHike
 );
