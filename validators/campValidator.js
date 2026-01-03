@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-
+import validateIdParam from "./commonValidator.js";
 // Email regex: must contain @ and . at the end
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -302,6 +302,7 @@ export const validateCreateCamp = [
 ];
 
 export const validateUpdateCamp = [
+  ...validateIdParam,
   // Same validations as create, but all optional
   body("title")
     .optional()

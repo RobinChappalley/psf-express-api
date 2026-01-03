@@ -3,57 +3,90 @@ import {
   validateCreateCamp,
   validateUpdateCamp,
 } from "../validators/campValidator.js";
-import { handleValidationErrors } from "../middlewares/handleValidationErrors.js";
+import {
+  validateCampItem,
+  validateTraining,
+} from "../validators/campSubdocValidator.js";
+import validateRequest from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
+import validateIdParam from "../validators/commonValidator.js";
 
 const router = express.Router();
 
-/**
- * POST /camp
- * Ajouter un camp
- */
+router.get("/", CampController.getAllCamps);
+
+router.get(
+  "/:id",
+  validateIdParam,
+  validateRequest,
+  CampController.getCampById
+);
 router.post(
   "/",
   validateCreateCamp,
-  handleValidationErrors,
-  function (req, res, next) {
-    CampController.createCamp(req, res);
-  }
+  validateRequest,
+  CampController.createCamp
 );
-
-/* GET /camps
- * Récupérer la liste de tous les camps
- */
-router.get("/", function (req, res, next) {
-  CampController.getAllCamps(req, res);
-});
-
-/**
- * GET /camps/:id
- * Récupérer un camp
- */
-router.get("/:id", function (req, res, next) {
-  CampController.getCampById(req, res);
-});
-
-/**
- * PUT /camps/:id
- * Mettre à jour un camp
- */
 router.put(
   "/:id",
   validateUpdateCamp,
-  handleValidationErrors,
-  function (req, res, next) {
-    CampController.updateCamp(req, res);
-  }
+  validateRequest,
+  CampController.updateCamp
 );
 
-/**
- * DELETE /camps/:id
- * Supprimer un camp
- */
-router.delete("/:id", function (req, res, next) {
-  CampController.deleteCamp(req, res);
-});
+router.delete(
+  "/:id",
+  validateIdParam,
+  validateRequest,
+  CampController.deleteCamp
+);
+
+// Camp Items Routes
+router.get(
+  "/:id/items",
+  validateIdParam,
+  validateRequest,
+  CampController.getCampItems
+);
+
+router.post(
+  "/:id/items",
+  validateCampItem,
+  validateRequest,
+  CampController.addCampItem
+);
+
+router.put(
+  "/:id/item/:itemId",
+  validateCampItem,
+  validateRequest,
+  CampController.updateCampItem
+);
+
+router.delete(
+  "/:id/item/:itemId",
+  validateIdParam,
+  validateRequest,
+  CampController.deleteCampItem
+);
+
+// Camp Trainings Routes
+router.get("/:id/trainings", CampController.getCampTrainings);
+
+router.post(
+  "/:id/trainings",
+  validateTraining,
+  validateRequest,
+  CampController.addCampTraining
+);
+
+router.put(
+  "/:id/trainings/:trainingId",
+  validateTraining,
+  validateRequest,
+  CampController.updateCampTraining
+);
+
+router.delete("/:id/trainings/:trainingId", CampController.deleteCampTraining);
+
 export default router;
