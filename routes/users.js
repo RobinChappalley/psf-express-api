@@ -4,14 +4,19 @@ import {
   validateUpdateUser,
 } from "../validators/userValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
-import validateIdParam from "../validators/commonValidator.js";
+import validateObjectId from "../validators/commonValidator.js";
 import UserController from "../controllers/userController.js";
 
 const router = express.Router();
 
 router.get("/", UserController.getAllUsers);
 
-router.get("/:id", validateIdParam, validateRequest, UserController.getOneUser);
+router.get(
+  "/:id",
+  validateObjectId(),
+  validateRequest,
+  UserController.getOneUser
+);
 
 router.post(
   "/",
@@ -22,7 +27,7 @@ router.post(
 
 router.put(
   "/:id",
-  validateIdParam,
+  validateObjectId(),
   validateUpdateUser,
   validateRequest,
   UserController.updateUser
@@ -30,7 +35,7 @@ router.put(
 
 router.delete(
   "/:id",
-  validateIdParam,
+  validateObjectId(),
   validateRequest,
   UserController.deleteUser
 );
