@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import validateIdParam from "./commonValidator.js";
+import validateObjectId from "./commonValidator.js";
 
 export const validateCreateHike = [
   body("user")
@@ -53,7 +53,7 @@ export const validateCreateHike = [
 ];
 
 export const validateUpdateHike = [
-  ...validateIdParam,
+  ...validateObjectId(),
   body("user")
     .optional()
     .isMongoId()

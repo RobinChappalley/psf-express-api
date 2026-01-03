@@ -1,5 +1,5 @@
 import { body } from "express-validator";
-import validateIdParam from "./commonValidator.js";
+import validateObjectId from "./commonValidator.js";
 
 export const validateCreateItem = [
   body("slug")
@@ -24,7 +24,7 @@ export const validateCreateItem = [
 ];
 
 export const validateUpdateItem = [
-  ...validateIdParam,
+  ...validateObjectId(),
   body("slug")
     .optional()
     .trim()
