@@ -5,6 +5,10 @@ import CampModel from "../models/Camp.model.js";
 class CampController {
   async getAllCamps(req, res) {
     const camps = await CampModel.find();
+    if (!camps) {
+      return res.status(404).json({ error: "No camps found" });
+    }
+
     res.status(200).json(camps);
   }
 
@@ -15,24 +19,38 @@ class CampController {
   }
 
   async getCampById(req, res) {
-    const camp = await CampModel.findById(req.params.id);
+    // 1. On récupère l'ID validé
+    const { id } = matchedData(req);
+
+    // 2. On cherche
+    const camp = await CampModel.findById(id);
+
+    // 3. On vérifie l'existence (C'est le job du contrôleur !)
     if (!camp) {
       return res.status(404).json({ error: "Camp not found" });
     }
 
+    // 4. On renvoie
     res.status(200).json(camp);
   }
 
   async updateCamp(req, res) {
+    // 1. On récupère tout ce qui est validé (params et body mélangés souvent)
     const data = matchedData(req);
-    const updatedCamp = await CampModel.findByIdAndUpdate(req.params.id, data, {
+    // On extrait l'ID pour la recherche, et le reste pour la mise à jour
+    const { id, ...updateData } = data;
+
+    // 2. On cherche et update
+    const updatedCamp = await CampModel.findByIdAndUpdate(id, updateData, {
       new: true,
     });
 
+    // 3. On vérifie l'existence
     if (!updatedCamp) {
       return res.status(404).json({ error: "Camp not found" });
     }
 
+    // 4. On renvoie
     res.status(200).json(updatedCamp);
   }
 
@@ -118,6 +136,32 @@ class CampController {
     }
 
     res.status(200).json(camp.trainings);
+  }
+
+  async getCampTrainingById(req, res) {
+    if (
+      !mongoose.isValidObjectId(req.params.id) ||
+      !mongoose.isValidObjectId(req.params.trainingId)
+    ) {
+      return res.status(404).json({ error: "Camp or training not found" });
+    }
+
+    const camp = await CampModel.findById(req.params.id).populate(
+      "trainings.responsiblePerson"
+    );
+    if (!camp) {
+      return res.status(404).json({ error: "Camp not found" });
+    }
+
+    const training = camp.trainings.find(
+      (t) => t._id.toString() === req.params.trainingId
+    );
+
+    if (!training) {
+      return res.status(404).json({ error: "Training not found" });
+    }
+
+    res.status(200).json(training);
   }
 
   async addCampTraining(req, res) {
