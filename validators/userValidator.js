@@ -1,5 +1,6 @@
 import { body, validationResult } from "express-validator";
 import UserModel from "../models/User.model.js";
+import CampModel from "../models/Camp.model.js";
 
 //Phone regex
 const phoneRegex = /^(\+|00)[1-9]\d{1,3}[\d\s\-]{6,14}$/;
@@ -7,27 +8,13 @@ const phoneRegex = /^(\+|00)[1-9]\d{1,3}[\d\s\-]{6,14}$/;
 export const validateCreateUser = [
   //Role validation
   body("role")
-    .isArray({ min: 1 })
-    .withMessage("Role must be an array with at least one entry"),
-
-  body("role.*")
-    .isIn(["admin", "accompagnant", "parent", "enfant"])
-    .withMessage(
-      "Each role must be one of: admin, accompagnant, parent, enfant"
-    ),
-
-  body("role")
-    .optional() // Permet de ne pas envoyer le rôle (et laisser le défaut mongoose agir)
+    .optional() //If no role sent, mongoose applies default ("enfant")
     .isArray()
     .withMessage("Role must be an array."),
 
   body("role.*")
-    .optional()
-    .isString()
-    .isIn(["admin", "accompagnant", "parent", "enfant"]) // Optionnel : valide aussi que les valeurs sont correctes
-    .withMessage(
-      "Rôle not valid. Must be one of: admin, accompagnant, parent, enfant."
-    ),
+    .isIn(["admin", "accompagnant", "parent", "enfant"])
+    .withMessage("Roles must be one of: admin, accompagnant, parent, enfant"),
 
   //Names validation
   body("lastname")
@@ -63,8 +50,9 @@ export const validateCreateUser = [
 
   //Password validation
   body("password")
+    .if((value, { req }) => req.body.email)
     .notEmpty()
-    .withMessage("Password is required")
+    .withMessage("Password is required when email is provided")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long"),
 
@@ -111,12 +99,12 @@ export const validateCreateUser = [
     .isMongoId()
     .withMessage("Parent reference must be a valid MongoDB ObjectId")
     .bail()
-    .custom(async (parent) => {
-      const user = await UserModel.findById(parent);
+    .custom(async (parentId) => {
+      const user = await UserModel.findById(parentId);
       if (!user) {
         throw new Error("This user doesn't exist");
       }
-      if (user.role === "enfant") {
+      if (user.role.includes("enfant")) {
         throw new Error("A user with the role ENFANT can not be a parent");
       }
       return true;
@@ -126,11 +114,32 @@ export const validateCreateUser = [
     .optional()
     .isArray()
     .withMessage("Children must be an array.")
-    .bail(),
+    .bail()
+    .custom(async (childrenIds) => {
+      if (!childrenIds.length) return true;
+      const children = await UserModel.find({ _id: { $in: childrenIds } });
+      if (children.length !== childrenIds.length)
+        throw new Error("At least one child does not exist");
+      const invalidChildren = children.filter(
+        (child) => !child.role.includes("enfant")
+      );
+      if (invalidChildren.length > 0)
+        throw new Error("Some children do not have the role ENFANT");
+      return true;
+    }),
 
-  body("children.*")
-    .isMongoId()
-    .withMessage("A child reference must be a valid MongoDB ObjectId"),
+  body("camps")
+    .optional()
+    .isArray()
+    .withMessage("Camps must be an array")
+    .bail()
+    .custom(async (campsIds) => {
+      if (!campsIds.length) return true;
+      const camps = await CampModel.find({ _id: { $in: campsIds } });
+      if (camps.length !== campsIds.length)
+        throw new Error("At least one camp does not exist");
+      return true;
+    }),
 
   //Participation Info validation
   body("participationInfo")
@@ -168,6 +177,7 @@ export const validateCreateUser = [
     .bail(),
 
   body("participationInfo.allergies.*")
+    .optional()
     .isString()
     .withMessage("Each allergy must be a string"),
 
@@ -178,6 +188,7 @@ export const validateCreateUser = [
     .bail(),
 
   body("participationInfo.medication.*")
+    .optional()
     .isString()
     .withMessage("Each medication must be a string"),
 
@@ -277,6 +288,12 @@ export const validateUpdateUser = [
       return true;
     }),
 
+  //Password validation
+  body("password")
+    .optional()
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters long"),
+
   //Phone number validation
   body("phoneNumber")
     .optional()
@@ -320,12 +337,12 @@ export const validateUpdateUser = [
     .isMongoId()
     .withMessage("Parent reference must be a valid MongoDB ObjectId")
     .bail()
-    .custom(async (parent) => {
-      const user = await UserModel.findById(parent);
+    .custom(async (parentId) => {
+      const user = await UserModel.findById(parentId);
       if (!user) {
         throw new Error("This user doesn't exist");
       }
-      if (user.role === "enfant") {
+      if (user.role.includes("enfant")) {
         throw new Error("A user with the role ENFANT can not be a parent");
       }
       return true;
@@ -335,12 +352,32 @@ export const validateUpdateUser = [
     .optional()
     .isArray()
     .withMessage("Children must be an array.")
-    .bail(),
+    .bail()
+    .custom(async (childrenIds) => {
+      if (!childrenIds.length) return true;
+      const children = await UserModel.find({ _id: { $in: childrenIds } });
+      if (children.length !== childrenIds.length)
+        throw new Error("At least one child does not exist");
+      const invalidChildren = children.filter(
+        (child) => !child.role.includes("enfant")
+      );
+      if (invalidChildren.length > 0)
+        throw new Error("Some children do not have the role ENFANT");
+      return true;
+    }),
 
-  body("children.*")
+  body("camps")
     .optional()
-    .isMongoId()
-    .withMessage("A child reference must be a valid MongoDB ObjectId"),
+    .isArray()
+    .withMessage("Camps must be an array")
+    .bail()
+    .custom(async (campsIds) => {
+      if (!campsIds.length) return true;
+      const camps = await CampModel.find({ _id: { $in: campsIds } });
+      if (camps.length !== campsIds.length)
+        throw new Error("At least one camp does not exist");
+      return true;
+    }),
 
   //Participation Info validation
   body("participationInfo")
