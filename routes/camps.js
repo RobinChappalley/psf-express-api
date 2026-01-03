@@ -71,7 +71,19 @@ router.delete(
 );
 
 // Camp Trainings Routes
-router.get("/:id/trainings", CampController.getCampTrainings);
+router.get(
+  "/:id/trainings",
+  validateIdParam,
+  validateRequest,
+  CampController.getCampTrainings
+);
+
+router.get(
+  "/:id/trainings/:trainingId",
+  validateIdParam,
+  validateRequest,
+  CampController.getCampTrainingById
+);
 
 router.post(
   "/:id/trainings",
