@@ -1,0 +1,24 @@
+meta {
+  name: Add item
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/items
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+        "slug": "d'autres trucs",
+        "name": "utiles-pour",
+        "description": "Grand sac à dos pour randonnée"
+      }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

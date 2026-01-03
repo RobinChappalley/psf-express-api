@@ -1,0 +1,16 @@
+meta {
+  name: updateTraining
+  type: http
+  seq: 1
+}
+
+put {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/camps/
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

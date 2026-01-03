@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --watch . --ext js,mjs,json --exec node ./bin/start",
-    "test": "cross-env NODE_ENV=test DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest"
+    "test": "cross-env NODE_ENV=test DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

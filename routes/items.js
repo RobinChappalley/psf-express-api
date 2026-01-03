@@ -3,31 +3,39 @@ import {
   validateCreateItem,
   validateUpdateItem,
 } from "../validators/itemValidator.js";
-import validateIdParam from "../validators/commonValidator.js";
+import validateObjectId from "../validators/commonValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import ItemController from "../controllers/itemController.js";
 
 const router = express.Router();
 
-router.get("/items", ItemController.getAllItems);
+//ici on est donc à http://{{APP_HOST}}:{{APP_PORT}}/items
+
+router.get("/", ItemController.getAllItems);
+router.get(
+  "/:id",
+  validateObjectId(),
+  validateRequest,
+  ItemController.getItemById
+);
 
 router.post(
-  "/items",
+  "/",
   validateCreateItem,
   validateRequest,
   ItemController.createItem
 );
 
 router.put(
-  "/item/:id",
+  "/:id",
   validateUpdateItem,
   validateRequest,
   ItemController.updateItem
 );
 
 router.delete(
-  "/item/:id",
-  validateIdParam,
+  "/:id",
+  validateObjectId(),
   validateRequest,
   ItemController.deleteItem
 );

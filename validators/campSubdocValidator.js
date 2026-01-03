@@ -1,4 +1,5 @@
 import { body } from "express-validator";
+import validateObjectId from "./commonValidator.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,7 +19,12 @@ export const validateCampItem = [
 ];
 
 // Training validation
-export const validateTraining = [
+export const validateTrainingBody = [
+  body("number")
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage("Training number must be a positive integer"),
+
   body("date")
     .optional()
     .isISO8601()
@@ -70,6 +76,17 @@ export const validateTraining = [
     .optional()
     .isMongoId()
     .withMessage("Responsible person ID must be a valid MongoDB ObjectId"),
+];
+
+export const validateCreateTraining = [
+  ...validateObjectId("campId"), // On déverse les règles de l'ID
+  ...validateTrainingBody, // On déverse les règles du Body
+];
+
+export const validateUpdateTraining = [
+  ...validateObjectId("campId"),
+  ...validateObjectId("trainingId"),
+  ...validateTrainingBody,
 ];
 
 // Fundraising validation
@@ -149,10 +166,7 @@ export const validateAG = [
     .isISO8601()
     .withMessage("Date must be a valid ISO8601 date"),
 
-  body("time")
-    .optional()
-    .isString()
-    .withMessage("Time must be a string"),
+  body("time").optional().isString().withMessage("Time must be a string"),
 
   body("location")
     .optional()
@@ -183,10 +197,7 @@ export const validateInformationEvening = [
     .isISO8601()
     .withMessage("Date must be a valid ISO8601 date"),
 
-  body("time")
-    .optional()
-    .isString()
-    .withMessage("Time must be a string"),
+  body("time").optional().isString().withMessage("Time must be a string"),
 
   body("location")
     .optional()

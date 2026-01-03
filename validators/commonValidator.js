@@ -1,8 +1,9 @@
 import { param, body } from "express-validator";
 
-// Une brique de lego réutilisable juste pour l'ID
-const validateIdParam = [
-  param("id").isMongoId().withMessage("ID must be a valid MongoDB ID"),
+const validateObjectId = (paramName = "id") => [
+  param(paramName)
+    .isMongoId()
+    .withMessage(`Le paramètre '${paramName}' doit être un ID valide`),
 ];
 
-export default validateIdParam;
+export default validateObjectId;

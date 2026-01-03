@@ -62,7 +62,7 @@ describe("Camp Trainings API", function () {
     await cleanDatabase();
   });
 
-  describe("GET /camps/:id/trainings", function () {
+  describe("GET /camps/:campId/trainings", function () {
     it("should retrieve all trainings from a camp", async function () {
       const res = await supertest(app)
         .get(`/camps/${testCamp._id}/trainings`)
@@ -91,15 +91,23 @@ describe("Camp Trainings API", function () {
       expect(res.body).toEqual([]);
     });
 
+    it("should return one specific training by ID", async function () {
+      const res = await supertest(app)
+        .get(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .expect(200)
+        .expect("Content-Type", /json/);
+
+      expect(res.body).toHaveProperty("_id", trainingId.toString());
+      expect(res.body.meetingPoint).toBe("Gare centrale");
+    });
+
     it("should return 404 for non-existent camp", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app)
-        .get(`/camps/${fakeId}/trainings`)
-        .expect(404);
+      await supertest(app).get(`/camps/${fakeId}/trainings`).expect(404);
     });
   });
 
-  describe("POST /camps/:id/trainings", function () {
+  describe("POST /camps/:campId/trainings", function () {
     it("should add a new training to camp", async function () {
       const newTraining = {
         date: "2025-06-22",
@@ -158,14 +166,13 @@ describe("Camp Trainings API", function () {
     });
   });
 
-  describe("PUT /camps/:id/trainings/:id2", function () {
+  describe("PUT /camps/:campId/trainings/:trainingId", function () {
     it("should update an existing training", async function () {
       const updates = {
         "meeting-point": "Gare de Montreux",
         distance: 18.5,
         remark: "Modification de l'itinéraire",
       };
-
       const res = await supertest(app)
         .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
         .send(updates)
@@ -217,7 +224,7 @@ describe("Camp Trainings API", function () {
         .expect(404);
     });
 
-    it("should return 404 for invalid training ID", async function () {
+    it("should return 400 for invalid training ID", async function () {
       const updates = {
         distance: 20.0,
       };
@@ -225,11 +232,11 @@ describe("Camp Trainings API", function () {
       await supertest(app)
         .put(`/camps/${testCamp._id}/trainings/invalid-id`)
         .send(updates)
-        .expect(404);
+        .expect(400);
     });
   });
 
-  describe("DELETE /camps/:id/trainings/:id2", function () {
+  describe("DELETE /camps/:campId/trainings/:trainingId", function () {
     it("should delete a training from camp", async function () {
       const res = await supertest(app)
         .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
@@ -262,7 +269,7 @@ describe("Camp Trainings API", function () {
     it("should return 404 for invalid training ID", async function () {
       await supertest(app)
         .delete(`/camps/${testCamp._id}/trainings/invalid-id`)
-        .expect(404);
+        .expect(400);
     });
   });
 });

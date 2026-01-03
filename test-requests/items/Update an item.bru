@@ -1,0 +1,16 @@
+meta {
+  name: Update an item
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/items/65464
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

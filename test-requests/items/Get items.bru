@@ -1,0 +1,16 @@
+meta {
+  name: Get items
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/items
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
