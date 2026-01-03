@@ -1,0 +1,16 @@
+meta {
+  name: get trainings
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/camps/695950aa93327dc1062d69ae/trainings
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

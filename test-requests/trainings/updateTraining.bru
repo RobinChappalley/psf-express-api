@@ -1,11 +1,11 @@
 meta {
-  name: Update an item
+  name: updateTraining
   type: http
-  seq: 4
+  seq: 1
 }
 
-delete {
-  url: http://{{APP_HOST}}:{{APP_PORT}}/items/65464
+put {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/camps/
   body: none
   auth: inherit
 }

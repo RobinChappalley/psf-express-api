@@ -1,0 +1,31 @@
+meta {
+  name: add new training
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/camps/695950aa93327dc1062d69ae/trainings/695950aa93327dc1062d69b4
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+          "date": "2026-06-22",
+          "train-going-time": "09:00",
+          "train-return-time": "19:00",
+          "meeting-time": "09:30",
+          "meeting-point": "Gare de Lausanne",
+          "return-time": "18:30",
+          "distance": 15.0,
+          "elevation-difference": 400,
+          "responsible-person-id": "607f1f77bcf86cd799439001",
+          "remark": "Entraînement difficile"
+        }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
