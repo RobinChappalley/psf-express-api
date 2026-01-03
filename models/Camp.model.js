@@ -1,6 +1,18 @@
 import mongoose from "mongoose";
 const { Schema } = mongoose;
 
+//A quoi sert sparse ? Pour permettre les valeurs null dans les champs uniques
+//Le problème vient de ces lignes dans ton schéma :
+// Dans stageSchema et fundraisingSchema
+//index({ number: 1, year: 1 }, { unique: true });
+//MongoDB traite null comme une valeur.
+
+//Tu crées le Camp A sans stage. Pour MongoDB, le couple (number, year) est considéré comme "absent" (ou parfois null selon comment Mongoose le cast).
+//Tu crées le Camp B sans stage. MongoDB voit un deuxième "vide" ou null, et comme l'index est unique, il crache une erreur : "Doublon détecté !".
+
+//La solution magique est l'option sparse: true.
+//Cela dit à MongoDB : "Si le champ n'existe pas ou est null, ne l'indexe pas. N'applique la contrainte d'unicité que si les données existent vraiment."
+
 const itemSchema = new Schema({
   item: {
     type: Schema.Types.ObjectId,
@@ -24,6 +36,8 @@ const infoEveningSchema = new Schema({
     },
   ],
 });
+
+infoEveningSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
 
 const trainingSchema = new Schema({
   number: { type: Number, required: true },
@@ -68,7 +82,7 @@ const fundraisingSchema = new Schema({
   ],
 });
 
-fundraisingSchema.index({ number: 1, year: 1 }, { unique: true });
+fundraisingSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const generalMeetingSchema = new Schema({
   dateTime: Date,
@@ -86,6 +100,8 @@ const generalMeetingSchema = new Schema({
   ],
 });
 
+generalMeetingSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
+
 const stageSchema = new Schema({
   number: { type: Number, required: true },
   year: { type: Number },
@@ -98,7 +114,7 @@ const stageSchema = new Schema({
   routeDescription: String,
 });
 
-stageSchema.index({ number: 1, year: 1 }, { unique: true });
+stageSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const campSchema = new Schema({
   title: {
