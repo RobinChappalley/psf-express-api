@@ -5,33 +5,14 @@ import mongoose from "mongoose";
 import { cleanDatabase } from "./utils.js";
 import ItemModel from "../models/Item.model.js";
 
-describe("Items API", function () {
-  let testItem;
+beforeAll(async () => {
+  await connectMongo();
+});
+afterAll(async () => {
+  await mongoose.connection.close();
+});
 
-  beforeAll(async () => {
-    await connectMongo();
-  });
-
-  afterAll(async () => {
-    await mongoose.connection.close();
-  });
-
-  beforeEach(async () => {
-    await cleanDatabase();
-
-    // Create a test item with unique slug
-    const timestamp = Date.now();
-    testItem = await ItemModel.create({
-      slug: `tente-2-places-${timestamp}`,
-      name: `Tente 2 places ${timestamp}`,
-      description: "Tente légère pour 2 personnes",
-    });
-  });
-
-  afterEach(async () => {
-    await cleanDatabase();
-  });
-
+describe("GET /items", function () {
   it("should return empty array when no items exist", async function () {
     const res = await supertest(app)
       .get("/items")
@@ -44,10 +25,9 @@ describe("Items API", function () {
 
 describe("POST /items", function () {
   it("should create a new item", async function () {
-    const timestamp = Date.now();
     const newItem = {
-      slug: `sac-a-dos-50l-${timestamp}`,
-      name: `Sac à dos 50L ${timestamp}`,
+      slug: `sac-a-dos-50l`,
+      name: `Sac à dos 50L`,
       description: "Grand sac à dos pour randonnée",
     };
 
@@ -56,6 +36,11 @@ describe("POST /items", function () {
       .send(newItem)
       .expect(201)
       .expect("Content-Type", /json/);
+    if (res.status === 500) {
+      console.error("⚠️ STATUS 500 REÇU ⚠️");
+      console.error("Message erreur :", res.body); // Si c'est du JSON
+      console.error("Texte erreur :", res.text); // Si c'est du HTML/Texte brut
+    }
 
     expect(res.body).toHaveProperty("_id");
     expect(res.body.slug).toBe(newItem.slug);
