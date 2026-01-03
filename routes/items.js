@@ -9,24 +9,24 @@ import ItemController from "../controllers/itemController.js";
 
 const router = express.Router();
 
-router.get("/items", ItemController.getAllItems);
+router.get("/", ItemController.getAllItems);
 
 router.post(
-  "/items",
+  "/",
   validateCreateItem,
   validateRequest,
   ItemController.createItem
 );
 
 router.put(
-  "/item/:id",
+  "/:id",
   validateUpdateItem,
   validateRequest,
   ItemController.updateItem
 );
 
 router.delete(
-  "/item/:id",
+  "/:id",
   validateIdParam,
   validateRequest,
   ItemController.deleteItem
