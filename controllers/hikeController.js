@@ -41,10 +41,10 @@ class HikeController {
 
   async deleteHike(req, res) {
     const data = matchedData(req);
+    console.log("Deleting hike with data:", data);
     // Suppression sécurisée : on vérifie l'ID du hike ET l'ID de l'auteur
     const result = await Hike.findOneAndDelete({
-      _id: data._id,
-      user: data.user._id,
+      _id: data.hikeId,
     });
 
     if (!result) {
