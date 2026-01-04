@@ -4,7 +4,10 @@ import HikeModel from "../models/Hike.model.js";
 
 class HikeController {
   async getAllHikes(req, res) {
-    const hikes = await HikeModel.find().populate("user", "firstname lastname email");
+    const hikes = await HikeModel.find().populate(
+      "user",
+      "firstname lastname email"
+    );
     res.status(200).json(hikes);
   }
 
@@ -15,11 +18,12 @@ class HikeController {
   }
 
   async getHikeById(req, res) {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(404).json({ error: "Hike not found" });
-    }
+    const { id } = matchedData(req);
 
-    const hike = await HikeModel.findById(req.params.id).populate("user", "firstname lastname email");
+    const hike = await HikeModel.findById(id).populate(
+      "user",
+      "firstname lastname email"
+    );
     if (!hike) {
       return res.status(404).json({ error: "Hike not found" });
     }
@@ -33,11 +37,9 @@ class HikeController {
     }
 
     const data = matchedData(req);
-    const updatedHike = await HikeModel.findByIdAndUpdate(
-      req.params.id,
-      data,
-      { new: true }
-    ).populate("user", "firstname lastname email");
+    const updatedHike = await HikeModel.findByIdAndUpdate(req.params.id, data, {
+      new: true,
+    }).populate("user", "firstname lastname email");
 
     if (!updatedHike) {
       return res.status(404).json({ error: "Hike not found" });
