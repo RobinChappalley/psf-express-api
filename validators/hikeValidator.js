@@ -1,5 +1,4 @@
 import { body } from "express-validator";
-import validateObjectId from "./commonValidator.js";
 
 export const validateHikeHikeCreation = [
   body("userId").isMongoId().withMessage("User ID must be a valid Mongo ID"),
