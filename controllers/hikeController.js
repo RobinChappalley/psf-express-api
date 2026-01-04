@@ -1,65 +1,57 @@
-import mongoose from "mongoose";
+import createError from "http-errors";
+import Hike from "../models/Hike.model.js";
 import { matchedData } from "express-validator";
-import HikeModel from "../models/Hike.model.js";
 
 class HikeController {
   async getAllHikes(req, res) {
-    const hikes = await HikeModel.find().populate(
-      "user",
-      "firstname lastname email"
-    );
+    const hikes = await Hike.find()
+      .sort({ createdAt: -1 })
+      .populate("user", "username email")
+      .lean();
+
     res.status(200).json(hikes);
   }
-
   async createHike(req, res) {
-    const data = matchedData(req);
-    const newHike = await HikeModel.create(data);
-    res.status(201).json(newHike);
-  }
+    const payload = matchedData(req);
 
-  async getHikeById(req, res) {
-    const { id } = matchedData(req);
-
-    const hike = await HikeModel.findById(id).populate(
-      "user",
-      "firstname lastname email"
-    );
-    if (!hike) {
-      return res.status(404).json({ error: "Hike not found" });
+    if (req.file) {
+      payload.imageUrl = req.file.path;
     }
 
-    res.status(200).json(hike);
-  }
-
-  async updateHike(req, res) {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(404).json({ error: "Hike not found" });
+    // LOGIQUE HYBRIDE (TEST / PROD)
+    // Si on a un token (req.user), on l'utilise
+    // Sinon, on prend le userId envoyé manuellement et validé
+    if (req.user) {
+      payload.user = req.user._id;
+    } else if (payload.userId) {
+      payload.user = payload.userId; // On mappe le champ validé vers le champ du modèle
+    } else {
+      // Si ni l'un ni l'autre, ça va planter dans Mongoose, donc on prévient
+      throw new Error("Aucun utilisateur identifié pour créer cette randonnée");
     }
 
-    const data = matchedData(req);
-    const updatedHike = await HikeModel.findByIdAndUpdate(req.params.id, data, {
-      new: true,
-    }).populate("user", "firstname lastname email");
+    // On nettoie payload.userId car le modèle attend 'user', pas 'userId'
+    delete payload.userId;
 
-    if (!updatedHike) {
-      return res.status(404).json({ error: "Hike not found" });
-    }
+    const hike = await Hike.create(payload);
+    await hike.populate("user", "username email");
 
-    res.status(200).json(updatedHike);
+    res.status(201).json(hike);
   }
 
   async deleteHike(req, res) {
-    if (!mongoose.isValidObjectId(req.params.id)) {
-      return res.status(404).json({ error: "Hike not found" });
+    const data = matchedData(req);
+    // Suppression sécurisée : on vérifie l'ID du hike ET l'ID de l'auteur
+    const result = await Hike.findOneAndDelete({
+      _id: data._id,
+      user: data.user._id,
+    });
+
+    if (!result) {
+      throw createError(404, "Hike not found or you are not the author");
     }
 
-    const deletedHike = await HikeModel.findByIdAndDelete(req.params.id);
-    if (!deletedHike) {
-      return res.status(404).json({ error: "Hike not found" });
-    }
-
-    res.status(200).json({ message: "Hike deleted" });
+    res.status(204).send();
   }
 }
-
 export default new HikeController();
