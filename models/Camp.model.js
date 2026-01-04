@@ -173,6 +173,12 @@ campSchema.pre("save", function (next) {
   next();
 });
 
+campSchema.methods.getNextTrainingNumber = function () {
+  if (this.trainings.length === 0) return 1;
+  const maxNumber = Math.max(...this.trainings.map((t) => t.number || 0));
+  return maxNumber + 1;
+};
+
 const CampModel = mongoose.model("Camp", campSchema);
 export default CampModel;
 //module.exports = CampModel;
