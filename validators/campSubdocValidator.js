@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import validateObjectId from "./commonValidator.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,64 +18,75 @@ export const validateCampItem = [
     .withMessage("Quantity must be a non-negative integer"),
 ];
 
-// Training validation
 export const validateTrainingBody = [
-  body("number")
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage("Training number must be a positive integer"),
+  // 1. Validation de l'ID Camp dans l'URL
+  param("campId")
+    .isMongoId()
+    .withMessage("Item reference must be a valid MongoDB ObjectId"),
 
+  // 2. Champs Obligatoires & Dates
   body("date")
-    .optional()
+    .notEmpty()
+    .withMessage("Training date is required")
     .isISO8601()
-    .withMessage("Date must be a valid ISO8601 date"),
+    .withMessage("Training date must be a valid ISO8601 date")
+    .toDate(), // Important: convertit la string en Date
 
-  body("train-going-time")
-    .optional()
-    .isString()
-    .withMessage("Train going time must be a string"),
-
-  body("meeting-time")
-    .optional()
-    .isString()
-    .withMessage("Meeting time must be a string"),
-
-  body("meeting-point")
-    .optional()
-    .trim()
-    .isString()
-    .withMessage("Meeting point must be a string"),
-
-  body("return-time")
-    .optional()
-    .isString()
-    .withMessage("Return time must be a string"),
-
-  body("train-return-time")
-    .optional()
-    .isString()
-    .withMessage("Train return time must be a string"),
+  // 3. Champs Numériques (Conversion impérative avec form-data)
+  body("number")
+    .optional({ checkFalsy: true }) // "checkFalsy" gère le cas où le champ est envoyé vide ""
+    .isInt({ min: 1 })
+    .withMessage("Training number must be a positive integer")
+    .toInt(), // Conversion string -> int
 
   body("distance")
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
-    .withMessage("Distance must be a non-negative number"),
+    .withMessage("Distance must be a non-negative number")
+    .toFloat(),
 
-  body("elevation-difference")
-    .optional()
+  body("elevationGain")
+    .optional({ checkFalsy: true })
     .isInt({ min: 0 })
-    .withMessage("Elevation difference must be a non-negative integer"),
+    .withMessage("Elevation gain must be a non-negative integer")
+    .toInt(),
 
-  body("remark")
-    .optional()
-    .trim()
-    .isString()
-    .withMessage("Remark must be a string"),
+  body("elevationLoss")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 0 })
+    .withMessage("Elevation loss must be a non-negative integer")
+    .toInt(),
 
-  body("responsible-person-id")
-    .optional()
+  // 4. Champs Textes Simples (Nettoyage)
+  // J'ai repris tes noms de variables en camelCase pour correspondre à ton validateur d'origine
+  body("trainGoingTime").optional().trim().isString(),
+  body("trainReturnTime").optional().trim().isString(),
+  body("meetingTime").optional().trim().isString(),
+  body("meetingPoint").optional().trim().isString(),
+  body("returnTime").optional().trim().isString(),
+  body("routeDescription").optional().trim().isString(), // J'ai vu ça dans 'stages', utile ici ?
+  body("remark").optional().trim().isString(),
+
+  // 5. Références MongoDB
+  body("responsiblePerson")
+    .optional({ checkFalsy: true })
     .isMongoId()
-    .withMessage("Responsible person ID must be a valid MongoDB ObjectId"),
+    .withMessage("Responsible person must be a valid MongoDB ObjectId"),
+
+  // 6. Cas complexe : itemsList (Tableau d'objets)
+  // En form-data, le front doit envoyer JSON.stringify([{itemId: "...", quantity: 2}])
+  body("itemsList")
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      try {
+        const parsed = JSON.parse(value);
+        if (!Array.isArray(parsed)) throw new Error("Must be an array");
+        return true;
+      } catch (e) {
+        throw new Error("Items list must be a valid JSON stringified array");
+      }
+    })
+    .customSanitizer((value) => JSON.parse(value)), // On le transforme en vrai objet JS
 ];
 
 export const validateCreateTraining = [
