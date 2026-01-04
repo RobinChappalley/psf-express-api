@@ -1,6 +1,7 @@
-import mongoose from "mongoose";
 import { matchedData } from "express-validator";
 import CampModel from "../models/Camp.model.js";
+import { parseGpxToCoordinates } from "../utils/gpxHandler.js";
+import createError from "http-errors";
 
 class CampController {
   async getAllCamps(req, res) {
@@ -206,32 +207,26 @@ class CampController {
     const camp = await CampModel.findById(campId);
     if (!camp) return res.status(404).json({ error: "Camp not found" });
 
-    // --- LA LOGIQUE INTELLIGENTE ICI ---
-    // Si 'number' est fourni par le front, on le prend.
-    // Sinon, on prend la longueur du tableau + 1.
-    let finalNumber = number;
-
-    if (!finalNumber) {
-      // Optionnel : Pour être plus robuste qu'un simple length + 1,
-      // on peut chercher le numéro max existant et ajouter 1.
-      if (camp.trainings.length > 0) {
-        const maxNumber = Math.max(...camp.trainings.map((t) => t.number || 0));
-        finalNumber = maxNumber + 1;
-      } else {
-        finalNumber = 1;
-      }
-    }
+    const finalNumber = number || camp.getNextTrainingNumber();
 
     // Petite sécurité : Vérifier si ce numéro existe déjà pour éviter les doublons ?
     // Ce n'est pas bloquant techniquement pour Mongo, mais ça peut être bizarre fonctionnellement.
-    const exists = camp.trainings.find((t) => t.number === finalNumber);
-    if (exists) {
-      return res
-        .status(400)
-        .json({ error: `Training number ${finalNumber} already exists` });
+    if (camp.trainings.some((t) => t.number === finalNumber)) {
+      throw createError(400, `Training number ${finalNumber} already exists`);
     }
     // -----------------------------------
 
+    let gpsTrack = null;
+    if (req.file) {
+      const coordinates = parseGpxToCoordinates(req.file.buffer);
+      gpsTrack = { type: "LineString", coordinates };
+    }
+
+    // 3. Construction de l'objet (Clean & Explicit)
+
+    // Trouver l'objet ajouté (celui qui a le bon numéro)
+    const added = camp.trainings.find((t) => t.number === finalNumber);
+    res.status(201).json(added);
     const newTraining = {
       number: finalNumber, // On utilise le numéro décidé
       year: new Date(date).getFullYear(),
@@ -246,6 +241,7 @@ class CampController {
       date,
       distance,
       remark,
+      gpsTrack,
     };
 
     camp.trainings.push(newTraining);
@@ -335,7 +331,7 @@ class CampController {
     // (juste sans modif). Pour une suppression, c'est souvent le comportement
     // désiré (Idempotence : "Assure-toi que c'est parti").
 
-    res.status(200).json({ message: "Training deleted" });
+    res.status(204).json({ message: "Training deleted" });
   }
 }
 
