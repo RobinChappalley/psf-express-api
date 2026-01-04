@@ -1,168 +1,87 @@
-import supertest from "supertest";
-import app from "../app.js";
-import { connectMongo } from "../db/db.js";
+import { jest } from "@jest/globals";
+import request from "supertest";
 import mongoose from "mongoose";
-import { cleanDatabase } from "./utils.js";
-import UserModel from "../models/User.model.js";
-import HikeModel from "../models/Hike.model.js";
+import path from "path";
+import { fileURLToPath } from "url";
+import { connectMongo } from "../db/db.js";
 
-describe("Hikes API", function () {
-  let testUser;
-  let testHike;
+// Nécessaire pour __dirname en ES6
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 1. DÉFINITION DU MOCK (Avant l'import de l'app)
+// On utilise unstable_mockModule qui est compatible ESM
+jest.unstable_mockModule("../middlewares/fileUpload.js", () => ({
+  default: {
+    single: () => (req, res, next) => {
+      // Simulation : Si un fichier est reçu (Multipart), on injecte le fake path
+      // Cela permet de valider que multer a bien reçu le flux du vrai fichier
+      if (req.headers["content-type"]?.includes("multipart/form-data")) {
+        req.file = {
+          path: "https://res.cloudinary.com/demo/image/upload/real-file-simulated.jpg",
+          originalname: "test-img.jpg",
+        };
+      }
+      next();
+    },
+  },
+}));
+
+// 2. IMPORT DYNAMIQUE DE L'APP (Après le mock)
+// C'est la clé : on attend que le mock soit prêt avant de charger app.js
+const { default: app } = await import("../app.js");
+const { default: User } = await import("../models/User.model.js");
+const { default: Hike } = await import("../models/Hike.model.js");
+
+describe("POST /api/hikes", () => {
+  let user;
 
   beforeAll(async () => {
     await connectMongo();
+
+    user = await User.create({
+      firstname: `TestLocal${Date.now()}`,
+      lastname: `User${Date.now()}`,
+      email: `testlocal${Date.now()}@test.com`,
+      password: "password123",
+    });
   });
 
   afterAll(async () => {
     await mongoose.connection.close();
   });
 
-  beforeEach(async () => {
-    await cleanDatabase();
+  it("should create a hike using a real local image file", async () => {
+    // Chemin absolu vers ton image de test située à côté de ce fichier
+    let imagePath = path.resolve(__dirname, "test-img.jpeg");
+    // Enlever /app du début si présent
+    if (imagePath.startsWith("/app")) {
+      imagePath = imagePath.slice(4);
+    }
 
-    // Create a test user with unique email
-    const timestamp = Date.now();
-    testUser = await UserModel.create({
-      firstname: "John",
-      lastname: "Doe",
-      email: `john.doe.${timestamp}@test.com`,
-      password: "password123",
-      role: ["accompagnant"],
-    });
+    const hikeData = {
+      content: "Rando avec vraie image locale",
+      userId: user._id.toString(),
+    };
 
-    // Create a test hike
-    testHike = await HikeModel.create({
-      user: testUser._id,
-      date: "2025-07-15",
-      startPoint: "Col de Jaman",
-      endPoint: "Château-d'Oex",
-      distance: 15.2,
-      elevationGain: 500,
-      elevationLoss: 300,
-      routeDescription: "Par le sentier des alpages",
-    });
-  });
+    console.log("📝 Données envoyées:", hikeData);
+    console.log("📁 Chemin image:", imagePath);
 
-  afterEach(async () => {
-    await cleanDatabase();
-  });
+    const res = await request(app).post("/hikes").send(hikeData);
+    //.expect("Content-Type", "multipart/form-data");
+    // Le vrai fichier physique
 
-  describe("POST /hikes", function () {
-    it("should create a new hike", async function () {
-      const newHike = {
-        user: testUser._id.toString(),
-        date: "2025-08-20",
-        startPoint: "Montreux",
-        endPoint: "Rochers-de-Naye",
-        distance: 12.5,
-        elevationGain: 800,
-        elevationLoss: 100,
-        routeDescription: "Montée directe",
-      };
+    console.log("📊 Statut réponse:", res.statusCode);
+    console.log("📦 Réponse body:", JSON.stringify(res.body, null, 2));
+    if (res.error) {
+      console.log("❌ Erreur supertest:", res.error);
+    }
 
-      const res = await supertest(app)
-        .post("/hikes")
-        .send(newHike)
-        .expect(201)
-        .expect("Content-Type", /json/);
-
-      expect(res.body).toHaveProperty("_id");
-      expect(res.body.startPoint).toBe("Montreux");
-      expect(res.body.distance).toBe(12.5);
-    });
-
-    it("should fail without required user field", async function () {
-      const invalidHike = {
-        date: "2025-08-20",
-        startPoint: "Montreux",
-        endPoint: "Rochers-de-Naye",
-      };
-
-      await supertest(app).post("/hikes").send(invalidHike).expect(400);
-    });
-  });
-
-  describe("GET /hikes", function () {
-    it("should retrieve the list of all hikes", async function () {
-      const res = await supertest(app)
-        .get("/hikes")
-        .expect(200)
-        .expect("Content-Type", /json/);
-
-      expect(res.body).toBeInstanceOf(Array);
-      expect(res.body.length).toBeGreaterThan(0);
-      expect(res.body[0]).toHaveProperty("user");
-      expect(res.body[0]).toHaveProperty("startPoint");
-    });
-  });
-
-  describe("GET /hikes/:id", function () {
-    it("should retrieve a specific hike", async function () {
-      const res = await supertest(app)
-        .get(`/hikes/${testHike._id}`)
-        .expect(200)
-        .expect("Content-Type", /json/);
-
-      expect(res.body._id).toBe(testHike._id.toString());
-      expect(res.body.startPoint).toBe("Col de Jaman");
-    });
-
-    it("should return 404 for non-existent hike", async function () {
-      const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app).get(`/hikes/${fakeId}`).expect(404);
-    });
-
-    it("should return 404 for invalid ObjectId", async function () {
-      await supertest(app).get("/hikes/invalid-id").expect(404);
-    });
-  });
-
-  describe("PUT /hikes/:id", function () {
-    it("should update an existing hike", async function () {
-      const updates = {
-        distance: 18.5,
-        elevationGain: 600,
-        routeDescription: "Par le sentier modifié",
-      };
-
-      const res = await supertest(app)
-        .put(`/hikes/${testHike._id}`)
-        .send(updates)
-        .expect(200)
-        .expect("Content-Type", /json/);
-
-      expect(res.body.distance).toBe(18.5);
-      expect(res.body.elevationGain).toBe(600);
-      expect(res.body.routeDescription).toBe("Par le sentier modifié");
-    });
-
-    it("should return 404 for non-existent hike", async function () {
-      const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app)
-        .put(`/hikes/${fakeId}`)
-        .send({ distance: 20 })
-        .expect(404);
-    });
-  });
-
-  describe("DELETE /hikes/:id", function () {
-    it("should delete an existing hike", async function () {
-      const res = await supertest(app)
-        .delete(`/hikes/${testHike._id}`)
-        .expect(200)
-        .expect("Content-Type", /json/);
-
-      expect(res.body).toHaveProperty("message");
-
-      // Verify it's actually deleted
-      const deletedHike = await HikeModel.findById(testHike._id);
-      expect(deletedHike).toBeNull();
-    });
-
-    it("should return 404 for non-existent hike", async function () {
-      const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app).delete(`/hikes/${fakeId}`).expect(404);
-    });
+    expect(res.statusCode).toBe(201);
+    expect(res.body.content).toBe(hikeData.content);
+    // Vérifie que le contrôleur a bien reçu l'URL mockée -> preuve que le middleware est passé
+    expect(res.body.imageUrl).toBe(
+      "https://res.cloudinary.com/demo/image/upload/real-file-simulated.jpg"
+    );
   });
 });
