@@ -15,20 +15,17 @@ cloudinary.config({
 export const deleteImage = async (imageUrl) => {
   if (!imageUrl) return;
 
-  // Extraction de l'ID
+  //  Extraction de l'ID
   const regex = /\/upload\/(?:v\d+\/)?(.+)\.[^.]+$/;
   const match = imageUrl.match(regex);
 
   if (!match || !match[1]) {
-    // Si l'URL est invalide, faut-il bloquer ?
-    // Ici je décide que oui pour la consistance, mais on pourrait débattre.
     throw createError(400, "Invalid image URL format");
   }
 
   const publicId = match[1];
 
   // On attend la réponse. Si Cloudinary est down, ça throw une erreur ici.
-  // Note : destroy() renvoie un résultat, on peut vérifier result === 'ok' si on veut être puriste
   const response = await cloudinary.uploader.destroy(publicId);
 
   if (response.result !== "ok" && response.result !== "not found") {
