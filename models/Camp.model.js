@@ -51,6 +51,10 @@ const trainingSchema = new Schema({
   distance: Number,
   elevationGain: Number,
   elevationLoss: Number,
+  gpsTrack: {
+    type: { type: String },
+    coordinates: [[Number]],
+  },
   responsiblePerson: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -134,6 +138,8 @@ const campSchema = new Schema({
   generalMeeting: generalMeetingSchema,
   stages: [stageSchema],
 });
+
+campSchema.index({ "trainings.gpsTrack": "2dsphere" });
 
 // Hook PRE-SAVE sur le MAIN schema pour traiter les sous-documents
 campSchema.pre("save", function (next) {
