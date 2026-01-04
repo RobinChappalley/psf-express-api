@@ -1,6 +1,7 @@
 import createError from "http-errors";
 import Hike from "../models/Hike.model.js";
 import { matchedData } from "express-validator";
+import { deleteImage } from "../utils/cloudinaryHelper.js";
 
 class HikeController {
   async getAllHikes(req, res) {
@@ -40,7 +41,24 @@ class HikeController {
   }
 
   async deleteHike(req, res) {
-    const data = matchedData(req);
+    const hike = await Hike.findById(req.params.hikeId);
+
+    if (!hike) {
+      throw createError(404, "Hike not found");
+    }
+
+    // ÉTAPE 1 : Suppression externe (Point de défaillance possible)
+    if (hike.imageUrl) {
+      // Si ceci échoue (throw), Express stoppe tout ici -> pas de deleteOne()
+      await deleteImage(hike.imageUrl);
+    }
+
+    // ÉTAPE 2 : Suppression interne (Seulement si Étape 1 OK)
+    await hike.deleteOne();
+
+    res.status(204).send();
+
+    /* const data = matchedData(req);
     console.log("Deleting hike with data:", data);
     // Suppression sécurisée : on vérifie l'ID du hike ET l'ID de l'auteur
     const result = await Hike.findOneAndDelete({
@@ -51,7 +69,7 @@ class HikeController {
       throw createError(404, "Hike not found or you are not the author");
     }
 
-    res.status(204).send();
+    res.status(204).send(); */
   }
 }
 export default new HikeController();
