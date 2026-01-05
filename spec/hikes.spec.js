@@ -67,9 +67,11 @@ describe("POST /api/hikes", () => {
     console.log("📝 Données envoyées:", hikeData);
     console.log("📁 Chemin image:", imagePath);
 
-    const res = await request(app).post("/hikes").send(hikeData);
-    //.expect("Content-Type", "multipart/form-data");
-    // Le vrai fichier physique
+    const res = await request(app)
+      .post("/hikes")
+      .field("content", hikeData.content)
+      .field("userId", hikeData.userId)
+      .attach("image", imagePath);
 
     console.log("📊 Statut réponse:", res.statusCode);
     console.log("📦 Réponse body:", JSON.stringify(res.body, null, 2));
