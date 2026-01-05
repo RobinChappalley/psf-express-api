@@ -38,6 +38,26 @@ const infoEveningSchema = new Schema({
 });
 
 infoEveningSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
+const GPXTrackSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["LineString"],
+      required: true,
+      default: "LineString",
+    },
+    coordinates: {
+      type: [[Number]], // Tableau de tableaux de nombres [[lng, lat]]
+      required: true,
+      // Validation basique : LineString = min 2 points
+      validate: {
+        validator: (v) => Array.isArray(v) && v.length >= 2,
+        message: "A GPX track must have at least 2 points.",
+      },
+    },
+  },
+  { _id: false }
+);
 
 const trainingSchema = new Schema({
   number: { type: Number, required: true },
@@ -52,8 +72,7 @@ const trainingSchema = new Schema({
   elevationGain: Number,
   elevationLoss: Number,
   gpsTrack: {
-    type: { type: String },
-    coordinates: [[Number]],
+    type: GPXTrackSchema,
   },
   responsiblePerson: {
     type: Schema.Types.ObjectId,
@@ -120,26 +139,29 @@ const stageSchema = new Schema({
 
 stageSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
-const campSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    unique: true,
+const campSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    startDate: Date,
+    endDate: Date,
+    subStartDatetime: Date,
+    subEndDatetime: Date,
+    gpsTrack: {},
+    itemsList: [itemSchema],
+    infoEvening: infoEveningSchema,
+    trainings: [trainingSchema],
+    fundraisings: [fundraisingSchema],
+    generalMeeting: generalMeetingSchema,
+    stages: [stageSchema],
   },
-  startDate: Date,
-  endDate: Date,
-  subStartDatetime: Date,
-  subEndDatetime: Date,
-  gpsTrack: {},
-  itemsList: [itemSchema],
-  infoEvening: infoEveningSchema,
-  trainings: [trainingSchema],
-  fundraisings: [fundraisingSchema],
-  generalMeeting: generalMeetingSchema,
-  stages: [stageSchema],
-});
+  { timestamps: true }
+);
 
-campSchema.index({ "trainings.gpsTrack": "2dsphere" });
+campSchema.index({ "trainings.gpsTrack": "2dsphere" }, { sparse: true });
 
 // Hook PRE-SAVE sur le MAIN schema pour traiter les sous-documents
 campSchema.pre("save", function (next) {
