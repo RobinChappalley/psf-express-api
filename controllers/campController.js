@@ -188,72 +188,65 @@ class CampController {
   }
 
   async addCampTraining(req, res) {
-    const {
-      campId,
-      number,
-      trainingId,
-      "train-going-time": trainGoingTime,
-      "train-return-time": trainReturnTime,
-      "meeting-time": meetingTime,
-      "meeting-point": meetingPoint,
-      "return-time": returnTime,
-      "elevation-difference": elevationDiff,
-      "responsible-person-id": responsiblePerson,
-      date,
-      distance,
-      remark,
-    } = matchedData(req);
+    // 1. MatchedData retourne maintenant des clés en CamelCase
+    const data = matchedData(req);
+    const { campId } = req.params;
 
     const camp = await CampModel.findById(campId);
-    if (!camp) return res.status(404).json({ error: "Camp not found" });
+    if (!camp) throw createError(404, "Camp not found");
 
-    const finalNumber = number || camp.getNextTrainingNumber();
-
-    // Petite sécurité : Vérifier si ce numéro existe déjà pour éviter les doublons ?
-    // Ce n'est pas bloquant techniquement pour Mongo, mais ça peut être bizarre fonctionnellement.
-    if (camp.trainings.some((t) => t.number === finalNumber)) {
-      throw createError(400, `Training number ${finalNumber} already exists`);
+    // 2. Logique numéro
+    const number = data.number || camp.getNextTrainingNumber(); // Supposons que cette méthode existe
+    if (camp.trainings.some((t) => t.number === number)) {
+      throw createError(409, `Training number ${number} already exists`);
     }
-    // -----------------------------------
 
-    let gpsTrack = null;
+    let gpsTrack = undefined;
     if (req.file) {
-      const coordinates = parseGpxToCoordinates(req.file.buffer);
-      gpsTrack = { type: "LineString", coordinates };
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        gpsTrack = { type: "LineString", coordinates: coords };
+      }
     }
 
-    // 3. Construction de l'objet (Clean & Explicit)
+    // 3. Construction de l'objet (Mapping Input -> Mongoose Schema)
+    const newTrainingPayload = {
+      // Champs directs (noms identiques Input/Schema)
+      number,
+      date: data.date,
+      year: new Date(data.date).getFullYear(),
+      distance: data.distance,
+      remark: data.remark,
 
-    // Trouver l'objet ajouté (celui qui a le bon numéro)
-    const added = camp.trainings.find((t) => t.number === finalNumber);
-    res.status(201).json(added);
-    const newTraining = {
-      number: finalNumber, // On utilise le numéro décidé
-      year: new Date(date).getFullYear(),
-      trainingId,
-      trainGoingTime,
-      trainReturnTime,
-      meetingTime,
-      meetingPoint,
-      returnTime,
-      elevationDiff,
-      responsiblePerson,
-      date,
-      distance,
-      remark,
-      gpsTrack,
+      // Champs CamelCase (directement accessibles via data)
+      trainGoingTime: data.trainGoingTime,
+      trainReturnTime: data.trainReturnTime,
+      meetingTime: data.meetingTime,
+      meetingPoint: data.meetingPoint,
+      returnTime: data.returnTime,
+      elevationGain: data.elevationGain,
+      elevationLoss: data.elevationLoss,
+
+      // Input: responsiblePersonId -> Schema: responsiblePerson
+      responsiblePerson: data.responsiblePersonId,
+
+      // GPX (ton code existant)
+      gpsTrack: gpsTrack,
     };
 
-    camp.trainings.push(newTraining);
-
-    // Si tu veux que les entrainements soient triés par numéro dans le tableau directement :
+    // 4. Push & Save
+    camp.trainings.push(newTrainingPayload);
     camp.trainings.sort((a, b) => a.number - b.number);
 
     await camp.save();
 
-    // Renvoi de la réponse...
-    const addedTraining = camp.trainings.find((t) => t.number === finalNumber); // Façon sûre de le retrouver
-    res.status(201).json(addedTraining);
+    // 5. Récupération & Réponse
+    const savedTraining = camp.trainings.find((t) => t.number === number);
+
+    // Debug pour te rassurer
+    console.log("Saved:", savedTraining);
+
+    res.status(201).json(savedTraining);
   }
 
   async updateCampTraining(req, res) {
@@ -262,18 +255,18 @@ class CampController {
     const {
       campId,
       trainingId,
-      "train-going-time": trainGoingTime,
-      "train-return-time": trainReturnTime,
-      "meeting-time": meetingTime,
-      "meeting-point": meetingPoint,
-      "return-time": returnTime,
-      "elevation-difference": elevationDiff,
-      "responsible-person-id": responsiblePerson,
+      trainGoingTime,
+      trainReturnTime,
+      meetingTime,
+      meetingPoint,
+      returnTime,
+      elevationGain,
+      elevationLoss,
+      responsiblePerson,
       date,
       distance,
       remark,
     } = matchedData(req);
-
     // 2. Construction dynamique de l'objet de mise à jour ($set)
     // On utilise les variables camelCase propres.
     const updates = {};
@@ -292,10 +285,8 @@ class CampController {
     if (remark) updates["trainings.$.remark"] = remark;
 
     // Cas particulier : elevation-difference met à jour deux champs
-    if (elevationDiff) {
-      updates["trainings.$.elevationGain"] = elevationDiff;
-      updates["trainings.$.elevationLoss"] = elevationDiff;
-    }
+    if (elevationGain) updates["trainings.$.elevationGain"] = elevationGain;
+    if (elevationLoss) updates["trainings.$.elevationLoss"] = elevationLoss;
 
     // 3. Exécution de la mise à jour
     const camp = await CampModel.findOneAndUpdate(
@@ -331,7 +322,7 @@ class CampController {
     // (juste sans modif). Pour une suppression, c'est souvent le comportement
     // désiré (Idempotence : "Assure-toi que c'est parti").
 
-    res.status(204).json({ message: "Training deleted" });
+    res.status(200).json({ message: "Training deleted" });
   }
 }
 
