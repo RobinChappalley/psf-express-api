@@ -26,8 +26,7 @@ export const validateTrainingBody = [
 
   // 2. Champs Obligatoires & Dates
   body("date")
-    .notEmpty()
-    .withMessage("Training date is required")
+    .optional({ checkFalsy: true })
     .isISO8601()
     .withMessage("Training date must be a valid ISO8601 date")
     .toDate(), // Important: convertit la string en Date
