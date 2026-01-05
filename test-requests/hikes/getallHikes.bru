@@ -1,0 +1,16 @@
+meta {
+  name: getallHikes
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/hikes
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

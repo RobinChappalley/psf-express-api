@@ -4,8 +4,6 @@ const { Schema } = mongoose;
 
 const hashRounds = 12;
 
-console.log("📦 User.model.js is being loaded...");
-
 const addressSchema = new Schema({
   street: String,
   city: String,

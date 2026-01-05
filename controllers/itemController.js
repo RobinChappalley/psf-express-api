@@ -1,4 +1,3 @@
-import mongoose from "mongoose";
 import { matchedData } from "express-validator";
 import ItemModel from "../models/Item.model.js";
 

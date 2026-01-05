@@ -5,9 +5,15 @@ meta {
 }
 
 get {
-  url: 
-  body: none
+  url: http://{{APP_HOST}}:{{APP_PORT}}/users
+  body: json
   auth: inherit
+}
+
+body:json {
+  {"role": ["parent"],
+        "lastname": "Parent",
+        "firstname": "Jean"}
 }
 
 settings {

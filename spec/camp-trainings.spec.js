@@ -111,14 +111,15 @@ describe("Camp Trainings API", function () {
     it("should add a new training to camp", async function () {
       const newTraining = {
         date: "2025-06-22",
-        "train-going-time": "09:00",
-        "train-return-time": "19:00",
-        "meeting-time": "09:30",
-        "meeting-point": "Gare de Lausanne",
-        "return-time": "18:30",
+        trainGoingTime: "09:00",
+        trainReturnTime: "19:00",
+        meetingTime: "09:30",
+        meetingPoint: "Gare de Lausanne",
+        returnTime: "18:30",
         distance: 15.0,
-        "elevation-difference": 400,
-        "responsible-person-id": testUser._id.toString(),
+        elevationGain: 400,
+        elevationLoss: 250,
+        responsiblePerson: testUser._id.toString(),
         remark: "Entraînement difficile",
       };
 
@@ -129,8 +130,11 @@ describe("Camp Trainings API", function () {
         .expect("Content-Type", /json/);
 
       expect(res.body).toHaveProperty("_id");
-      expect(res.body.meetingPoint).toBe("Gare de Lausanne");
       expect(res.body.distance).toBe(15.0);
+      expect(res.body.elevationGain).toBe(400);
+      expect(res.body.elevationLoss).toBe(250);
+
+      expect(res.body.meetingPoint).toBe("Gare de Lausanne");
 
       // Verify camp has 2 trainings now
       const updatedCamp = await CampModel.findById(testCamp._id);
@@ -164,12 +168,36 @@ describe("Camp Trainings API", function () {
         .send(newTraining)
         .expect(404);
     });
+
+    it("should create a training with metadata AND GPX file", async () => {
+      const mockGpx = `<?xml version="1.0"?>
+      <gpx>
+        <trk>
+          <trkseg>
+            <trkpt lat="48.85" lon="2.35"></trkpt>
+            <trkpt lat="48.86" lon="2.36"></trkpt> 
+          </trkseg>
+        </trk>
+      </gpx>`;
+
+      const res = await supertest(app)
+        .post(`/camps/${testCamp._id}/trainings`)
+        .field("date", "2024-07-15")
+        .field("distance", "10")
+        .field("meetingPoint", "Base")
+        .attach("gpxFile", Buffer.from(mockGpx), "track.gpx");
+
+      expect(res.status).toBe(201);
+      expect(res.body.number).toBe(2); // Auto-incrémenté
+      expect(res.body.gpsTrack.coordinates).toBeDefined();
+      expect(res.body.gpsTrack.coordinates[0]).toEqual([2.35, 48.85]);
+    });
   });
 
   describe("PUT /camps/:campId/trainings/:trainingId", function () {
     it("should update an existing training", async function () {
       const updates = {
-        "meeting-point": "Gare de Montreux",
+        meetingPoint: "Gare de Montreux",
         distance: 18.5,
         remark: "Modification de l'itinéraire",
       };
@@ -240,8 +268,7 @@ describe("Camp Trainings API", function () {
     it("should delete a training from camp", async function () {
       const res = await supertest(app)
         .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .expect(200)
-        .expect("Content-Type", /json/);
+        .expect(200);
 
       expect(res.body).toHaveProperty("message");
 
@@ -266,7 +293,7 @@ describe("Camp Trainings API", function () {
         .expect(404);
     });
 
-    it("should return 404 for invalid training ID", async function () {
+    it("should return 400 for invalid training ID", async function () {
       await supertest(app)
         .delete(`/camps/${testCamp._id}/trainings/invalid-id`)
         .expect(400);

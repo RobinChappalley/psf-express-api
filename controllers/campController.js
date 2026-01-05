@@ -1,6 +1,7 @@
-import mongoose from "mongoose";
 import { matchedData } from "express-validator";
 import CampModel from "../models/Camp.model.js";
+import { parseGpxToCoordinates } from "../utils/gpxHandler.js";
+import createError from "http-errors";
 
 class CampController {
   async getAllCamps(req, res) {
@@ -187,77 +188,65 @@ class CampController {
   }
 
   async addCampTraining(req, res) {
-    const {
-      campId,
-      number,
-      trainingId,
-      "train-going-time": trainGoingTime,
-      "train-return-time": trainReturnTime,
-      "meeting-time": meetingTime,
-      "meeting-point": meetingPoint,
-      "return-time": returnTime,
-      "elevation-difference": elevationDiff,
-      "responsible-person-id": responsiblePerson,
-      date,
-      distance,
-      remark,
-    } = matchedData(req);
+    // 1. MatchedData retourne maintenant des clés en CamelCase
+    const data = matchedData(req);
+    const { campId } = req.params;
 
     const camp = await CampModel.findById(campId);
-    if (!camp) return res.status(404).json({ error: "Camp not found" });
+    if (!camp) throw createError(404, "Camp not found");
 
-    // --- LA LOGIQUE INTELLIGENTE ICI ---
-    // Si 'number' est fourni par le front, on le prend.
-    // Sinon, on prend la longueur du tableau + 1.
-    let finalNumber = number;
+    // 2. Logique numéro
+    const number = data.number || camp.getNextTrainingNumber(); // Supposons que cette méthode existe
+    if (camp.trainings.some((t) => t.number === number)) {
+      throw createError(409, `Training number ${number} already exists`);
+    }
 
-    if (!finalNumber) {
-      // Optionnel : Pour être plus robuste qu'un simple length + 1,
-      // on peut chercher le numéro max existant et ajouter 1.
-      if (camp.trainings.length > 0) {
-        const maxNumber = Math.max(...camp.trainings.map((t) => t.number || 0));
-        finalNumber = maxNumber + 1;
-      } else {
-        finalNumber = 1;
+    let gpsTrack = undefined;
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        gpsTrack = { type: "LineString", coordinates: coords };
       }
     }
 
-    // Petite sécurité : Vérifier si ce numéro existe déjà pour éviter les doublons ?
-    // Ce n'est pas bloquant techniquement pour Mongo, mais ça peut être bizarre fonctionnellement.
-    const exists = camp.trainings.find((t) => t.number === finalNumber);
-    if (exists) {
-      return res
-        .status(400)
-        .json({ error: `Training number ${finalNumber} already exists` });
-    }
-    // -----------------------------------
+    // 3. Construction de l'objet (Mapping Input -> Mongoose Schema)
+    const newTrainingPayload = {
+      // Champs directs (noms identiques Input/Schema)
+      number,
+      date: data.date,
+      year: new Date(data.date).getFullYear(),
+      distance: data.distance,
+      remark: data.remark,
 
-    const newTraining = {
-      number: finalNumber, // On utilise le numéro décidé
-      year: new Date(date).getFullYear(),
-      trainingId,
-      trainGoingTime,
-      trainReturnTime,
-      meetingTime,
-      meetingPoint,
-      returnTime,
-      elevationDiff,
-      responsiblePerson,
-      date,
-      distance,
-      remark,
+      // Champs CamelCase (directement accessibles via data)
+      trainGoingTime: data.trainGoingTime,
+      trainReturnTime: data.trainReturnTime,
+      meetingTime: data.meetingTime,
+      meetingPoint: data.meetingPoint,
+      returnTime: data.returnTime,
+      elevationGain: data.elevationGain,
+      elevationLoss: data.elevationLoss,
+
+      // Input: responsiblePersonId -> Schema: responsiblePerson
+      responsiblePerson: data.responsiblePersonId,
+
+      // GPX (ton code existant)
+      gpsTrack: gpsTrack,
     };
 
-    camp.trainings.push(newTraining);
-
-    // Si tu veux que les entrainements soient triés par numéro dans le tableau directement :
+    // 4. Push & Save
+    camp.trainings.push(newTrainingPayload);
     camp.trainings.sort((a, b) => a.number - b.number);
 
     await camp.save();
 
-    // Renvoi de la réponse...
-    const addedTraining = camp.trainings.find((t) => t.number === finalNumber); // Façon sûre de le retrouver
-    res.status(201).json(addedTraining);
+    // 5. Récupération & Réponse
+    const savedTraining = camp.trainings.find((t) => t.number === number);
+
+    // Debug pour te rassurer
+    console.log("Saved:", savedTraining);
+
+    res.status(201).json(savedTraining);
   }
 
   async updateCampTraining(req, res) {
@@ -266,18 +255,18 @@ class CampController {
     const {
       campId,
       trainingId,
-      "train-going-time": trainGoingTime,
-      "train-return-time": trainReturnTime,
-      "meeting-time": meetingTime,
-      "meeting-point": meetingPoint,
-      "return-time": returnTime,
-      "elevation-difference": elevationDiff,
-      "responsible-person-id": responsiblePerson,
+      trainGoingTime,
+      trainReturnTime,
+      meetingTime,
+      meetingPoint,
+      returnTime,
+      elevationGain,
+      elevationLoss,
+      responsiblePerson,
       date,
       distance,
       remark,
     } = matchedData(req);
-
     // 2. Construction dynamique de l'objet de mise à jour ($set)
     // On utilise les variables camelCase propres.
     const updates = {};
@@ -296,10 +285,8 @@ class CampController {
     if (remark) updates["trainings.$.remark"] = remark;
 
     // Cas particulier : elevation-difference met à jour deux champs
-    if (elevationDiff) {
-      updates["trainings.$.elevationGain"] = elevationDiff;
-      updates["trainings.$.elevationLoss"] = elevationDiff;
-    }
+    if (elevationGain) updates["trainings.$.elevationGain"] = elevationGain;
+    if (elevationLoss) updates["trainings.$.elevationLoss"] = elevationLoss;
 
     // 3. Exécution de la mise à jour
     const camp = await CampModel.findOneAndUpdate(

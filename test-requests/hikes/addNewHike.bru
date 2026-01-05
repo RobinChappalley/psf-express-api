@@ -1,0 +1,22 @@
+meta {
+  name: addNewHike
+  type: http
+  seq: 7
+}
+
+post {
+  url: http://{{APP_HOST}}:{{APP_PORT}}/hikes
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  userId: 695a7d96ca60a0870bd43e4d @contentType(Text)
+  image: @file(/Users/robinchappalley/Pictures/PSF25/images-calendrier/PSF-25-calendrier-01 - Petite.jpeg) @contentType(File)
+  content: "super rando dans les Alpes" @contentType(Text)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

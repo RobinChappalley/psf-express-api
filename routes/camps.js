@@ -11,6 +11,9 @@ import {
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
 import validateObjectId from "../validators/commonValidator.js";
+import multer from "multer";
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
@@ -95,9 +98,10 @@ router.get(
 
 router.post(
   "/:campId/trainings",
-  validateCreateTraining,
-  validateRequest,
-  CampController.addCampTraining
+  upload.single("gpxFile"), // 1. On extrait le fichier
+  validateCreateTraining, // 2. On valide les champs (y compris req.body peuplé par multer)
+  validateRequest, // 3. On check les erreurs de validation
+  CampController.addCampTraining // 4. On exécute la logique
 );
 
 router.put(
