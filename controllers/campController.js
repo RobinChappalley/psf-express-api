@@ -1,6 +1,10 @@
 import { matchedData } from "express-validator";
 import CampModel from "../models/Camp.model.js";
 import { parseGpxToCoordinates } from "../utils/gpxHandler.js";
+import {
+  getBoundingBox,
+  getMinDistanceToLineString,
+} from "../utils/geoUtils.js";
 import createError from "http-errors";
 
 class CampController {
@@ -323,6 +327,65 @@ class CampController {
     // désiré (Idempotence : "Assure-toi que c'est parti").
 
     res.status(200).json({ message: "Training deleted" });
+  }
+
+  async getNearestTraining(req, res) {
+    const { latitude, longitude, maxDistance = 50 } = matchedData(req);
+
+    // 1. Générer une bounding box pour le pré-filtrage
+    const bbox = getBoundingBox(latitude, longitude, maxDistance);
+
+    // 2. Requête MongoDB : récupérer tous les camps avec trainings qui ont un gpsTrack
+    // On utilise l'index 2dsphere pour optimiser
+    const camps = await CampModel.find({
+      "trainings.gpsTrack.coordinates": { $exists: true, $ne: [] },
+    })
+      .select("title startDate endDate trainings")
+      .populate("trainings.responsiblePerson");
+
+    // 3. Parcourir tous les trainings et calculer la distance minimale
+    let nearestTraining = null;
+    let minDistance = Infinity;
+    let nearestCampId = null;
+
+    for (const camp of camps) {
+      for (const training of camp.trainings) {
+        // Ignorer les trainings sans gpsTrack
+        if (!training.gpsTrack || !training.gpsTrack.coordinates) {
+          continue;
+        }
+
+        // Calculer la distance minimale au tracé
+        const distance = getMinDistanceToLineString(
+          latitude,
+          longitude,
+          training.gpsTrack.coordinates
+        );
+
+        // Vérifier si c'est le plus proche et dans la limite maxDistance
+        if (distance < minDistance && distance <= maxDistance) {
+          minDistance = distance;
+          nearestTraining = training;
+          nearestCampId = camp._id;
+        }
+      }
+    }
+
+    // 4. Si aucun entraînement trouvé
+    if (!nearestTraining) {
+      return res.status(404).json({
+        error: `No training found within ${maxDistance}km of the given location`,
+      });
+    }
+
+    // 5. Construire la réponse (format identique à getCampTrainingById + infos supplémentaires)
+    const response = {
+      ...nearestTraining.toObject(),
+      _campId: nearestCampId,
+      _distanceKm: Math.round(minDistance * 100) / 100, // Arrondi à 2 décimales
+    };
+
+    res.status(200).json(response);
   }
 }
 

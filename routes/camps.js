@@ -7,6 +7,7 @@ import {
   validateCampItem,
   validateCreateTraining,
   validateUpdateTraining,
+  validateNearestTraining,
 } from "../validators/campSubdocValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
@@ -90,6 +91,14 @@ router.delete(
   [...validateObjectId("campId"), validateObjectId("itemId")],
   validateRequest,
   CampController.deleteCampItem
+);
+
+// Recherche de l'entraînement le plus proche (DOIT être avant /:campId/trainings)
+router.get(
+  "/trainings/nearest",
+  validateNearestTraining,
+  validateRequest,
+  CampController.getNearestTraining
 );
 
 // Camp Trainings Routes
