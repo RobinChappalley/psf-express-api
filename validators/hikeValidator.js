@@ -1,7 +1,7 @@
 import { body } from "express-validator";
 
 export const validateHikeHikeCreation = [
-  body("userId").isMongoId().withMessage("User ID must be a valid Mongo ID"),
+  body("user").isMongoId().withMessage("User must be a valid Mongo ID"),
 
   body("content")
     .trim()
