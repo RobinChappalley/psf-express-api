@@ -1,4 +1,4 @@
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import validateObjectId from "./commonValidator.js";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -229,4 +229,27 @@ export const validateInformationEvening = [
     .optional()
     .isInt({ min: 0 })
     .withMessage("Number of participants must be a non-negative integer"),
+];
+
+// Validation pour la recherche d'entraînement le plus proche
+export const validateNearestTraining = [
+  query("latitude")
+    .notEmpty()
+    .withMessage("Latitude is required")
+    .isFloat({ min: -90, max: 90 })
+    .withMessage("Latitude must be between -90 and 90")
+    .toFloat(),
+
+  query("longitude")
+    .notEmpty()
+    .withMessage("Longitude is required")
+    .isFloat({ min: -180, max: 180 })
+    .withMessage("Longitude must be between -180 and 180")
+    .toFloat(),
+
+  query("maxDistance")
+    .optional()
+    .isFloat({ min: 0.1 })
+    .withMessage("maxDistance must be a positive number")
+    .toFloat(),
 ];
