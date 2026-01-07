@@ -6,6 +6,7 @@ import {
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import validateObjectId from "../validators/commonValidator.js";
 import UserController from "../controllers/userController.js";
+import { authenticate, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -35,6 +36,8 @@ router.put(
 
 router.delete(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateObjectId(),
   validateRequest,
   UserController.deleteUser
