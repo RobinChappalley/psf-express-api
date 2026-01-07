@@ -1,0 +1,53 @@
+meta {
+  name: add second training with GPX
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{base-url}}/camps/695afc43d78a8a6f7c433b02/trainings/
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  date: 2026-06-29
+  trainGoingTime: 08:30
+  trainReturnTime: 20:00
+  meetingTime: 09:00
+  meetingPoint: Gare de Genève
+  returnTime: 19:30
+  distance: 22.0
+  elevationGain: 600
+  elevationLoss: 550
+  responsiblePerson: 607f1f77bcf86cd799439001
+  remark: Entraînement 2 - Région de Genève
+  gpxFile: @file(/path/to/your/training2.gpx)
+}
+
+docs {
+  # Add Second Training with GPX File
+
+  Cette requête permet d'ajouter un deuxième entraînement avec un fichier GPX différent.
+
+  ## Instructions pour tester la fonctionnalité "nearest"
+  1. Remplacer le campId dans l'URL par l'ID d'un camp existant (le même que la première requête)
+  2. Remplacer le responsiblePerson par l'ID d'un utilisateur existant
+  3. **IMPORTANT**: Cliquer sur le champ `gpxFile` et sélectionner un DEUXIÈME fichier GPX réel (différent du premier)
+
+  ## Workflow de test complet
+  1. Exécuter "add new training with GPX" avec un premier fichier GPX (ex: tracé région Lausanne)
+  2. Exécuter cette requête avec un deuxième fichier GPX (ex: tracé région Genève)
+  3. Exécuter "Get Nearest Training" avec des coordonnées proches du premier tracé → devrait retourner training 1
+  4. Exécuter "Get Nearest Training" avec des coordonnées proches du second tracé → devrait retourner training 2
+
+  ## Exemples de coordonnées pour tester
+  - Lausanne: latitude=46.5197, longitude=6.6323
+  - Genève: latitude=46.2044, longitude=6.1432
+  - Berne: latitude=46.9480, longitude=7.4474
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
