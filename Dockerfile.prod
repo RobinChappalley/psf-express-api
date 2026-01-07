@@ -1,0 +1,42 @@
+# Build stage
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+COPY package*.json ./
+
+# Install all dependencies (needed for build)
+RUN npm ci
+
+# Final stage (runtime)
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm ci --omit=dev && npm cache clean --force
+
+# Copy only necessary files (exclude dev/test files)
+COPY --chown=nodejs:nodejs bin ./bin
+COPY --chown=nodejs:nodejs db ./db
+COPY --chown=nodejs:nodejs controllers ./controllers
+COPY --chown=nodejs:nodejs middlewares ./middlewares
+COPY --chown=nodejs:nodejs models ./models
+COPY --chown=nodejs:nodejs routes ./routes
+COPY --chown=nodejs:nodejs utils ./utils
+COPY --chown=nodejs:nodejs validators ./validators
+COPY --chown=nodejs:nodejs app.js .
+
+# Switch to non-root user
+USER nodejs
+
+EXPOSE 3000
+
+# Run the application (not through npm, directly with node)
+CMD ["node", "./bin/start.js"]
