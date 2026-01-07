@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { promisify } from "util";
 import UserModel from "../models/User.model.js";
 
 const JWT_SECRET =
@@ -13,7 +14,11 @@ export const authenticate = async (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
-  const decoded = jwt.verify(token, JWT_SECRET);
+  const decoded = await promisify(jwt.verify)(token, JWT_SECRET).catch(() => {
+    const err = new Error("Invalid or expired token");
+    err.status = 401;
+    throw err;
+  });
   const user = await UserModel.findById(decoded.id);
 
   if (!user) {

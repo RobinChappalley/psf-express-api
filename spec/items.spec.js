@@ -2,12 +2,49 @@ import supertest from "supertest";
 import app from "../app.js";
 import { connectMongo } from "../db/db.js";
 import mongoose from "mongoose";
-import { cleanDatabase } from "./utils.js";
+import { cleanDatabase, cleanDatabaseExceptUsers } from "./utils.js";
 import ItemModel from "../models/Item.model.js";
+import UserModel from "../models/User.model.js";
+
+//Declare tokens used for login
+let tokenAdmin;
+let tokenParent;
 
 beforeAll(async () => {
   await connectMongo();
   await cleanDatabase();
+
+  //Create a user with role ADMIN
+  const adminUser = await UserModel.create({
+    role: ["admin"],
+    lastname: "Admin",
+    firstname: "Person",
+    email: "person.admin@email.com",
+    password: "123456",
+    phoneNumber: "+41 79 123 34 57",
+  });
+
+  //Create a user with role PARENT
+  const parentUser = await UserModel.create({
+    role: ["parent"],
+    lastname: "Doe",
+    firstname: "John",
+    email: "john.doe@email.com",
+    password: "123456",
+    phoneNumber: "+41 79 123 34 57",
+  });
+
+  //Login admin
+  const resAdmin = await supertest(app)
+    .post("/login")
+    .send({ email: "person.admin@email.com", password: "123456" });
+  tokenAdmin = resAdmin.body.token;
+
+  //Login parent
+  const resParent = await supertest(app)
+    .post("/login")
+    .send({ email: "john.doe@email.com", password: "123456" });
+  tokenParent = resParent.body.token;
 });
 afterAll(async () => {
   await mongoose.connection.close();
@@ -31,6 +68,7 @@ describe("POST /items", function () {
 
     const res = await supertest(app)
       .post("/items")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send(newItem)
       .expect(201)
       .expect("Content-Type", /json/);
@@ -45,6 +83,7 @@ describe("POST /items", function () {
 
     const res = await supertest(app)
       .post("/items")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send(newItem)
       .expect(201)
       .expect("Content-Type", /json/);
@@ -60,7 +99,11 @@ describe("POST /items", function () {
       description: "Description",
     };
 
-    await supertest(app).post("/items").send(invalidItem).expect(400);
+    await supertest(app)
+      .post("/items")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send(invalidItem)
+      .expect(400);
   });
 
   it("should fail without required name field", async function () {
@@ -69,7 +112,11 @@ describe("POST /items", function () {
       description: "Description",
     };
 
-    await supertest(app).post("/items").send(invalidItem).expect(400);
+    await supertest(app)
+      .post("/items")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send(invalidItem)
+      .expect(400);
   });
 
   it("should fail with duplicate slug", async function () {
@@ -79,13 +126,18 @@ describe("POST /items", function () {
       description: "Autre description",
     };
 
-    await supertest(app).post("/items").send(duplicateItem).expect(409); // Conflict - handled by error handler
+    await supertest(app)
+      .post("/items")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send(duplicateItem)
+      .expect(409); // Conflict - handled by error handler
   });
 
   describe("GET /items", function () {
     it("should retrieve the list of all items", async function () {
       const res = await supertest(app)
         .get("/items")
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -100,7 +152,7 @@ describe("POST /items", function () {
     let getTestItem;
 
     beforeEach(async () => {
-      await cleanDatabase();
+      await cleanDatabaseExceptUsers();
 
       getTestItem = await ItemModel.create({
         slug: `sac-a-dos-70l`,
@@ -112,6 +164,7 @@ describe("POST /items", function () {
     it("should retrieve a specific item by ID", async function () {
       const res = await supertest(app)
         .get(`/items/${getTestItem._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -124,7 +177,7 @@ describe("POST /items", function () {
   describe("PUT /item/:id", function () {
     let putTestItem;
     beforeEach(async () => {
-      await cleanDatabase();
+      await cleanDatabaseExceptUsers();
 
       putTestItem = await ItemModel.create({
         slug: `tente-2-places`,
@@ -140,6 +193,7 @@ describe("POST /items", function () {
       };
       const res = await supertest(app)
         .put(`/items/${putTestItem._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -155,6 +209,7 @@ describe("POST /items", function () {
       };
       const res = await supertest(app)
         .put(`/items/${putTestItem._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -167,6 +222,7 @@ describe("POST /items", function () {
       const fakeId = new mongoose.Types.ObjectId();
       await supertest(app)
         .put(`/items/${fakeId}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send({ name: "Updated name" })
         .expect(404);
     });
@@ -175,7 +231,7 @@ describe("POST /items", function () {
   describe("DELETE /item/:id", function () {
     let deleteTestItem;
     beforeEach(async () => {
-      await cleanDatabase();
+      await cleanDatabaseExceptUsers();
 
       deleteTestItem = await ItemModel.create({
         slug: `tente-2-places`,
@@ -186,6 +242,7 @@ describe("POST /items", function () {
     it("should delete an existing item", async function () {
       const res = await supertest(app)
         .delete(`/items/${deleteTestItem._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -198,7 +255,10 @@ describe("POST /items", function () {
 
     it("should return 404 for non-existent item", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app).delete(`/items/${fakeId}`).expect(404);
+      await supertest(app)
+        .delete(`/items/${fakeId}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
+        .expect(404);
     });
   });
 });

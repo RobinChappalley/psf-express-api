@@ -15,4 +15,16 @@ async function cleanDatabase() {
   await Promise.all(deletePromises);
 }
 
-export { cleanDatabase };
+async function cleanDatabaseExceptUsers() {
+  if (!mongoose.connection.db) return;
+
+  const collections = await mongoose.connection.db.collections();
+
+  const deletePromises = collections
+    .filter((col) => col.collectionName !== "users")
+    .map((col) => col.deleteMany({}));
+
+  await Promise.all(deletePromises);
+}
+
+export { cleanDatabase, cleanDatabaseExceptUsers };

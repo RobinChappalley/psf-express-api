@@ -23,7 +23,7 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ error: "ID invalide." });
   }
 
-  // --- Gestion erreurs génériques (compatible avec votre ancien code) ---
+  // --- Gestion erreurs génériques ---
 
   // Si l'erreur a un status défini (ex: créé par createError(404)), on l'utilise
   const status = err.status || 500;

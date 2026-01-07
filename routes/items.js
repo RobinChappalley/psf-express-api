@@ -6,14 +6,17 @@ import {
 import validateObjectId from "../validators/commonValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import ItemController from "../controllers/itemController.js";
+import { authenticate, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
 
 //ici on est donc à http://{{APP_HOST}}:{{APP_PORT}}/items
 
-router.get("/", ItemController.getAllItems);
+router.get("/", authenticate, restrictTo("admin"), ItemController.getAllItems);
 router.get(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateObjectId(),
   validateRequest,
   ItemController.getItemById
@@ -21,6 +24,8 @@ router.get(
 
 router.post(
   "/",
+  authenticate,
+  restrictTo("admin"),
   validateCreateItem,
   validateRequest,
   ItemController.createItem
@@ -28,6 +33,8 @@ router.post(
 
 router.put(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateUpdateItem,
   validateRequest,
   ItemController.updateItem
@@ -35,6 +42,8 @@ router.put(
 
 router.delete(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateObjectId(),
   validateRequest,
   ItemController.deleteItem
