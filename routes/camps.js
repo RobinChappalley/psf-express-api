@@ -12,6 +12,7 @@ import validateRequest from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
 import validateObjectId from "../validators/commonValidator.js";
 import multer from "multer";
+import { authenticate, restrictTo } from "../middlewares/auth.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -27,12 +28,16 @@ router.get(
 );
 router.post(
   "/",
+  authenticate,
+  restrictTo("admin"),
   validateCreateCamp,
   validateRequest,
   CampController.createCamp
 );
 router.put(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateUpdateCamp,
   validateRequest,
   CampController.updateCamp
@@ -40,6 +45,8 @@ router.put(
 
 router.delete(
   "/:id",
+  authenticate,
+  restrictTo("admin"),
   validateObjectId(),
   validateRequest,
   CampController.deleteCamp
@@ -48,6 +55,8 @@ router.delete(
 // Camp Items Routes
 router.get(
   "/:campId/items",
+  //authenticate,
+  //restrictTo("parent", "accompagnant", "admin"),
   validateObjectId(),
   validateRequest,
   CampController.getCampItems
@@ -55,6 +64,8 @@ router.get(
 
 router.get(
   "/:campId/item/:itemId",
+  //authenticate,
+  //restrictTo("parent", "accompagnant", "admin"),
   [...validateObjectId("campId"), validateObjectId("itemId")],
   validateRequest,
   CampController.getCampItemById
@@ -84,6 +95,8 @@ router.delete(
 // Camp Trainings Routes
 router.get(
   "/:campId/trainings",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   validateObjectId("campId"),
   validateRequest,
   CampController.getCampTrainings
@@ -91,6 +104,8 @@ router.get(
 
 router.get(
   "/:campId/trainings/:trainingId",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   [...validateObjectId("campId"), validateObjectId("trainingId")],
   validateRequest,
   CampController.getCampTrainingById
@@ -98,6 +113,8 @@ router.get(
 
 router.post(
   "/:campId/trainings",
+  authenticate,
+  restrictTo("admin"),
   upload.single("gpxFile"), // 1. On extrait le fichier
   validateCreateTraining, // 2. On valide les champs (y compris req.body peuplé par multer)
   validateRequest, // 3. On check les erreurs de validation
@@ -106,6 +123,8 @@ router.post(
 
 router.put(
   "/:campId/trainings/:trainingId",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   validateUpdateTraining,
   validateRequest,
   CampController.updateCampTraining
@@ -113,6 +132,8 @@ router.put(
 
 router.delete(
   "/:campId/trainings/:trainingId",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   [...validateObjectId("campId"), validateObjectId("trainingId")],
   validateRequest,
   CampController.deleteCampTraining
