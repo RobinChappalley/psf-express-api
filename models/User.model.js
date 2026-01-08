@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 const { Schema } = mongoose;
+
+const hashRounds = 12;
 
 const addressSchema = new Schema({
   street: String,
@@ -61,6 +64,11 @@ const userSchema = new Schema({
     lowercase: true,
     trim: true,
     unique: true,
+    sparse: true,
+  },
+  password: {
+    type: String,
+    select: false,
   },
   phoneNumber: { type: String },
   address: addressSchema,
@@ -83,5 +91,24 @@ const userSchema = new Schema({
   participationInfo: participationInfoSchema,
 });
 
+userSchema.pre("save", async function (next) {
+  if (!this.password || !this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, hashRounds);
+  next();
+});
+
+userSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+userSchema.pre("save", function (next) {
+  if (this.phoneNumber) {
+    this.phoneNumber = this.phoneNumber
+      .replace(/^00/, "+")
+      .replace(/[\s\-\(\)]/g, "");
+  }
+  next();
+});
+
 const UserModel = mongoose.model("User", userSchema);
-module.exports = UserModel;
+export default UserModel;

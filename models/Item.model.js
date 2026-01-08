@@ -8,4 +8,5 @@ const itemSchema = new Schema({
 });
 
 const ItemModel = mongoose.model("Item", itemSchema);
-module.exports = ItemModel;
+//module.exports = ItemModel;
+export default ItemModel;

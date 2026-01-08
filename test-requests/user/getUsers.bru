@@ -1,0 +1,22 @@
+meta {
+  name: getUsers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base-url}}/users
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {"role": ["parent"],
+        "lastname": "Parent",
+        "firstname": "Jean"}
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

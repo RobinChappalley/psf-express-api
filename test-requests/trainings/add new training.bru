@@ -1,0 +1,53 @@
+meta {
+  name: add new training with GPX
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{base-url}}/camps/695afc43d78a8a6f7c433b02/trainings/
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  date: 2026-06-22
+  trainGoingTime: 09:00
+  trainReturnTime: 19:00
+  meetingTime: 09:30
+  meetingPoint: Gare de Lausanne
+  returnTime: 18:30
+  distance: 15.0
+  elevationGain: 400
+  elevationLoss: 350
+  responsiblePerson: 607f1f77bcf86cd799439001
+  remark: Entraînement 1 - Région de Lausanne
+  gpxFile: @file(/path/to/your/training1.gpx)
+}
+
+docs {
+  # Add Training with GPX File
+
+  Cette requête permet d'ajouter un entraînement avec un fichier GPX.
+
+  ## Instructions
+  1. Remplacer le campId dans l'URL par l'ID d'un camp existant
+  2. Remplacer le responsiblePerson par l'ID d'un utilisateur existant
+  3. **IMPORTANT**: Cliquer sur le champ `gpxFile` et sélectionner un fichier GPX réel depuis votre système
+
+  ## Champs
+  - `gpxFile`: Fichier GPX contenant le tracé GPS (fichier)
+  - `date`: Date de l'entraînement (ISO 8601)
+  - `meetingPoint`: Point de rendez-vous
+  - `distance`: Distance en km
+  - `elevationGain`: Dénivelé positif en mètres
+  - `elevationLoss`: Dénivelé négatif en mètres
+  - `responsiblePerson`: ID de la personne responsable
+
+  Le fichier GPX sera parsé automatiquement et les coordonnées seront extraites.
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

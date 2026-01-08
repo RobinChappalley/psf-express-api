@@ -1483,6 +1483,87 @@ paths:
 components:
   schemas:
     ####################################
+    # USER
+    ####################################
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        role:
+          type: array
+          items: { type: string }
+          enum: ["admin", "accompagnant", "parent", "enfant"]
+        lastname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "Dupont"
+        firstname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "Jean"
+        email:
+          type: string
+          format: email
+          example: "jean.dupont@example.com"
+        phoneNumber:
+          type: string
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city: { type: string }
+            postalCode: { type: number }
+            country: { type: string }
+        parent:
+          type: string
+          example: "60d0fe4f5311236168a109ca"
+        children:
+          type: array
+          items: { type: string }
+        camps:
+          type: array
+          items: { type: string }
+        participationInfo:
+          type: object
+          properties:
+            birthDate:
+              type: string
+              format: date
+              example: "2005-06-15"
+            tshirtInfo:
+              type: object
+              properties:
+                size:
+                  type: string
+                  enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"]
+                  example: "m"
+                gender:
+                  type: string
+                  enum: ["m", "f"]
+                  example: "f"
+            allergies:
+              type: array
+              items: { type: string }
+            medication:
+              type: array
+              items: { type: string }
+            insuranceNumber: { type: string }
+            insuranceName: { type: string }
+            idExpireDate:
+              type: string
+              format: date
+              example: "2026-12-31"
+            publicTransportPass:
+              type: string
+              enum: ["AG", "demi-tarif", "aucun"]
+            isCASMember: { type: boolean }
+            isHelicopterInsured: { type: boolean }
+            hasPhotoConsent: { type: boolean }
+            hasPaid: { type: boolean }
+
+    ####################################
     # CAMP
     ####################################
     Camp:
@@ -1490,33 +1571,47 @@ components:
       required:
         - title
       properties:
-        _id: { type: string, description: "ID MongoDB" }
-        title: { type: string, description: "Titre unique du camp" }
-        startDate: { type: string, format: date-time }
-        endDate: { type: string, format: date-time }
-        subStartDatetime: { type: string, format: date-time, description: "Date de début des inscriptions" }
-        subEndDatetime: { type: string, format: date-time, description: "Date de fin des inscriptions" }
-        gpsTrack: { type: object }
+        id: { type: string }
+        title: { type: string, example: "Camp de marche 2025" }
+        startDate:
+          type: string
+          format: date
+          example: "2025-07-01"
+        endDate:
+          type: string
+          format: date
+          example: "2025-07-15"
+        subStartDatetime:
+          type: string
+          format: date-time
+          example: "2025-03-01T09:00:00Z"
+        subEndDatetime:
+          type: string
+          format: date-time
+          example: "2025-05-31T23:59:59Z"
+        gpsTrack:
+          type: object
+          description: "Objet JSON représentant le tracé GPS (structure non spécifiée)"
         itemsList:
           type: array
           items:
             $ref: "#/components/schemas/CampItem"
-        infoEvening:
-          $ref: "#/components/schemas/InformationEvening"
+        information-evening:
+          $ref: "#/components/schemas/InfoEvening"
         trainings:
           type: array
           items:
             $ref: "#/components/schemas/Training"
-        stages:
-          type: array
-          items:
-            $ref: "#/components/schemas/Stage"
         fundraisings:
           type: array
           items:
             $ref: "#/components/schemas/Fundraising"
         generalMeeting:
           $ref: "#/components/schemas/GeneralMeeting"
+        stages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stage"
 
     CampItem:
       type: object
@@ -1527,6 +1622,30 @@ components:
         quantity: { type: number }
 
     ####################################
+    # INFORMATION EVENING
+    ####################################
+    InfoEvening:
+      type: object
+      required:
+        - number
+      properties:
+        dateTime:
+          type: string
+          format: date-time
+          example: "2025-06-15T18:00:00Z"
+        location: { type: string, example: "Salle des fêtes, Lausanne" }
+        participants:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                example: "parent@example.com"
+              nbOfParticipants: { type: integer, example: 2 }
+
+    ####################################
     # TRAINING
     ####################################
     Training:
@@ -1534,48 +1653,26 @@ components:
       required:
         - number
       properties:
-        _id: { type: string, description: "ID MongoDB" }
-        number: { type: number, description: "Numéro unique de l'entraînement" }
-        date: { type: string, format: date-time }
-        trainGoingTime: { type: string }
-        trainReturnTime: { type: string }
-        meetingTime: { type: string }
-        meetingPoint: { type: string }
-        returnTime: { type: string }
-        distance: { type: number }
-        elevationGain: { type: number }
-        elevationLoss: { type: number }
+        number: { type: integer, example: 1 }
+        date:
+          type: string
+          format: date
+          example: "2025-07-02"
+        trainGoingTime: { type: string, example: "08:00" }
+        trainReturnTime: { type: string, example: "18:00" }
+        meetingTime: { type: string, example: "08:30" }
+        meetingPoint: { type: string, example: "Gare centrale" }
+        returnTime: { type: string, example: "17:30" }
+        distance: { type: number, example: 12.5 }
+        elevationGain: { type: number, example: 300 }
+        elevationLoss: { type: number, example: 200 }
         responsiblePerson:
           type: string
-          description: "ID de l'utilisateur responsable (référence à User)"
-        itemsList:
+        items-list:
           type: array
           items:
-            type: object
-            properties:
-              itemId:
-                type: string
-                description: "ID de l'objet (référence à Item)"
-              quantity: { type: number }
-        remark: { type: string }
-
-    ####################################
-    # STAGE
-    ####################################
-    Stage:
-      type: object
-      required:
-        - number
-      properties:
-        _id: { type: string, description: "ID MongoDB" }
-        number: { type: number, description: "Numéro unique de l'étape" }
-        date: { type: string, format: date-time }
-        startPoint: { type: string }
-        endPoint: { type: string }
-        distance: { type: number }
-        elevationGain: { type: number }
-        elevationLoss: { type: number }
-        routeDescription: { type: string }
+            $ref: "#/components/schemas/CampItem"
+        remark: { type: string, example: "Prévoir des chaussures imperméables" }
 
     ####################################
     # FUNDRAISING
@@ -1585,48 +1682,61 @@ components:
       required:
         - number
       properties:
-        _id: { type: string, description: "ID MongoDB" }
-        number: { type: number, description: "Numéro unique de la vente" }
-        dateTime: { type: string, format: date-time }
-        location: { type: string }
+        id: { type: string }
+        number: { type: integer, example: 1 }
+        dateTime:
+          type: string
+          format: date-time
+          example: "2025-06-20T19:00:00Z"
+        location: { type: string, example: "Café du Marché, Lausanne" }
         participants:
           type: array
-          description: "Liste des IDs des utilisateurs participants (références à User)"
-          items: { type: string }
+          items:
+            type: string
+            example: "60d0fe4f5311236168a109ca"
 
     ####################################
-    # GENERAL MEETING (AG)
+    # GENERAL MEETING
     ####################################
     GeneralMeeting:
       type: object
       properties:
-        dateTime: { type: string, format: date-time }
-        location: { type: string }
+        dateTime:
+          type: string
+          format: date-time
+          example: "2025-07-10T19:00:00Z"
+        location: { type: string, example: "Salle des fêtes" }
         participants:
           type: array
-          items:
-            $ref: "#/components/schemas/Participant"
+        items:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+              example: "membre@example.com"
+            nbOfParticipants: { type: integer, example: 1 }
 
     ####################################
-    # INFORMATION EVENING
+    # STAGE
     ####################################
-    InformationEvening:
-      type: object
-      properties:
-        dateTime: { type: string, format: date-time }
-        location: { type: string }
-        participants:
-          type: array
-          items:
-            $ref: "#/components/schemas/Participant"
-
-    Participant:
+    Stage:
       type: object
       required:
         - email
       properties:
-        email: { type: string, format: email }
-        nbOfParticipants: { type: number }
+        number: { type: integer, example: 1 }
+        date:
+          type: string
+          format: date
+          example: "2025-07-03"
+        startPoint: { type: string, example: "Col de Jaman" }
+        endPoint: { type: string, example: "Château-d'Oex" }
+        distance: { type: number, example: 15.2 }
+        elevationGain: { type: number, example: 500 }
+        elevationLoss: { type: number, example: 300 }
+        routeDescription:
+          { type: string, example: "Par le sentier des alpages" }
 
     ####################################
     # HIKE
@@ -1636,17 +1746,22 @@ components:
       required:
         - user
       properties:
-        _id: { type: string, description: "ID MongoDB" }
         user:
           type: string
-          description: "ID de l'utilisateur (référence à User)"
-        date: { type: string, format: date-time }
-        gpsTrack: { type: object }
-        startPoint: { type: string }
-        endPoint: { type: string }
-        distance: { type: number }
-        elevationGain: { type: number }
-        elevationLoss: { type: number }
+          example: "60d0fe4f5311236168a109ca"
+          description: "ID de l'utilisateur ayant effectué la randonnée"
+        date:
+          type: string
+          format: date
+          example: "2025-07-05"
+        gpsTrack:
+          type: object
+          description: "Objet JSON représentant le tracé GPS (structure non spécifiée)"
+        startPoint: { type: string, example: "Col de Jaman" }
+        endPoint: { type: string, example: "Château-d'Oex" }
+        distance: { type: number, example: 15.2 }
+        elevationGain: { type: number, example: 500 }
+        elevationLoss: { type: number, example: 300 }
         routeDescription: { type: string }
 
     ####################################
@@ -1662,144 +1777,6 @@ components:
         slug: { type: string, description: "Identifiant unique en format slug" }
         name: { type: string, description: "Nom unique de l'objet" }
         description: { type: string }
-
-    ####################################
-    # USER
-    ####################################
-    User:
-      type: object
-      required:
-        - role
-        - lastname
-        - firstname
-      properties:
-        _id: { type: string, description: "ID MongoDB" }
-        role:
-          type: array
-          items:
-            type: string
-            enum: [admin, accompagnant, parent, enfant]
-          default: [enfant]
-        lastname: { type: string, minLength: 1, maxLength: 50 }
-        firstname: { type: string, minLength: 1, maxLength: 50 }
-        email:
-          type: string
-          format: email
-        phoneNumber: { type: string }
-        address:
-          type: object
-          properties:
-            street: { type: string }
-            city: { type: string }
-            postalCode: { type: number }
-            country: { type: string }
-        parent:
-          type: string
-          description: "ID du parent (référence à User)"
-        children:
-          type: array
-          description: "IDs des enfants (références à User)"
-          items: { type: string }
-        camps:
-          type: array
-          description: "IDs des camps auxquels l'utilisateur participe (références à Camp)"
-          items: { type: string }
-        participationInfo:
-          type: object
-          properties:
-            birthDate: { type: string, format: date-time }
-            tshirtInfo:
-              type: object
-              properties:
-                size:
-                  type: string
-                  enum: [xxs, xs, s, m, l, xl, xxl]
-                gender:
-                  type: string
-                  enum: [m, f]
-            allergies:
-              type: array
-              items: { type: string }
-            medication:
-              type: array
-              items: { type: string }
-            insuranceNumber: { type: string }
-            insuranceName: { type: string }
-            idExpireDate: { type: string, format: date-time }
-            publicTransportPass:
-              type: string
-              enum: [AG, demi-tarif, aucun]
-            isCASMember: { type: boolean }
-            isHelicopterInsured: { type: boolean }
-            hasPhotoConsent: { type: boolean }
-            hasPaid: { type: boolean }
-
-    UserInput:
-      type: object
-      required:
-        - role
-        - lastname
-        - firstname
-      description: "Schéma pour la création/modification d'un utilisateur"
-      properties:
-        role:
-          type: array
-          items:
-            type: string
-            enum: [admin, accompagnant, parent, enfant]
-        lastname: { type: string, minLength: 1, maxLength: 50 }
-        firstname: { type: string, minLength: 1, maxLength: 50 }
-        email:
-          type: string
-          format: email
-        phoneNumber: { type: string }
-        address:
-          type: object
-          properties:
-            street: { type: string }
-            city: { type: string }
-            postalCode: { type: number }
-            country: { type: string }
-        parent:
-          type: string
-          description: "ID du parent (référence à User)"
-        children:
-          type: array
-          description: "IDs des enfants (références à User)"
-          items: { type: string }
-        camps:
-          type: array
-          description: "IDs des camps auxquels l'utilisateur participe (références à Camp)"
-          items: { type: string }
-        participationInfo:
-          type: object
-          properties:
-            birthDate: { type: string, format: date-time }
-            tshirtInfo:
-              type: object
-              properties:
-                size:
-                  type: string
-                  enum: [xxs, xs, s, m, l, xl, xxl]
-                gender:
-                  type: string
-                  enum: [m, f]
-            allergies:
-              type: array
-              items: { type: string }
-            medication:
-              type: array
-              items: { type: string }
-            insuranceNumber: { type: string }
-            insuranceName: { type: string }
-            idExpireDate: { type: string, format: date-time }
-            publicTransportPass:
-              type: string
-              enum: [AG, demi-tarif, aucun]
-            isCASMember: { type: boolean }
-            isHelicopterInsured: { type: boolean }
-            hasPhotoConsent: { type: boolean }
-            hasPaid: { type: boolean }
 
 tags:
   - name: Authentication
@@ -1820,6 +1797,5 @@ tags:
     description: Assemblées générales du camp
   - name: InformationEvening
     description: Soirées d'information du camp
-
   - name: Users
     description: Gestion des utilisateurs

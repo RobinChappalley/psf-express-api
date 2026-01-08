@@ -28,6 +28,18 @@ Cette commande va :
 2. Lancer les conteneurs requis
 3. Démarrer l'application en mode développement
 
+## Tout détruire et recommencer à neuf
+
+```bash
+docker compose -f docker-compose.dev.yaml down -v
+```
+
+Cette commande va
+
+1. Arrêter les deux conteneurs (Mongo et l'app express)
+2. Supprimer le volume docker de mongo
+3. Supprimer le réseaux docker
+
 ## Bruno
 
 Burno est un [client API Open source](https://www.usebruno.com/), idéal pour documenter les requêtes effectuées. Chaque requête est un fichier .bru qui se trouve dans le dossier "test-requests"
@@ -42,6 +54,18 @@ soit dans notre cas :
 
 ```bash
 docker exec psf-express-api-express-api-1 npm test
+```
+
+## Seeders
+
+Puisque que l'API utilise docker, npm run seed ne va pas fonctionner, il faut donc lancer les tests avec la commande suivante :
+
+`docker exec nom-du-conteneur npm run seed`
+
+soit dans notre cas :
+
+```bash
+docker exec psf-express-api-express-api-1 npm run seed
 ```
 
 ## Technologies utilisées

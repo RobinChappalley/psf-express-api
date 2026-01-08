@@ -5,18 +5,30 @@ meta {
 }
 
 put {
-  url: http://localhost:{{APP_PORT}}/camps/1
+  url: {{base-url}}/camps/607f1f77bcf86cd799439020
   body: json
   auth: none
 }
 
 body:json {
   {
-    "name": "Camp d'été 2024 - Modifié",
-    "start-date": "2024-07-01",
-    "end-date": "2024-07-15",
-    "subscription-start-date": "2024-05-01",
-    "subscription-deadline": "2024-06-15",
-    "GPS-track": {}
+    "title": "Camp d'été 2024 - Alpes (Modifié)",
+    "endDate": "2024-07-20T18:00:00Z",
+    "subEndDatetime": "2024-06-20T17:00:00Z",
+    "gpsTrack": {
+      "latitude": 45.2600,
+      "longitude": 5.7300,
+      "elevation": 2500
+    },
+    "infoEvening": {
+      "dateTime": "2024-07-10T19:00:00Z",
+      "location": "Salle principale du refuge - Aile Nord",
+      "participants": [
+        {
+          "email": "participant1@example.com",
+          "nbOfParticipants": 4
+        }
+      ]
+    }
   }
 }

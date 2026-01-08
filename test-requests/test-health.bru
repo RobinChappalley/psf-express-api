@@ -1,11 +1,11 @@
 meta {
   name: test-health
   type: http
-  seq: 1
+  seq: 2
 }
 
 get {
-  url: http://localhost:{{APP_PORT}}/users
+  url: {{base-url}}/users
   body: none
   auth: inherit
 }

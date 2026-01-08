@@ -1,0 +1,54 @@
+meta {
+  name: Get Nearest Training
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base-url}}/camps/trainings/nearest?latitude=46.5197&longitude=6.6323&maxDistance=100
+  body: none
+  auth: none
+}
+
+params:query {
+  latitude: 46.5197
+  longitude: 6.6323
+  maxDistance: 100
+}
+
+docs {
+  # Get Nearest Training
+
+  Recherche l'entraînement le plus proche d'une position GPS donnée.
+
+  ## Query Parameters
+  - `latitude` (required): Latitude de la position utilisateur (-90 à 90)
+  - `longitude` (required): Longitude de la position utilisateur (-180 à 180)
+  - `maxDistance` (optional): Distance maximale de recherche en km (défaut: 50km)
+
+  ## Exemple de réponse
+  ```json
+  {
+    "_id": "...",
+    "number": 3,
+    "date": "2025-07-15T00:00:00.000Z",
+    "meetingPoint": "Gare de Lausanne",
+    "distance": 12.5,
+    "gpsTrack": {
+      "type": "LineString",
+      "coordinates": [[6.63, 46.52], [6.64, 46.53]]
+    },
+    "responsiblePerson": {
+      "_id": "...",
+      "firstname": "Jean",
+      "lastname": "Dupont"
+    },
+    "_campId": "...",
+    "_distanceKm": 2.34
+  }
+  ```
+
+  ## Cas d'erreur
+  - 404: Aucun entraînement trouvé dans le rayon spécifié
+  - 400: Paramètres invalides (latitude/longitude hors limites)
+}
