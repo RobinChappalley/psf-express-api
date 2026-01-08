@@ -11,15 +11,19 @@ paths:
   /login:
     post:
       tags: [Authentication]
-      summary: Connexion utilisateur
+      summary: Connexion utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - email
+                - password
               properties:
-                email: { type: string }
+                email: { type: string, format: email }
                 password: { type: string }
       responses:
         "200":
@@ -34,7 +38,8 @@ paths:
   /logout:
     post:
       tags: [Authentication]
-      summary: Déconnexion utilisateur
+      summary: Déconnexion utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       responses:
         "200":
           description: Déconnexion réussie
@@ -69,13 +74,15 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - title
               properties:
-                name: { type: string }
-                start-date: { type: string, format: date }
-                end-date: { type: string, format: date }
-                subscription-start-date: { type: string, format: date }
-                subscription-deadline: { type: string, format: date }
-                GPS-track: { type: object }
+                title: { type: string }
+                startDate: { type: string, format: date-time }
+                endDate: { type: string, format: date-time }
+                subStartDatetime: { type: string, format: date-time }
+                subEndDatetime: { type: string, format: date-time }
+                gpsTrack: { type: object }
       responses:
         "201":
           description: Camp créé
@@ -125,12 +132,12 @@ paths:
             schema:
               type: object
               properties:
-                name: { type: string }
-                start-date: { type: string, format: date }
-                end-date: { type: string, format: date }
-                subscription-start-date: { type: string, format: date }
-                subscription-deadline: { type: string, format: date }
-                GPS-track: { type: object }
+                title: { type: string }
+                startDate: { type: string, format: date-time }
+                endDate: { type: string, format: date-time }
+                subStartDatetime: { type: string, format: date-time }
+                subEndDatetime: { type: string, format: date-time }
+                gpsTrack: { type: object }
       responses:
         "200":
           description: Camp mis à jour
@@ -202,8 +209,8 @@ paths:
             schema:
               type: object
               properties:
-                item_id: { type: string }
-                quantity: { type: string }
+                item: { type: string, description: "ID de l'objet (référence à Item)" }
+                quantity: { type: number }
       responses:
         "201":
           description: Objet ajouté
@@ -218,7 +225,7 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/item:
+  /camps/{id}/item/{itemId}:
     put:
       tags: [Items]
       summary: Mettre à jour un objet d'un camp
@@ -228,6 +235,11 @@ paths:
           required: true
           schema: { type: string }
           description: ID du camp
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+          description: ID de l'objet dans la liste du camp
       requestBody:
         required: true
         content:
@@ -235,8 +247,8 @@ paths:
             schema:
               type: object
               properties:
-                item_id: { type: string }
-                quantity: { type: string }
+                item: { type: string, description: "ID de l'objet (référence à Item)" }
+                quantity: { type: number }
       responses:
         "200":
           description: Objet mis à jour
@@ -259,6 +271,11 @@ paths:
           required: true
           schema: { type: string }
           description: ID du camp
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+          description: ID de l'objet dans la liste du camp
       responses:
         "200":
           description: Objet supprimé
@@ -309,17 +326,21 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - number
               properties:
-                date: { type: string }
-                train-going-time: { type: string }
-                meeting-time: { type: string }
-                meeting-point: { type: string }
-                return-time: { type: string }
-                train-return-time: { type: string }
-                distance: { type: string }
-                elevation-difference: { type: string }
+                number: { type: number, description: "Numéro unique de l'entraînement" }
+                date: { type: string, format: date-time }
+                trainGoingTime: { type: string }
+                meetingTime: { type: string }
+                meetingPoint: { type: string }
+                returnTime: { type: string }
+                trainReturnTime: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
                 remark: { type: string }
-                responsible-person-id: { type: string }
+                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
       responses:
         "201":
           description: Entraînement ajouté
@@ -334,25 +355,21 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/trainings/{id2}:
+  /camps/{id}/trainings/{trainingId}:
     put:
       tags: [Trainings]
       summary: Modifier un entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
       requestBody:
         required: true
         content:
@@ -360,16 +377,18 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                train-going-time: { type: string }
-                meeting-time: { type: string }
-                meeting-point: { type: string }
-                return-time: { type: string }
-                train-return-time: { type: string }
-                distance: { type: string }
-                elevation-difference: { type: string }
+                number: { type: number, description: "Numéro unique de l'entraînement" }
+                date: { type: string, format: date-time }
+                trainGoingTime: { type: string }
+                meetingTime: { type: string }
+                meetingPoint: { type: string }
+                returnTime: { type: string }
+                trainReturnTime: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
                 remark: { type: string }
-                responsible-person-id: { type: string }
+                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
       responses:
         "200":
           description: Entraînement mis à jour
@@ -387,20 +406,16 @@ paths:
       tags: [Trainings]
       summary: Supprimer un entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
       responses:
         "200":
           description: Entraînement supprimé
@@ -409,25 +424,21 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/trainings/{id2}/items:
+  /camps/{id}/trainings/{trainingId}/items:
     get:
       tags: [Items]
       summary: Récupérer les objets d'un entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
       responses:
         "200":
           description: Liste des objets
@@ -445,20 +456,16 @@ paths:
       tags: [Items]
       summary: Ajouter un objet d'entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
       requestBody:
         required: true
         content:
@@ -466,8 +473,8 @@ paths:
             schema:
               type: object
               properties:
-                item_id: { type: string }
-                quantity: { type: string }
+                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                quantity: { type: number }
       responses:
         "201":
           description: Objet ajouté
@@ -482,32 +489,26 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/trainings/{id2}/items/{id3}:
+  /camps/{id}/trainings/{trainingId}/items/{itemId}:
     put:
       tags: [Items]
       summary: Modifier un objet d'entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
-        - {
-            in: path,
-            name: id3,
-            required: true,
-            schema: { type: string },
-            description: ID de l'objet,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+          description: ID de l'objet dans la liste
       requestBody:
         required: true
         content:
@@ -515,7 +516,8 @@ paths:
             schema:
               type: object
               properties:
-                quantity: { type: string }
+                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                quantity: { type: number }
       responses:
         "200":
           description: Objet modifié
@@ -533,27 +535,21 @@ paths:
       tags: [Items]
       summary: Supprimer un objet d'entraînement
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'entraînement,
-          }
-        - {
-            in: path,
-            name: id3,
-            required: true,
-            schema: { type: string },
-            description: ID de l'objet,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+          description: ID de l'objet dans la liste
       responses:
         "200":
           description: Objet supprimé
@@ -569,7 +565,8 @@ paths:
   /hikes:
     get:
       tags: [Hikes]
-      summary: Récupérer la liste des marches
+      summary: Récupérer la liste des marches (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       responses:
         "200":
           description: Liste des marches
@@ -583,24 +580,26 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [Hikes]
-      summary: Ajouter une marche
+      summary: Ajouter une marche (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - user
               properties:
-                user-id: { type: string }
-                date: { type: string }
-                number: { type: string }
-                start-point: { type: string }
-                end-point: { type: string }
-                distance: { type: string }
-                elevation-gain: { type: string }
-                elevation-loss: { type: string }
-                route-description: { type: string }
-                GPS-track: { type: object }
+                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
+                date: { type: string, format: date-time }
+                startPoint: { type: string }
+                endPoint: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
+                routeDescription: { type: string }
+                gpsTrack: { type: object }
       responses:
         "201":
           description: Marche ajoutée
@@ -616,7 +615,8 @@ paths:
   /hikes/{id}:
     get:
       tags: [Hikes]
-      summary: Récupérer une marche
+      summary: Récupérer une marche (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -636,7 +636,8 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [Hikes]
-      summary: Mettre à jour une marche
+      summary: Mettre à jour une marche (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -650,16 +651,15 @@ paths:
             schema:
               type: object
               properties:
-                user-id: { type: string }
-                date: { type: string }
-                number: { type: string }
-                start-point: { type: string }
-                end-point: { type: string }
-                distance: { type: string }
-                elevation-gain: { type: string }
-                elevation-loss: { type: string }
-                route-description: { type: string }
-                GPS-track: { type: object }
+                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
+                date: { type: string, format: date-time }
+                startPoint: { type: string }
+                endPoint: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
+                routeDescription: { type: string }
+                gpsTrack: { type: object }
       responses:
         "200":
           description: Marche mise à jour
@@ -675,7 +675,8 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Hikes]
-      summary: Supprimer une marche
+      summary: Supprimer une marche (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -697,7 +698,8 @@ paths:
   /items:
     get:
       tags: [Items]
-      summary: Récupérer tous les objets du répertoire
+      summary: Récupérer tous les objets du répertoire (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       responses:
         "200":
           description: Liste de tous les objets du répertoire
@@ -713,16 +715,20 @@ paths:
           description: Erreur interne au serveur
     post:
       tags: [Items]
-      summary: Ajouter un objet au répertoire
+      summary: Ajouter un objet au répertoire (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - slug
+                - name
               properties:
-                slug: { type: string }
-                name: { type: string }
+                slug: { type: string, description: "Identifiant unique en format slug" }
+                name: { type: string, description: "Nom de l'objet" }
                 description: { type: string }
       responses:
         "201": { description: Objet ajouté au répertoire }
@@ -733,18 +739,17 @@ paths:
         "500":
           description: Erreur interne au serveur
 
-  /item/{id}:
+  /items/{id}:
     put:
       tags: [Items]
-      summary: Modifier un objet du répertoire
+      summary: Modifier un objet du répertoire (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID de l'objet,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'objet
       requestBody:
         required: true
         content:
@@ -752,8 +757,8 @@ paths:
             schema:
               type: object
               properties:
-                slug: { type: string }
-                name: { type: string }
+                slug: { type: string, description: "Identifiant unique en format slug" }
+                name: { type: string, description: "Nom de l'objet" }
                 description: { type: string }
       responses:
         "200":
@@ -772,15 +777,14 @@ paths:
           description: Accès refusé
     delete:
       tags: [Items]
-      summary: Supprimer un objet du répertoire
+      summary: Supprimer un objet du répertoire (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID de l'objet,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'objet
       responses:
         "200":
           description: Objet supprimé du répertoire
@@ -798,15 +802,14 @@ paths:
   /camps/{id}/fundraisings:
     get:
       tags: [Fundraisings]
-      summary: Récupérer les ventes pour un camp
+      summary: Récupérer les ventes pour un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Liste des ventes pour un camp
@@ -824,27 +827,31 @@ paths:
           description: Camp non trouvé
     post:
       tags: [Fundraisings]
-      summary: Ajouter une vente à un camp
+      summary: Ajouter une vente à un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - number
               properties:
-                datetime: { type: string }
+                number: { type: number, description: "Numéro unique de la vente" }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
-                users-id:
+                participants:
                   type: array
-                  items: { type: string }
+                  items:
+                    type: string
+                    description: "ID de l'utilisateur participant"
       responses:
         "201":
           description: Vente ajoutée
@@ -859,25 +866,22 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/fundraisings/{id2}:
+  /camps/{id}/fundraisings/{fundraisingId}:
     get:
       tags: [Fundraisings]
-      summary: Récupérer une vente d'un camp
+      summary: Récupérer une vente d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de la vente,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: fundraisingId
+          required: true
+          schema: { type: string }
+          description: ID de la vente
       responses:
         "200":
           description: Vente trouvée
@@ -895,22 +899,19 @@ paths:
           description: Accès refusé
     put:
       tags: [Fundraisings]
-      summary: Modifier une vente
+      summary: Modifier une vente (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de la vente,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: fundraisingId
+          required: true
+          schema: { type: string }
+          description: ID de la vente
       requestBody:
         required: true
         content:
@@ -918,11 +919,14 @@ paths:
             schema:
               type: object
               properties:
-                datetime: { type: string }
+                number: { type: number, description: "Numéro unique de la vente" }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
-                users-id:
+                participants:
                   type: array
-                  items: { type: string }
+                  items:
+                    type: string
+                    description: "ID de l'utilisateur participant"
       responses:
         "200":
           description: Vente modifiée
@@ -940,22 +944,19 @@ paths:
           description: Accès refusé
     delete:
       tags: [Fundraisings]
-      summary: Supprimer une vente
+      summary: Supprimer une vente (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de la vente,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: fundraisingId
+          required: true
+          schema: { type: string }
+          description: ID de la vente
       responses:
         "200":
           description: Vente supprimée
@@ -973,15 +974,14 @@ paths:
   /camps/{id}/stages:
     get:
       tags: [Étapes]
-      summary: Récupérer les étapes d'un camp
+      summary: Récupérer les étapes d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Liste des étapes d'un camp
@@ -999,30 +999,31 @@ paths:
           description: Accès refusé
     post:
       tags: [Étapes]
-      summary: Ajouter une étape à un camp
+      summary: Ajouter une étape à un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - number
               properties:
-                date: { type: string }
-                number: { type: string }
-                start-point: { type: string }
-                end-point: { type: string }
-                distance: { type: string }
-                elevation-gain: { type: string }
-                elevation-loss: { type: string }
-                route-description: { type: string }
+                number: { type: number, description: "Numéro unique de l'étape" }
+                date: { type: string, format: date-time }
+                startPoint: { type: string }
+                endPoint: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
+                routeDescription: { type: string }
       responses:
         "201":
           description: Étape ajoutée
@@ -1037,25 +1038,22 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/stages/{id2}:
+  /camps/{id}/stages/{stageId}:
     get:
       tags: [Étapes]
-      summary: Récupérer une étape d'un camp
+      summary: Récupérer une étape d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'étape,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: stageId
+          required: true
+          schema: { type: string }
+          description: ID de l'étape
       responses:
         "200":
           description: Étape trouvée
@@ -1071,22 +1069,19 @@ paths:
           description: Accès refusé
     put:
       tags: [Étapes]
-      summary: Modifier une étape
+      summary: Modifier une étape (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'étape,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: stageId
+          required: true
+          schema: { type: string }
+          description: ID de l'étape
       requestBody:
         required: true
         content:
@@ -1094,14 +1089,14 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                number: { type: string }
-                start-point: { type: string }
-                end-point: { type: string }
-                distance: { type: string }
-                elevation-gain: { type: string }
-                elevation-loss: { type: string }
-                route-description: { type: string }
+                number: { type: number, description: "Numéro unique de l'étape" }
+                date: { type: string, format: date-time }
+                startPoint: { type: string }
+                endPoint: { type: string }
+                distance: { type: number }
+                elevationGain: { type: number }
+                elevationLoss: { type: number }
+                routeDescription: { type: string }
       responses:
         "200":
           description: Étape modifiée
@@ -1117,22 +1112,19 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Étapes]
-      summary: Supprimer une étape d'un camp
+      summary: Supprimer une étape d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            in: path,
-            name: id,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
-        - {
-            in: path,
-            name: id2,
-            required: true,
-            schema: { type: string },
-            description: ID de l'étape,
-          }
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: stageId
+          required: true
+          schema: { type: string }
+          description: ID de l'étape
       responses:
         "200":
           description: Étape supprimée
@@ -1148,37 +1140,35 @@ paths:
   /camps/{id}/ag:
     get:
       tags: [AG]
-      summary: Récupérer l'AG d'un camp
+      summary: Récupérer l'AG d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: AG trouvée
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AG"
+                $ref: "#/components/schemas/GeneralMeeting"
         "404":
           description: Camp ou AG non trouvé
         "500":
           description: Erreur interne du serveur
     post:
       tags: [AG]
-      summary: Ajouter une AG à un camp
+      summary: Ajouter une AG à un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
@@ -1186,8 +1176,7 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                time: { type: string }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
                   type: array
@@ -1199,7 +1188,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AG"
+                $ref: "#/components/schemas/GeneralMeeting"
         "400":
           description: Données invalides
         "404":
@@ -1208,15 +1197,14 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [AG]
-      summary: Modifier l'AG d'un camp
+      summary: Modifier l'AG d'un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
@@ -1224,8 +1212,7 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                time: { type: string }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
                   type: array
@@ -1237,7 +1224,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AG"
+                $ref: "#/components/schemas/GeneralMeeting"
         "400":
           description: Données invalides
         "404":
@@ -1246,15 +1233,14 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [AG]
-      summary: Supprimer une AG
+      summary: Supprimer une AG (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: AG supprimée
@@ -1270,15 +1256,14 @@ paths:
   /camps/{id}/information-evening:
     get:
       tags: [InformationEvening]
-      summary: Récupérer une soirée d'information
+      summary: Récupérer une soirée d'information (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: Soirée trouvée
@@ -1292,15 +1277,14 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [InformationEvening]
-      summary: Ajouter une soirée d’information à un camp
+      summary: Ajouter une soirée d'information à un camp (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
@@ -1308,8 +1292,7 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                time: { type: string }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
                   type: array
@@ -1330,15 +1313,14 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [InformationEvening]
-      summary: Modifier une soirée d'information
+      summary: Modifier une soirée d'information (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       requestBody:
         required: true
         content:
@@ -1346,27 +1328,35 @@ paths:
             schema:
               type: object
               properties:
-                date: { type: string }
-                time: { type: string }
+                dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
                   type: array
                   items:
                     $ref: "#/components/schemas/Participant"
       responses:
-        "200": { description: IE modifiée }
-
+        "200":
+          description: IE modifiée
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InformationEvening"
+        "400":
+          description: Données invalides
+        "404":
+          description: Camp ou IE non trouvé
+        "500":
+          description: Erreur interne du serveur
     delete:
       tags: [InformationEvening]
-      summary: Supprimer une soirée d'information
+      summary: Supprimer une soirée d'information (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
-        - {
-            name: id,
-            in: path,
-            required: true,
-            schema: { type: string },
-            description: ID du camp,
-          }
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID du camp
       responses:
         "200":
           description: IE supprimée
@@ -1382,7 +1372,8 @@ paths:
   /users:
     get:
       tags: [Users]
-      summary: Récupérer la liste de tous les utilisateurs
+      summary: Récupérer la liste de tous les utilisateurs (NON IMPLÉMENTÉ)
+      description: Cette route retourne actuellement juste un message texte, pas une liste d'utilisateurs
       responses:
         "200":
           description: Liste des utilisateurs
@@ -1394,17 +1385,16 @@ paths:
                   $ref: "#/components/schemas/User"
         "500":
           description: Erreur interne du serveur
-
-  /user:
     post:
       tags: [Users]
-      summary: Ajouter un utilisateur
+      summary: Ajouter un utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/UserInput"
       responses:
         "201":
           description: Utilisateur créé
@@ -1420,7 +1410,8 @@ paths:
   /users/{id}:
     get:
       tags: [Users]
-      summary: Récupérer un utilisateur
+      summary: Récupérer un utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -1440,7 +1431,8 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [Users]
-      summary: Modifier un utilisateur
+      summary: Modifier un utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -1452,7 +1444,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/UserInput"
       responses:
         "200":
           description: Utilisateur modifié
@@ -1468,7 +1460,8 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Users]
-      summary: Supprimer un utilisateur
+      summary: Supprimer un utilisateur (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -1494,20 +1487,21 @@ components:
     ####################################
     Camp:
       type: object
+      required:
+        - title
       properties:
-        id: { type: string }
-        name: { type: string }
-        start-date: { type: string, format: date }
-        end-date: { type: string, format: date }
-        subscription-start-date: { type: string, format: date }
-        subscription-deadline: { type: string, format: date }
-        GPS-track:
-          type: object
-        items-list:
+        _id: { type: string, description: "ID MongoDB" }
+        title: { type: string, description: "Titre unique du camp" }
+        startDate: { type: string, format: date-time }
+        endDate: { type: string, format: date-time }
+        subStartDatetime: { type: string, format: date-time, description: "Date de début des inscriptions" }
+        subEndDatetime: { type: string, format: date-time, description: "Date de fin des inscriptions" }
+        gpsTrack: { type: object }
+        itemsList:
           type: array
           items:
             $ref: "#/components/schemas/CampItem"
-        information-evening:
+        infoEvening:
           $ref: "#/components/schemas/InformationEvening"
         trainings:
           type: array
@@ -1517,77 +1511,96 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Stage"
-        fundraising:
+        fundraisings:
           type: array
           items:
             $ref: "#/components/schemas/Fundraising"
-        AG:
-          $ref: "#/components/schemas/AG"
+        generalMeeting:
+          $ref: "#/components/schemas/GeneralMeeting"
 
     CampItem:
       type: object
       properties:
-        item_id: { type: string }
-        quantity: { type: string }
+        item:
+          type: string
+          description: "ID de l'objet (référence à Item)"
+        quantity: { type: number }
 
     ####################################
     # TRAINING
     ####################################
     Training:
       type: object
+      required:
+        - number
       properties:
-        date: { type: string }
-        train-going-time: { type: string }
-        meeting-time: { type: string }
-        meeting-point: { type: string }
-        return-time: { type: string }
-        train-return-time: { type: string }
-        distance: { type: string }
-        elevation-difference: { type: string }
-        remark: { type: string }
-        id: { type: string }
-        responsible-person-id: { type: string }
-        items-list:
+        _id: { type: string, description: "ID MongoDB" }
+        number: { type: number, description: "Numéro unique de l'entraînement" }
+        date: { type: string, format: date-time }
+        trainGoingTime: { type: string }
+        trainReturnTime: { type: string }
+        meetingTime: { type: string }
+        meetingPoint: { type: string }
+        returnTime: { type: string }
+        distance: { type: number }
+        elevationGain: { type: number }
+        elevationLoss: { type: number }
+        responsiblePerson:
+          type: string
+          description: "ID de l'utilisateur responsable (référence à User)"
+        itemsList:
           type: array
           items:
-            $ref: "#/components/schemas/CampItem"
+            type: object
+            properties:
+              itemId:
+                type: string
+                description: "ID de l'objet (référence à Item)"
+              quantity: { type: number }
+        remark: { type: string }
 
     ####################################
     # STAGE
     ####################################
     Stage:
       type: object
+      required:
+        - number
       properties:
-        date: { type: string }
-        number: { type: string }
-        start-point: { type: string }
-        end-point: { type: string }
-        distance: { type: string }
-        elevation-gain: { type: string }
-        elevation-loss: { type: string }
-        route-description: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
+        number: { type: number, description: "Numéro unique de l'étape" }
+        date: { type: string, format: date-time }
+        startPoint: { type: string }
+        endPoint: { type: string }
+        distance: { type: number }
+        elevationGain: { type: number }
+        elevationLoss: { type: number }
+        routeDescription: { type: string }
 
     ####################################
     # FUNDRAISING
     ####################################
     Fundraising:
       type: object
+      required:
+        - number
       properties:
-        id: { type: string }
-        datetime: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
+        number: { type: number, description: "Numéro unique de la vente" }
+        dateTime: { type: string, format: date-time }
         location: { type: string }
-        users-id:
+        participants:
           type: array
+          description: "Liste des IDs des utilisateurs participants (références à User)"
           items: { type: string }
 
     ####################################
-    # AG
+    # GENERAL MEETING (AG)
     ####################################
-    AG:
+    GeneralMeeting:
       type: object
       properties:
-        date: { type: string }
-        time: { type: string }
+        dateTime: { type: string, format: date-time }
         location: { type: string }
         participants:
           type: array
@@ -1600,8 +1613,7 @@ components:
     InformationEvening:
       type: object
       properties:
-        date: { type: string }
-        time: { type: string }
+        dateTime: { type: string, format: date-time }
         location: { type: string }
         participants:
           type: array
@@ -1610,42 +1622,45 @@ components:
 
     Participant:
       type: object
+      required:
+        - email
       properties:
-        mail: { type: string }
-        number-of-participants: { type: string }
+        email: { type: string, format: email }
+        nbOfParticipants: { type: number }
 
     ####################################
     # HIKE
     ####################################
     Hike:
       type: object
+      required:
+        - user
       properties:
-        GPS-track: { type: object }
-        photos:
-          type: array
-          items:
-            type: object
-            properties:
-              file: { type: string }
-        user-id: { type: string }
-        date: { type: string }
-        number: { type: string }
-        start-point: { type: string }
-        end-point: { type: string }
-        distance: { type: string }
-        elevation-gain: { type: string }
-        elevation-loss: { type: string }
-        route-description: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
+        user:
+          type: string
+          description: "ID de l'utilisateur (référence à User)"
+        date: { type: string, format: date-time }
+        gpsTrack: { type: object }
+        startPoint: { type: string }
+        endPoint: { type: string }
+        distance: { type: number }
+        elevationGain: { type: number }
+        elevationLoss: { type: number }
+        routeDescription: { type: string }
 
     ####################################
     # ITEM (GLOBAL)
     ####################################
     Item:
       type: object
+      required:
+        - slug
+        - name
       properties:
-        id: { type: string }
-        slug: { type: string }
-        name: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
+        slug: { type: string, description: "Identifiant unique en format slug" }
+        name: { type: string, description: "Nom unique de l'objet" }
         description: { type: string }
 
     ####################################
@@ -1653,57 +1668,138 @@ components:
     ####################################
     User:
       type: object
+      required:
+        - role
+        - lastname
+        - firstname
       properties:
-        id: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
         role:
           type: array
-          items: { type: string }
-        parent-id: { type: string }
-        children:
-          type: array
-          items: { type: string }
-        name: { type: string }
-        firstname: { type: string }
-        phone-number:
-          type: string
-          nullable: true
+          items:
+            type: string
+            enum: [admin, accompagnant, parent, enfant]
+          default: [enfant]
+        lastname: { type: string, minLength: 1, maxLength: 50 }
+        firstname: { type: string, minLength: 1, maxLength: 50 }
         email:
           type: string
-          nullable: true
+          format: email
+        phoneNumber: { type: string }
         address:
           type: object
           properties:
             street: { type: string }
             city: { type: string }
-            postal-code: { type: string }
+            postalCode: { type: number }
             country: { type: string }
-        camps-attended:
+        parent:
+          type: string
+          description: "ID du parent (référence à User)"
+        children:
           type: array
+          description: "IDs des enfants (références à User)"
           items: { type: string }
-        participation-infos:
+        camps:
+          type: array
+          description: "IDs des camps auxquels l'utilisateur participe (références à Camp)"
+          items: { type: string }
+        participationInfo:
           type: object
           properties:
-            tshirt-info:
+            birthDate: { type: string, format: date-time }
+            tshirtInfo:
               type: object
               properties:
-                size: { type: string }
-                gender: { type: string }
+                size:
+                  type: string
+                  enum: [xxs, xs, s, m, l, xl, xxl]
+                gender:
+                  type: string
+                  enum: [m, f]
             allergies:
               type: array
               items: { type: string }
             medication:
               type: array
               items: { type: string }
-            avs-number: { type: string }
-            id-date: { type: string }
-            insurance-name: { type: string }
-            is-cas-member: { type: boolean }
-            has-AG: { type: boolean }
-            has-half-price: { type: boolean }
-            has-photo-consent: { type: boolean }
-            is-helicopter-insured: { type: boolean }
-            date-of-birth: { type: string, format: date }
-            has-paid: { type: boolean }
+            insuranceNumber: { type: string }
+            insuranceName: { type: string }
+            idExpireDate: { type: string, format: date-time }
+            publicTransportPass:
+              type: string
+              enum: [AG, demi-tarif, aucun]
+            isCASMember: { type: boolean }
+            isHelicopterInsured: { type: boolean }
+            hasPhotoConsent: { type: boolean }
+            hasPaid: { type: boolean }
+
+    UserInput:
+      type: object
+      required:
+        - role
+        - lastname
+        - firstname
+      description: "Schéma pour la création/modification d'un utilisateur"
+      properties:
+        role:
+          type: array
+          items:
+            type: string
+            enum: [admin, accompagnant, parent, enfant]
+        lastname: { type: string, minLength: 1, maxLength: 50 }
+        firstname: { type: string, minLength: 1, maxLength: 50 }
+        email:
+          type: string
+          format: email
+        phoneNumber: { type: string }
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city: { type: string }
+            postalCode: { type: number }
+            country: { type: string }
+        parent:
+          type: string
+          description: "ID du parent (référence à User)"
+        children:
+          type: array
+          description: "IDs des enfants (références à User)"
+          items: { type: string }
+        camps:
+          type: array
+          description: "IDs des camps auxquels l'utilisateur participe (références à Camp)"
+          items: { type: string }
+        participationInfo:
+          type: object
+          properties:
+            birthDate: { type: string, format: date-time }
+            tshirtInfo:
+              type: object
+              properties:
+                size:
+                  type: string
+                  enum: [xxs, xs, s, m, l, xl, xxl]
+                gender:
+                  type: string
+                  enum: [m, f]
+            allergies:
+              type: array
+              items: { type: string }
+            medication:
+              type: array
+              items: { type: string }
+            insuranceNumber: { type: string }
+            insuranceName: { type: string }
+            idExpireDate: { type: string, format: date-time }
+            publicTransportPass:
+              type: string
+              enum: [AG, demi-tarif, aucun]
+            isCASMember: { type: boolean }
+            isHelicopterInsured: { type: boolean }
+            hasPhotoConsent: { type: boolean }
+            hasPaid: { type: boolean }
 
 tags:
   - name: Authentication
