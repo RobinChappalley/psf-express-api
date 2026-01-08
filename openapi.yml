@@ -209,7 +209,11 @@ paths:
             schema:
               type: object
               properties:
-                item: { type: string, description: "ID de l'objet (référence à Item)" }
+                item:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "201":
@@ -247,7 +251,11 @@ paths:
             schema:
               type: object
               properties:
-                item: { type: string, description: "ID de l'objet (référence à Item)" }
+                item:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "200":
@@ -329,7 +337,11 @@ paths:
               required:
                 - number
               properties:
-                number: { type: number, description: "Numéro unique de l'entraînement" }
+                number:
+                  {
+                    type: number,
+                    description: "Numéro unique de l'entraînement",
+                  }
                 date: { type: string, format: date-time }
                 trainGoingTime: { type: string }
                 meetingTime: { type: string }
@@ -340,7 +352,11 @@ paths:
                 elevationGain: { type: number }
                 elevationLoss: { type: number }
                 remark: { type: string }
-                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
+                responsiblePerson:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur responsable",
+                  }
       responses:
         "201":
           description: Entraînement ajouté
@@ -377,7 +393,11 @@ paths:
             schema:
               type: object
               properties:
-                number: { type: number, description: "Numéro unique de l'entraînement" }
+                number:
+                  {
+                    type: number,
+                    description: "Numéro unique de l'entraînement",
+                  }
                 date: { type: string, format: date-time }
                 trainGoingTime: { type: string }
                 meetingTime: { type: string }
@@ -388,7 +408,11 @@ paths:
                 elevationGain: { type: number }
                 elevationLoss: { type: number }
                 remark: { type: string }
-                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
+                responsiblePerson:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur responsable",
+                  }
       responses:
         "200":
           description: Entraînement mis à jour
@@ -473,7 +497,11 @@ paths:
             schema:
               type: object
               properties:
-                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                itemId:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "201":
@@ -516,7 +544,11 @@ paths:
             schema:
               type: object
               properties:
-                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                itemId:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "200":
@@ -591,7 +623,11 @@ paths:
               required:
                 - user
               properties:
-                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
+                user:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur (référence à User)",
+                  }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -651,7 +687,11 @@ paths:
             schema:
               type: object
               properties:
-                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
+                user:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur (référence à User)",
+                  }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -727,7 +767,11 @@ paths:
                 - slug
                 - name
               properties:
-                slug: { type: string, description: "Identifiant unique en format slug" }
+                slug:
+                  {
+                    type: string,
+                    description: "Identifiant unique en format slug",
+                  }
                 name: { type: string, description: "Nom de l'objet" }
                 description: { type: string }
       responses:
@@ -757,7 +801,11 @@ paths:
             schema:
               type: object
               properties:
-                slug: { type: string, description: "Identifiant unique en format slug" }
+                slug:
+                  {
+                    type: string,
+                    description: "Identifiant unique en format slug",
+                  }
                 name: { type: string, description: "Nom de l'objet" }
                 description: { type: string }
       responses:
@@ -844,7 +892,8 @@ paths:
               required:
                 - number
               properties:
-                number: { type: number, description: "Numéro unique de la vente" }
+                number:
+                  { type: number, description: "Numéro unique de la vente" }
                 dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
@@ -919,7 +968,8 @@ paths:
             schema:
               type: object
               properties:
-                number: { type: number, description: "Numéro unique de la vente" }
+                number:
+                  { type: number, description: "Numéro unique de la vente" }
                 dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
@@ -1016,7 +1066,8 @@ paths:
               required:
                 - number
               properties:
-                number: { type: number, description: "Numéro unique de l'étape" }
+                number:
+                  { type: number, description: "Numéro unique de l'étape" }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -1089,7 +1140,8 @@ paths:
             schema:
               type: object
               properties:
-                number: { type: number, description: "Numéro unique de l'étape" }
+                number:
+                  { type: number, description: "Numéro unique de l'étape" }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -1487,12 +1539,18 @@ components:
     ####################################
     User:
       type: object
+      required:
+        - role
+        - lastname
+        - firstname
       properties:
-        id: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
         role:
           type: array
-          items: { type: string }
-          enum: ["admin", "accompagnant", "parent", "enfant"]
+          items:
+            type: string
+            enum: ["admin", "accompagnant", "parent", "enfant"]
+          default: ["enfant"]
         lastname:
           type: string
           minLength: 1
@@ -1518,20 +1576,23 @@ components:
             country: { type: string }
         parent:
           type: string
+          description: "ID du parent (référence à User)"
           example: "60d0fe4f5311236168a109ca"
         children:
           type: array
+          description: "IDs des enfants (références à User)"
           items: { type: string }
         camps:
           type: array
+          description: "IDs des camps auxquels l'utilisateur participe (références à Camp)"
           items: { type: string }
         participationInfo:
           type: object
           properties:
             birthDate:
               type: string
-              format: date
-              example: "2005-06-15"
+              format: date-time
+              example: "2005-06-15T00:00:00Z"
             tshirtInfo:
               type: object
               properties:
@@ -1553,8 +1614,88 @@ components:
             insuranceName: { type: string }
             idExpireDate:
               type: string
-              format: date
-              example: "2026-12-31"
+              format: date-time
+              example: "2026-12-31T00:00:00Z"
+            publicTransportPass:
+              type: string
+              enum: ["AG", "demi-tarif", "aucun"]
+            isCASMember: { type: boolean }
+            isHelicopterInsured: { type: boolean }
+            hasPhotoConsent: { type: boolean }
+            hasPaid: { type: boolean }
+
+    UserInput:
+      type: object
+      required:
+        - role
+        - lastname
+        - firstname
+      description: "Schéma pour la création/modification d'un utilisateur"
+      properties:
+        role:
+          type: array
+          items:
+            type: string
+            enum: ["admin", "accompagnant", "parent", "enfant"]
+        lastname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "Dupont"
+        firstname:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: "Jean"
+        email:
+          type: string
+          format: email
+          example: "jean.dupont@example.com"
+        phoneNumber: { type: string }
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city: { type: string }
+            postalCode: { type: number }
+            country: { type: string }
+        parent:
+          type: string
+          description: "ID du parent (référence à User)"
+        children:
+          type: array
+          description: "IDs des enfants (références à User)"
+          items: { type: string }
+        camps:
+          type: array
+          description: "IDs des camps auxquels l'utilisateur participe"
+          items: { type: string }
+        participationInfo:
+          type: object
+          properties:
+            birthDate:
+              type: string
+              format: date-time
+            tshirtInfo:
+              type: object
+              properties:
+                size:
+                  type: string
+                  enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"]
+                gender:
+                  type: string
+                  enum: ["m", "f"]
+            allergies:
+              type: array
+              items: { type: string }
+            medication:
+              type: array
+              items: { type: string }
+            insuranceNumber: { type: string }
+            insuranceName: { type: string }
+            idExpireDate:
+              type: string
+              format: date-time
             publicTransportPass:
               type: string
               enum: ["AG", "demi-tarif", "aucun"]
@@ -1571,16 +1712,16 @@ components:
       required:
         - title
       properties:
-        id: { type: string }
+        _id: { type: string, description: "ID MongoDB" }
         title: { type: string, example: "Camp de marche 2025" }
         startDate:
           type: string
-          format: date
-          example: "2025-07-01"
+          format: date-time
+          example: "2025-07-01T00:00:00Z"
         endDate:
           type: string
-          format: date
-          example: "2025-07-15"
+          format: date-time
+          example: "2025-07-15T00:00:00Z"
         subStartDatetime:
           type: string
           format: date-time
@@ -1596,8 +1737,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CampItem"
-        information-evening:
-          $ref: "#/components/schemas/InfoEvening"
+        infoEvening:
+          $ref: "#/components/schemas/InformationEvening"
         trainings:
           type: array
           items:
@@ -1624,10 +1765,8 @@ components:
     ####################################
     # INFORMATION EVENING
     ####################################
-    InfoEvening:
+    InformationEvening:
       type: object
-      required:
-        - number
       properties:
         dateTime:
           type: string
@@ -1637,13 +1776,7 @@ components:
         participants:
           type: array
           items:
-            type: object
-            properties:
-              email:
-                type: string
-                format: email
-                example: "parent@example.com"
-              nbOfParticipants: { type: integer, example: 2 }
+            $ref: "#/components/schemas/Participant"
 
     ####################################
     # TRAINING
@@ -1653,11 +1786,17 @@ components:
       required:
         - number
       properties:
-        number: { type: integer, example: 1 }
+        _id: { type: string, description: "ID MongoDB" }
+        number:
+          {
+            type: integer,
+            example: 1,
+            description: "Numéro unique de l'entraînement",
+          }
         date:
           type: string
-          format: date
-          example: "2025-07-02"
+          format: date-time
+          example: "2025-07-02T00:00:00Z"
         trainGoingTime: { type: string, example: "08:00" }
         trainReturnTime: { type: string, example: "18:00" }
         meetingTime: { type: string, example: "08:30" }
@@ -1668,10 +1807,16 @@ components:
         elevationLoss: { type: number, example: 200 }
         responsiblePerson:
           type: string
-        items-list:
+          description: "ID de l'utilisateur responsable (référence à User)"
+        itemsList:
           type: array
           items:
-            $ref: "#/components/schemas/CampItem"
+            type: object
+            properties:
+              itemId:
+                type: string
+                description: "ID de l'objet (référence à Item)"
+              quantity: { type: number }
         remark: { type: string, example: "Prévoir des chaussures imperméables" }
 
     ####################################
@@ -1708,14 +1853,8 @@ components:
         location: { type: string, example: "Salle des fêtes" }
         participants:
           type: array
-        items:
-          type: object
-          properties:
-            email:
-              type: string
-              format: email
-              example: "membre@example.com"
-            nbOfParticipants: { type: integer, example: 1 }
+          items:
+            $ref: "#/components/schemas/Participant"
 
     ####################################
     # STAGE
@@ -1723,20 +1862,23 @@ components:
     Stage:
       type: object
       required:
-        - email
+        - number
       properties:
-        number: { type: integer, example: 1 }
+        _id: { type: string, description: "ID MongoDB" }
+        number:
+          { type: integer, example: 1, description: "Numéro unique de l'étape" }
         date:
           type: string
-          format: date
-          example: "2025-07-03"
+          format: date-time
+          example: "2025-07-03T00:00:00Z"
         startPoint: { type: string, example: "Col de Jaman" }
         endPoint: { type: string, example: "Château-d'Oex" }
         distance: { type: number, example: 15.2 }
         elevationGain: { type: number, example: 500 }
         elevationLoss: { type: number, example: 300 }
         routeDescription:
-          { type: string, example: "Par le sentier des alpages" }
+          type: string
+          example: "Par le sentier des alpages"
 
     ####################################
     # HIKE
@@ -1777,6 +1919,22 @@ components:
         slug: { type: string, description: "Identifiant unique en format slug" }
         name: { type: string, description: "Nom unique de l'objet" }
         description: { type: string }
+
+    ####################################
+    # PARTICIPANT
+    ####################################
+    Participant:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "parent@example.com"
+        nbOfParticipants:
+          type: integer
+          example: 2
 
 tags:
   - name: Authentication
