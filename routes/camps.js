@@ -58,7 +58,7 @@ router.get(
   "/:campId/items",
   //authenticate,
   //restrictTo("parent", "accompagnant", "admin"),
-  validateObjectId(),
+  validateObjectId("campId"),
   validateRequest,
   CampController.getCampItems
 );
@@ -67,28 +67,28 @@ router.get(
   "/:campId/item/:itemId",
   //authenticate,
   //restrictTo("parent", "accompagnant", "admin"),
-  [...validateObjectId("campId"), validateObjectId("itemId")],
+  [...validateObjectId("campId"), ...validateObjectId("itemId")],
   validateRequest,
   CampController.getCampItemById
 );
 
 router.post(
   "/:campId/items",
-  validateCampItem,
+  [...validateObjectId("campId"), ...validateCampItem],
   validateRequest,
   CampController.addCampItem
 );
 
 router.put(
   "/:campId/item/:itemId",
-  validateCampItem,
+  [...validateObjectId("campId"), ...validateObjectId("itemId"), ...validateCampItem],
   validateRequest,
   CampController.updateCampItem
 );
 
 router.delete(
   "/:campId/item/:itemId",
-  [...validateObjectId("campId"), validateObjectId("itemId")],
+  [...validateObjectId("campId"), ...validateObjectId("itemId")],
   validateRequest,
   CampController.deleteCampItem
 );

@@ -11,8 +11,8 @@ paths:
   /login:
     post:
       tags: [Authentication]
-      summary: Connexion utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Connexion utilisateur
+      description: Authentifie un utilisateur et retourne un token JWT valide 7 jours
       requestBody:
         required: true
         content:
@@ -28,6 +28,14 @@ paths:
       responses:
         "200":
           description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  token: { type: string, description: "JWT token" }
         "400":
           description: Données invalides
         "401":
@@ -38,11 +46,17 @@ paths:
   /logout:
     post:
       tags: [Authentication]
-      summary: Déconnexion utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Déconnexion utilisateur
+      description: Déconnecte l'utilisateur (retourne un message de succès)
       responses:
         "200":
           description: Déconnexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Logged out successfully" }
         "500":
           description: Erreur interne du serveur
 
@@ -170,13 +184,13 @@ paths:
   # CAMP ITEMS
   ########################
 
-  /camps/{id}/items:
+  /camps/{campId}/items:
     get:
       tags: [Items]
       summary: Récupérer tous les objets d'un camp
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -198,7 +212,7 @@ paths:
       summary: Ajouter un objet à un camp
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -208,9 +222,21 @@ paths:
           application/json:
             schema:
               type: object
+              required:
+                - item_id
+                - quantity
               properties:
-                item: { type: string, description: "ID de l'objet (référence à Item)" }
-                quantity: { type: number }
+                item_id:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
+                quantity:
+                  {
+                    type: integer,
+                    minimum: 0,
+                    description: "Quantité (entier positif)",
+                  }
       responses:
         "201":
           description: Objet ajouté
@@ -225,13 +251,13 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/item/{itemId}:
-    put:
+  /camps/{campId}/item/{itemId}:
+    get:
       tags: [Items]
-      summary: Mettre à jour un objet d'un camp
+      summary: Récupérer un objet spécifique d'un camp
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -239,23 +265,62 @@ paths:
           name: itemId
           required: true
           schema: { type: string }
-          description: ID de l'objet dans la liste du camp
+          description: ID de l'objet référencé (Item._id)
+      responses:
+        "200":
+          description: Objet trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampItem"
+        "404":
+          description: Camp ou objet non trouvé
+        "500":
+          description: Erreur interne du serveur
+    put:
+      tags: [Items]
+      summary: Mettre à jour un objet d'un camp
+      parameters:
+        - in: path
+          name: campId
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: itemId
+          required: true
+          schema: { type: string }
+          description: ID de l'objet référencé (Item._id)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - item_id
+                - quantity
               properties:
-                item: { type: string, description: "ID de l'objet (référence à Item)" }
-                quantity: { type: number }
+                item_id:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
+                quantity:
+                  {
+                    type: integer,
+                    minimum: 0,
+                    description: "Quantité (entier positif)",
+                  }
       responses:
         "200":
-          description: Objet mis à jour
+          description: Objet mis à jour - retourne la liste complète des items du camp
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CampItem"
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampItem"
         "400":
           description: Données invalides
         "404":
@@ -267,7 +332,7 @@ paths:
       summary: Supprimer un objet d'un camp
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -275,7 +340,7 @@ paths:
           name: itemId
           required: true
           schema: { type: string }
-          description: ID de l'objet dans la liste du camp
+          description: ID de l'objet référencé (Item._id)
       responses:
         "200":
           description: Objet supprimé
@@ -288,13 +353,60 @@ paths:
   # CAMP TRAININGS
   ########################
 
-  /camps/{id}/trainings:
+  /camps/trainings/nearest:
+    get:
+      tags: [Trainings]
+      summary: Trouver l'entraînement le plus proche
+      description: Recherche l'entraînement le plus proche d'une position GPS donnée. Route spéciale à placer avant /:campId/trainings pour éviter les conflits. Aucune authentification requise.
+      parameters:
+        - in: query
+          name: latitude
+          required: true
+          schema: { type: number, minimum: -90, maximum: 90 }
+          description: Latitude de la position
+        - in: query
+          name: longitude
+          required: true
+          schema: { type: number, minimum: -180, maximum: 180 }
+          description: Longitude de la position
+        - in: query
+          name: maxDistance
+          schema: { type: number, minimum: 0.1, default: 50 }
+          description: Distance maximale de recherche en km (défaut 50)
+      responses:
+        "200":
+          description: Entraînement le plus proche trouvé
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Training"
+                  - type: object
+                    properties:
+                      _campId:
+                        { type: string, description: "ID du camp parent" }
+                      _distanceKm:
+                        {
+                          type: number,
+                          description: "Distance en km (arrondi 2 décimales)",
+                        }
+        "404":
+          description: Aucun entraînement trouvé dans le rayon spécifié
+        "400":
+          description: Paramètres invalides
+        "500":
+          description: Erreur interne du serveur
+
+  /camps/{campId}/trainings:
     get:
       tags: [Trainings]
       summary: Récupérer les entraînements d'un camp
+      description: Nécessite authentification (parent, accompagnant ou admin)
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -307,6 +419,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Training"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Camp non trouvé
         "500":
@@ -314,33 +430,48 @@ paths:
     post:
       tags: [Trainings]
       summary: Ajouter un entraînement
+      description: Crée un nouvel entraînement avec fichier GPX optionnel. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
-              required:
-                - number
               properties:
-                number: { type: number, description: "Numéro unique de l'entraînement" }
-                date: { type: string, format: date-time }
-                trainGoingTime: { type: string }
-                meetingTime: { type: string }
-                meetingPoint: { type: string }
-                returnTime: { type: string }
-                trainReturnTime: { type: string }
-                distance: { type: number }
-                elevationGain: { type: number }
-                elevationLoss: { type: number }
+                number:
+                  {
+                    type: integer,
+                    description: "Numéro unique de l'entraînement (optionnel - auto-généré)",
+                  }
+                date: { type: string, format: date }
+                trainGoingTime: { type: string, example: "08:00" }
+                meetingTime: { type: string, example: "08:30" }
+                meetingPoint: { type: string, example: "Gare centrale" }
+                returnTime: { type: string, example: "17:30" }
+                trainReturnTime: { type: string, example: "18:00" }
+                distance: { type: number, example: 12.5 }
+                elevationGain: { type: integer, minimum: 0 }
+                elevationLoss: { type: integer, minimum: 0 }
                 remark: { type: string }
-                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
+                responsiblePersonId:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur responsable (ObjectId)",
+                  }
+                gpxFile:
+                  {
+                    type: string,
+                    format: binary,
+                    description: "Fichier GPX (optionnel)",
+                  }
       responses:
         "201":
           description: Entraînement ajouté
@@ -350,18 +481,59 @@ paths:
                 $ref: "#/components/schemas/Training"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp non trouvé
+        "409":
+          description: Numéro d'entraînement déjà existant
         "500":
           description: Erreur interne du serveur
 
-  /camps/{id}/trainings/{trainingId}:
+  /camps/{campId}/trainings/{trainingId}:
+    get:
+      tags: [Trainings]
+      summary: Récupérer un entraînement spécifique
+      description: Nécessite authentification (parent, accompagnant ou admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: campId
+          required: true
+          schema: { type: string }
+          description: ID du camp
+        - in: path
+          name: trainingId
+          required: true
+          schema: { type: string }
+          description: ID de l'entraînement
+      responses:
+        "200":
+          description: Entraînement trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Training"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
+        "404":
+          description: Camp ou entraînement non trouvé
+        "500":
+          description: Erreur interne du serveur
     put:
       tags: [Trainings]
       summary: Modifier un entraînement
+      description: Met à jour un entraînement existant. Nécessite authentification (parent, accompagnant ou admin)
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -376,19 +548,23 @@ paths:
           application/json:
             schema:
               type: object
+              description: "Tous les champs sont optionnels"
               properties:
-                number: { type: number, description: "Numéro unique de l'entraînement" }
-                date: { type: string, format: date-time }
+                date: { type: string, format: date }
                 trainGoingTime: { type: string }
                 meetingTime: { type: string }
                 meetingPoint: { type: string }
                 returnTime: { type: string }
                 trainReturnTime: { type: string }
                 distance: { type: number }
-                elevationGain: { type: number }
-                elevationLoss: { type: number }
+                elevationGain: { type: integer }
+                elevationLoss: { type: integer }
                 remark: { type: string }
-                responsiblePerson: { type: string, description: "ID de l'utilisateur responsable" }
+                responsiblePerson:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur responsable",
+                  }
       responses:
         "200":
           description: Entraînement mis à jour
@@ -398,6 +574,10 @@ paths:
                 $ref: "#/components/schemas/Training"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Camp ou entraînement non trouvé
         "500":
@@ -405,9 +585,12 @@ paths:
     delete:
       tags: [Trainings]
       summary: Supprimer un entraînement
+      description: Supprime un entraînement. Nécessite authentification (parent, accompagnant ou admin)
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
-          name: id
+          name: campId
           required: true
           schema: { type: string }
           description: ID du camp
@@ -419,6 +602,10 @@ paths:
       responses:
         "200":
           description: Entraînement supprimé
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Camp ou entraînement non trouvé
         "500":
@@ -473,7 +660,11 @@ paths:
             schema:
               type: object
               properties:
-                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                itemId:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "201":
@@ -516,7 +707,11 @@ paths:
             schema:
               type: object
               properties:
-                itemId: { type: string, description: "ID de l'objet (référence à Item)" }
+                itemId:
+                  {
+                    type: string,
+                    description: "ID de l'objet (référence à Item)",
+                  }
                 quantity: { type: number }
       responses:
         "200":
@@ -565,11 +760,11 @@ paths:
   /hikes:
     get:
       tags: [Hikes]
-      summary: Récupérer la liste des marches (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Récupérer toutes les randonnées
+      description: Retourne la liste de toutes les randonnées (posts avec images). Aucune authentification requise.
       responses:
         "200":
-          description: Liste des marches
+          description: Liste des randonnées
           content:
             application/json:
               schema:
@@ -580,29 +775,38 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [Hikes]
-      summary: Ajouter une marche (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Créer une randonnée
+      description: Crée une nouvelle randonnée avec un contenu texte et une image optionnelle. Aucune authentification requise.
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
-                - user
+                - userId
+                - content
               properties:
-                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
-                date: { type: string, format: date-time }
-                startPoint: { type: string }
-                endPoint: { type: string }
-                distance: { type: number }
-                elevationGain: { type: number }
-                elevationLoss: { type: number }
-                routeDescription: { type: string }
-                gpsTrack: { type: object }
+                userId:
+                  {
+                    type: string,
+                    description: "ID de l'utilisateur (ObjectId)",
+                  }
+                content:
+                  {
+                    type: string,
+                    maxLength: 2000,
+                    description: "Contenu texte de la randonnée",
+                  }
+                image:
+                  {
+                    type: string,
+                    format: binary,
+                    description: "Image de la randonnée (optionnelle)",
+                  }
       responses:
         "201":
-          description: Marche ajoutée
+          description: Randonnée créée
           content:
             application/json:
               schema:
@@ -612,82 +816,22 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  /hikes/{id}:
-    get:
-      tags: [Hikes]
-      summary: Récupérer une marche (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-          description: ID de la marche
-      responses:
-        "200":
-          description: Marche trouvée
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Hike"
-        "404":
-          description: Marche non trouvée
-        "500":
-          description: Erreur interne du serveur
-    put:
-      tags: [Hikes]
-      summary: Mettre à jour une marche (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-          description: ID de la marche
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                user: { type: string, description: "ID de l'utilisateur (référence à User)" }
-                date: { type: string, format: date-time }
-                startPoint: { type: string }
-                endPoint: { type: string }
-                distance: { type: number }
-                elevationGain: { type: number }
-                elevationLoss: { type: number }
-                routeDescription: { type: string }
-                gpsTrack: { type: object }
-      responses:
-        "200":
-          description: Marche mise à jour
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Hike"
-        "400":
-          description: Données invalides
-        "404":
-          description: Marche non trouvée
-        "500":
-          description: Erreur interne du serveur
+  /hikes/{hikeId}:
     delete:
       tags: [Hikes]
-      summary: Supprimer une marche (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Supprimer une randonnée
+      description: Supprime une randonnée. Aucune authentification requise.
       parameters:
         - in: path
-          name: id
+          name: hikeId
           required: true
           schema: { type: string }
-          description: ID de la marche
+          description: ID de la randonnée
       responses:
         "200":
-          description: Marche supprimée
+          description: Randonnée supprimée
         "404":
-          description: Marche non trouvée
+          description: Randonnée non trouvée
         "500":
           description: Erreur interne du serveur
 
@@ -698,8 +842,10 @@ paths:
   /items:
     get:
       tags: [Items]
-      summary: Récupérer tous les objets du répertoire (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Récupérer tous les objets du répertoire
+      description: Retourne la liste de tous les items. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Liste de tous les objets du répertoire
@@ -709,14 +855,18 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Item"
+        "401":
+          description: Non authentifié
         "403":
-          description: Accès refusé
+          description: Accès refusé (rôle admin requis)
         "500":
           description: Erreur interne au serveur
     post:
       tags: [Items]
-      summary: Ajouter un objet au répertoire (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Ajouter un objet au répertoire
+      description: Crée un nouvel item. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -727,23 +877,63 @@ paths:
                 - slug
                 - name
               properties:
-                slug: { type: string, description: "Identifiant unique en format slug" }
-                name: { type: string, description: "Nom de l'objet" }
+                slug:
+                  {
+                    type: string,
+                    description: "Identifiant unique en format slug",
+                  }
+                name: { type: string, description: "Nom unique de l'objet" }
                 description: { type: string }
       responses:
-        "201": { description: Objet ajouté au répertoire }
+        "201":
+          description: Objet ajouté au répertoire
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
         "403":
-          description: Accès refusé
+          description: Accès refusé (rôle admin requis)
         "500":
           description: Erreur interne au serveur
 
   /items/{id}:
+    get:
+      tags: [Items]
+      summary: Récupérer un objet spécifique
+      description: Retourne un item par son ID. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'objet
+      responses:
+        "200":
+          description: Objet trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
+        "404":
+          description: Objet non trouvé
+        "500":
+          description: Erreur interne du serveur
     put:
       tags: [Items]
-      summary: Modifier un objet du répertoire (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Modifier un objet du répertoire
+      description: Met à jour un item existant. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -757,8 +947,12 @@ paths:
             schema:
               type: object
               properties:
-                slug: { type: string, description: "Identifiant unique en format slug" }
-                name: { type: string, description: "Nom de l'objet" }
+                slug:
+                  {
+                    type: string,
+                    description: "Identifiant unique en format slug",
+                  }
+                name: { type: string, description: "Nom unique de l'objet" }
                 description: { type: string }
       responses:
         "200":
@@ -769,16 +963,20 @@ paths:
                 $ref: "#/components/schemas/Item"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Objet non trouvé
         "500":
           description: Erreur interne du serveur
-        "403":
-          description: Accès refusé
     delete:
       tags: [Items]
-      summary: Supprimer un objet du répertoire (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Supprimer un objet du répertoire
+      description: Supprime un item. Nécessite authentification admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -788,12 +986,14 @@ paths:
       responses:
         "200":
           description: Objet supprimé du répertoire
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Objet non trouvé
         "500":
           description: Erreur interne du serveur
-        "403":
-          description: Accès refusé
 
   ########################
   # FUNDRAISINGS
@@ -844,7 +1044,8 @@ paths:
               required:
                 - number
               properties:
-                number: { type: number, description: "Numéro unique de la vente" }
+                number:
+                  { type: number, description: "Numéro unique de la vente" }
                 dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
@@ -919,7 +1120,8 @@ paths:
             schema:
               type: object
               properties:
-                number: { type: number, description: "Numéro unique de la vente" }
+                number:
+                  { type: number, description: "Numéro unique de la vente" }
                 dateTime: { type: string, format: date-time }
                 location: { type: string }
                 participants:
@@ -1016,7 +1218,8 @@ paths:
               required:
                 - number
               properties:
-                number: { type: number, description: "Numéro unique de l'étape" }
+                number:
+                  { type: number, description: "Numéro unique de l'étape" }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -1089,7 +1292,8 @@ paths:
             schema:
               type: object
               properties:
-                number: { type: number, description: "Numéro unique de l'étape" }
+                number:
+                  { type: number, description: "Numéro unique de l'étape" }
                 date: { type: string, format: date-time }
                 startPoint: { type: string }
                 endPoint: { type: string }
@@ -1372,8 +1576,8 @@ paths:
   /users:
     get:
       tags: [Users]
-      summary: Récupérer la liste de tous les utilisateurs (NON IMPLÉMENTÉ)
-      description: Cette route retourne actuellement juste un message texte, pas une liste d'utilisateurs
+      summary: Récupérer la liste de tous les utilisateurs
+      description: Retourne tous les utilisateurs. Aucune authentification requise.
       responses:
         "200":
           description: Liste des utilisateurs
@@ -1387,14 +1591,84 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [Users]
-      summary: Ajouter un utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Créer un utilisateur
+      description: Crée un nouvel utilisateur. Aucune authentification requise.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserInput"
+              type: object
+              required:
+                - lastname
+                - firstname
+              properties:
+                role:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["admin", "accompagnant", "parent", "enfant"]
+                  description: "Tableau de rôles (défaut: [enfant])"
+                lastname: { type: string, minLength: 1, maxLength: 20 }
+                firstname: { type: string, minLength: 1, maxLength: 20 }
+                email:
+                  {
+                    type: string,
+                    format: email,
+                    description: "Email unique (optionnel)",
+                  }
+                password:
+                  {
+                    type: string,
+                    minLength: 6,
+                    description: "Requis si email fourni",
+                  }
+                phoneNumber:
+                  { type: string, description: "Format: +41794567895" }
+                address:
+                  type: object
+                  properties:
+                    street: { type: string }
+                    city: { type: string }
+                    postalCode: { type: integer }
+                    country: { type: string }
+                parent: { type: string, description: "ID du parent (ObjectId)" }
+                children:
+                  type: array
+                  items: { type: string }
+                  description: "IDs des enfants (ObjectIds)"
+                camps:
+                  type: array
+                  items: { type: string }
+                  description: "IDs des camps (ObjectIds)"
+                participationInfo:
+                  type: object
+                  properties:
+                    birthDate: { type: string, format: date }
+                    tshirtInfo:
+                      type: object
+                      properties:
+                        size:
+                          {
+                            type: string,
+                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
+                          }
+                        gender: { type: string, enum: ["m", "f"] }
+                    allergies:
+                      type: array
+                      items: { type: string }
+                    medication:
+                      type: array
+                      items: { type: string }
+                    insuranceNumber: { type: string }
+                    insuranceName: { type: string }
+                    idExpireDate: { type: string, format: date }
+                    publicTransportPass:
+                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
+                    isCASMember: { type: boolean }
+                    isHelicopterInsured: { type: boolean }
+                    hasPhotoConsent: { type: boolean }
+                    hasPaid: { type: boolean }
       responses:
         "201":
           description: Utilisateur créé
@@ -1410,8 +1684,8 @@ paths:
   /users/{id}:
     get:
       tags: [Users]
-      summary: Récupérer un utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Récupérer un utilisateur
+      description: Retourne un utilisateur par son ID. Aucune authentification requise.
       parameters:
         - in: path
           name: id
@@ -1431,8 +1705,8 @@ paths:
           description: Erreur interne du serveur
     put:
       tags: [Users]
-      summary: Modifier un utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Modifier un utilisateur
+      description: Met à jour un utilisateur existant. Aucune authentification requise.
       parameters:
         - in: path
           name: id
@@ -1444,7 +1718,61 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UserInput"
+              type: object
+              description: "Tous les champs sont optionnels (mêmes propriétés que POST)"
+              properties:
+                role:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["admin", "accompagnant", "parent", "enfant"]
+                lastname: { type: string, minLength: 1, maxLength: 20 }
+                firstname: { type: string, minLength: 1, maxLength: 20 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                phoneNumber: { type: string }
+                address:
+                  type: object
+                  properties:
+                    street: { type: string }
+                    city: { type: string }
+                    postalCode: { type: integer }
+                    country: { type: string }
+                parent: { type: string }
+                children:
+                  type: array
+                  items: { type: string }
+                camps:
+                  type: array
+                  items: { type: string }
+                participationInfo:
+                  type: object
+                  properties:
+                    birthDate: { type: string, format: date }
+                    tshirtInfo:
+                      type: object
+                      properties:
+                        size:
+                          {
+                            type: string,
+                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
+                          }
+                        gender: { type: string, enum: ["m", "f"] }
+                    allergies:
+                      type: array
+                      items: { type: string }
+                    medication:
+                      type: array
+                      items: { type: string }
+                    insuranceNumber: { type: string }
+                    insuranceName: { type: string }
+                    idExpireDate: { type: string, format: date }
+                    publicTransportPass:
+                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
+                    isCASMember: { type: boolean }
+                    isHelicopterInsured: { type: boolean }
+                    hasPhotoConsent: { type: boolean }
+                    hasPaid: { type: boolean }
       responses:
         "200":
           description: Utilisateur modifié
@@ -1460,8 +1788,8 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Users]
-      summary: Supprimer un utilisateur (NON IMPLÉMENTÉ)
-      description: Cette route n'est pas encore implémentée dans le code
+      summary: Supprimer un utilisateur
+      description: Supprime un utilisateur. Aucune authentification requise.
       parameters:
         - in: path
           name: id
@@ -1487,12 +1815,17 @@ components:
     ####################################
     User:
       type: object
+      required:
+        - role
+        - lastname
+        - firstname
       properties:
-        id: { type: string }
+        _id: { type: string, description: "MongoDB ObjectId" }
         role:
           type: array
-          items: { type: string }
-          enum: ["admin", "accompagnant", "parent", "enfant"]
+          items:
+            type: string
+            enum: ["admin", "accompagnant", "parent", "enfant"]
         lastname:
           type: string
           minLength: 1
@@ -1571,16 +1904,16 @@ components:
       required:
         - title
       properties:
-        id: { type: string }
+        _id: { type: string, description: "MongoDB ObjectId" }
         title: { type: string, example: "Camp de marche 2025" }
         startDate:
           type: string
-          format: date
-          example: "2025-07-01"
+          format: date-time
+          example: "2025-07-01T00:00:00Z"
         endDate:
           type: string
-          format: date
-          example: "2025-07-15"
+          format: date-time
+          example: "2025-07-15T23:59:59Z"
         subStartDatetime:
           type: string
           format: date-time
@@ -1596,8 +1929,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/CampItem"
-        information-evening:
-          $ref: "#/components/schemas/InfoEvening"
+        infoEvening:
+          $ref: "#/components/schemas/InformationEvening"
         trainings:
           type: array
           items:
@@ -1612,6 +1945,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Stage"
+        createdAt:
+          {
+            type: string,
+            format: date-time,
+            description: "Timestamp de création",
+          }
+        updatedAt:
+          {
+            type: string,
+            format: date-time,
+            description: "Timestamp de dernière modification",
+          }
 
     CampItem:
       type: object
@@ -1624,10 +1969,8 @@ components:
     ####################################
     # INFORMATION EVENING
     ####################################
-    InfoEvening:
+    InformationEvening:
       type: object
-      required:
-        - number
       properties:
         dateTime:
           type: string
@@ -1637,13 +1980,7 @@ components:
         participants:
           type: array
           items:
-            type: object
-            properties:
-              email:
-                type: string
-                format: email
-                example: "parent@example.com"
-              nbOfParticipants: { type: integer, example: 2 }
+            $ref: "#/components/schemas/Participant"
 
     ####################################
     # TRAINING
@@ -1653,25 +1990,58 @@ components:
       required:
         - number
       properties:
-        number: { type: integer, example: 1 }
+        _id: { type: string, description: "MongoDB ObjectId du sous-document" }
+        number:
+          {
+            type: integer,
+            example: 1,
+            description: "Numéro unique de l'entraînement",
+          }
+        year:
+          {
+            type: integer,
+            example: 2025,
+            description: "Année (auto-générée depuis date)",
+          }
         date:
           type: string
-          format: date
-          example: "2025-07-02"
+          format: date-time
+          example: "2025-07-02T00:00:00Z"
         trainGoingTime: { type: string, example: "08:00" }
         trainReturnTime: { type: string, example: "18:00" }
         meetingTime: { type: string, example: "08:30" }
         meetingPoint: { type: string, example: "Gare centrale" }
         returnTime: { type: string, example: "17:30" }
         distance: { type: number, example: 12.5 }
-        elevationGain: { type: number, example: 300 }
-        elevationLoss: { type: number, example: 200 }
+        elevationGain: { type: integer, example: 300 }
+        elevationLoss: { type: integer, example: 200 }
+        gpsTrack:
+          type: object
+          description: "Tracé GPS GeoJSON LineString"
+          properties:
+            type: { type: string, enum: ["LineString"] }
+            coordinates:
+              type: array
+              items:
+                type: array
+                items: { type: number }
+                minItems: 2
+                maxItems: 2
+              description: "Tableau de coordonnées [[lng, lat], ...]"
         responsiblePerson:
           type: string
-        items-list:
+          description: "ID de l'utilisateur responsable (ObjectId)"
+        itemsList:
           type: array
           items:
-            $ref: "#/components/schemas/CampItem"
+            type: object
+            properties:
+              itemId:
+                {
+                  type: string,
+                  description: "ID de l'objet (référence à Item)",
+                }
+              quantity: { type: integer }
         remark: { type: string, example: "Prévoir des chaussures imperméables" }
 
     ####################################
@@ -1682,8 +2052,19 @@ components:
       required:
         - number
       properties:
-        id: { type: string }
-        number: { type: integer, example: 1 }
+        _id: { type: string, description: "MongoDB ObjectId du sous-document" }
+        number:
+          {
+            type: integer,
+            example: 1,
+            description: "Numéro unique de la vente",
+          }
+        year:
+          {
+            type: integer,
+            example: 2025,
+            description: "Année (auto-générée depuis dateTime)",
+          }
         dateTime:
           type: string
           format: date-time
@@ -1693,7 +2074,8 @@ components:
           type: array
           items:
             type: string
-            example: "60d0fe4f5311236168a109ca"
+            description: "ID de l'utilisateur (ObjectId)"
+          example: ["60d0fe4f5311236168a109ca"]
 
     ####################################
     # GENERAL MEETING
@@ -1708,14 +2090,8 @@ components:
         location: { type: string, example: "Salle des fêtes" }
         participants:
           type: array
-        items:
-          type: object
-          properties:
-            email:
-              type: string
-              format: email
-              example: "membre@example.com"
-            nbOfParticipants: { type: integer, example: 1 }
+          items:
+            $ref: "#/components/schemas/Participant"
 
     ####################################
     # STAGE
@@ -1723,18 +2099,26 @@ components:
     Stage:
       type: object
       required:
-        - email
+        - number
       properties:
-        number: { type: integer, example: 1 }
+        _id: { type: string, description: "MongoDB ObjectId du sous-document" }
+        number:
+          { type: integer, example: 1, description: "Numéro unique de l'étape" }
+        year:
+          {
+            type: integer,
+            example: 2025,
+            description: "Année (auto-générée depuis date)",
+          }
         date:
           type: string
-          format: date
-          example: "2025-07-03"
+          format: date-time
+          example: "2025-07-03T00:00:00Z"
         startPoint: { type: string, example: "Col de Jaman" }
         endPoint: { type: string, example: "Château-d'Oex" }
         distance: { type: number, example: 15.2 }
-        elevationGain: { type: number, example: 500 }
-        elevationLoss: { type: number, example: 300 }
+        elevationGain: { type: integer, example: 500 }
+        elevationLoss: { type: integer, example: 300 }
         routeDescription:
           { type: string, example: "Par le sentier des alpages" }
 
@@ -1745,24 +2129,42 @@ components:
       type: object
       required:
         - user
+        - content
       properties:
+        _id: { type: string, description: "MongoDB ObjectId" }
         user:
           type: string
-          example: "60d0fe4f5311236168a109ca"
-          description: "ID de l'utilisateur ayant effectué la randonnée"
-        date:
+          description: "ID de l'utilisateur ayant créé la randonnée (ObjectId)"
+        content:
           type: string
-          format: date
-          example: "2025-07-05"
-        gpsTrack:
-          type: object
-          description: "Objet JSON représentant le tracé GPS (structure non spécifiée)"
-        startPoint: { type: string, example: "Col de Jaman" }
-        endPoint: { type: string, example: "Château-d'Oex" }
-        distance: { type: number, example: 15.2 }
-        elevationGain: { type: number, example: 500 }
-        elevationLoss: { type: number, example: 300 }
-        routeDescription: { type: string }
+          maxLength: 2000
+          description: "Contenu texte de la randonnée"
+          example: "Belle randonnée aujourd'hui au Col de Jaman!"
+        imageUrl:
+          type: string
+          format: uri
+          description: "URL de l'image uploadée (Cloudinary)"
+          example: "https://res.cloudinary.com/..."
+        createdAt:
+          type: string
+          format: date-time
+          description: "Timestamp de création (auto-généré)"
+        updatedAt:
+          type: string
+          format: date-time
+          description: "Timestamp de dernière modification (auto-généré)"
+
+    ####################################
+    # PARTICIPANT
+    ####################################
+    Participant:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "participant@example.com"
+        nbOfParticipants: { type: integer, example: 1 }
 
     ####################################
     # ITEM (GLOBAL)
@@ -1777,6 +2179,13 @@ components:
         slug: { type: string, description: "Identifiant unique en format slug" }
         name: { type: string, description: "Nom unique de l'objet" }
         description: { type: string }
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "JWT Bearer token obtenu via /login"
 
 tags:
   - name: Authentication

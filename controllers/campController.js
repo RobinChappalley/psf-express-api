@@ -70,9 +70,9 @@ class CampController {
 
   // Camp Items Methods
   async getCampItems(req, res) {
-    const camp = await CampModel.findById(req.params.id).populate(
-      "itemsList.item"
-    );
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).populate("itemsList.item");
+
     if (!camp) {
       return res.status(404).json({ error: "Camp not found" });
     }
@@ -81,15 +81,16 @@ class CampController {
   }
 
   async getCampItemById(req, res) {
-    const camp = await CampModel.findById(req.params.id).populate(
-      "itemsList.item"
-    );
+    const { campId, itemId } = matchedData(req);
+    const camp = await CampModel.findById(campId).populate("itemsList.item");
+
     if (!camp) {
       return res.status(404).json({ error: "Camp not found" });
     }
 
+    // On cherche par l'ID de l'item référencé (pas l'ID du sous-document)
     const itemEntry = camp.itemsList.find(
-      (entry) => entry.item._id.toString() === req.params.itemId
+      (entry) => entry.item._id.toString() === itemId
     );
 
     if (!itemEntry) {
@@ -101,9 +102,11 @@ class CampController {
 
   async addCampItem(req, res) {
     const data = matchedData(req);
+    const { campId, item_id, quantity } = data;
+
     const camp = await CampModel.findByIdAndUpdate(
-      req.params.id,
-      { $push: { itemsList: { item: data.item_id, quantity: data.quantity } } },
+      campId,
+      { $push: { itemsList: { item: item_id, quantity: quantity } } },
       { new: true }
     ).populate("itemsList.item");
 
@@ -111,14 +114,22 @@ class CampController {
       return res.status(404).json({ error: "Camp not found" });
     }
 
+    // Retourner le dernier item ajouté
     res.status(201).json(camp.itemsList[camp.itemsList.length - 1]);
   }
 
   async updateCampItem(req, res) {
     const data = matchedData(req);
+    const { campId, itemId, quantity } = data;
+
+    // On met à jour en utilisant l'ID de l'item référencé
     const camp = await CampModel.findOneAndUpdate(
-      { _id: req.params.id, "itemsList.item": data.item_id },
-      { $set: { "itemsList.$.quantity": data.quantity } },
+      { _id: campId, "itemsList.item": itemId },
+      {
+        $set: {
+          "itemsList.$.quantity": quantity
+        }
+      },
       { new: true }
     ).populate("itemsList.item");
 
@@ -126,17 +137,19 @@ class CampController {
       return res.status(404).json({ error: "Camp or item not found" });
     }
 
+    // Retourner toute la liste des items (comme attendu par les tests)
     res.status(200).json(camp.itemsList);
   }
 
   async deleteCampItem(req, res) {
-    const data = matchedData(req);
+    const { campId, itemId } = matchedData(req);
+
     const camp = await CampModel.findByIdAndUpdate(
-      req.params.id,
+      campId,
       {
         $pull: {
           itemsList: {
-            item: req.params.itemId,
+            item: itemId,
           },
         },
       },
