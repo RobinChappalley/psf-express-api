@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --watch . --ext js,mjs,json --exec node ./bin/start",
+    "seed": "node run-seeders.js",
+    "seed:admin": "node seeders/admin.seeder.js",
     "test": "cross-env NODE_ENV=test DOTENV_CONFIG_QUIET=true node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/.bin/jest --runInBand"
   },
   "dependencies": {
