@@ -56,6 +56,18 @@ soit dans notre cas :
 docker exec psf-express-api-express-api-1 npm test
 ```
 
+## Seeders
+
+Puisque que l'API utilise docker, npm run seed ne va pas fonctionner, il faut donc lancer les tests avec la commande suivante :
+
+`docker exec nom-du-conteneur npm run seed`
+
+soit dans notre cas :
+
+```bash
+docker exec psf-express-api-express-api-1 npm run seed
+```
+
 ## Technologies utilisées
 
 - 🚀 [Express.js](https://expressjs.com/)
