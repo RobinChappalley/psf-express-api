@@ -249,6 +249,13 @@ describe("PUT /users/:id", function () {
     });
   });
 
+  afterEach(async () => {
+    // Clean up testUser to avoid duplicate key error
+    if (testUser) {
+      await UserModel.findByIdAndDelete(testUser._id);
+    }
+  });
+
   it("should update any user as admin", async () => {
     const res = await supertest(app)
       .put(`/users/${testUser._id}`)
@@ -308,6 +315,13 @@ describe("DELETE /users/:id", () => {
       lastname: "ToDelete",
       firstname: "User",
     });
+  });
+
+  afterEach(async () => {
+    // Clean up testUser if it wasn't deleted by the test
+    if (testUser) {
+      await UserModel.findByIdAndDelete(testUser._id);
+    }
   });
 
   it("should delete a user as admin", async () => {
