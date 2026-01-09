@@ -14,6 +14,7 @@ describe("Camp Trainings API", function () {
   //Declare tokens used for login
   let tokenAdmin;
   let tokenParent;
+  let tokenAccompagnant;
 
   beforeAll(async () => {
     await connectMongo();
@@ -39,6 +40,16 @@ describe("Camp Trainings API", function () {
       phoneNumber: "+41 79 123 34 57",
     });
 
+    //Create a user with role ACCOMPAGNANT
+    const accompagnantUser = await UserModel.create({
+      role: ["accompagnant"],
+      lastname: "Guide",
+      firstname: "Anna",
+      email: "anna.guide@email.com",
+      password: "123456",
+      phoneNumber: "+41 79 123 34 59",
+    });
+
     //Login admin
     const resAdmin = await supertest(app)
       .post("/login")
@@ -50,6 +61,12 @@ describe("Camp Trainings API", function () {
       .post("/login")
       .send({ email: "john.doe@email.com", password: "123456" });
     tokenParent = resParent.body.token;
+
+    //Login accompagnant
+    const resAccompagnant = await supertest(app)
+      .post("/login")
+      .send({ email: "anna.guide@email.com", password: "123456" });
+    tokenAccompagnant = resAccompagnant.body.token;
   });
 
   afterAll(async () => {
@@ -310,6 +327,41 @@ describe("Camp Trainings API", function () {
         .send(updates)
         .expect(400);
     });
+
+    it("should return 403 when parent tries to update training", async function () {
+      const updates = {
+        meetingPoint: "Unauthorized update",
+      };
+
+      await supertest(app)
+        .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .send(updates)
+        .expect(403);
+    });
+
+    it("should return 403 when accompagnant tries to update training", async function () {
+      const updates = {
+        meetingPoint: "Unauthorized update",
+      };
+
+      await supertest(app)
+        .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .set("Authorization", `Bearer ${tokenAccompagnant}`)
+        .send(updates)
+        .expect(403);
+    });
+
+    it("should return 401 without authentication", async function () {
+      const updates = {
+        meetingPoint: "No auth update",
+      };
+
+      await supertest(app)
+        .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .send(updates)
+        .expect(401);
+    });
   });
 
   describe("DELETE /camps/:campId/trainings/:trainingId", function () {
@@ -349,6 +401,26 @@ describe("Camp Trainings API", function () {
         .delete(`/camps/${testCamp._id}/trainings/invalid-id`)
         .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(400);
+    });
+
+    it("should return 403 when parent tries to delete training", async function () {
+      await supertest(app)
+        .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .expect(403);
+    });
+
+    it("should return 403 when accompagnant tries to delete training", async function () {
+      await supertest(app)
+        .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .set("Authorization", `Bearer ${tokenAccompagnant}`)
+        .expect(403);
+    });
+
+    it("should return 401 without authentication", async function () {
+      await supertest(app)
+        .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
+        .expect(401);
     });
   });
 });
