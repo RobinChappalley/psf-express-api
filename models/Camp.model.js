@@ -38,6 +38,7 @@ const infoEveningSchema = new Schema({
 });
 
 infoEveningSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
+
 const GPXTrackSchema = new mongoose.Schema(
   {
     type: {
@@ -145,6 +146,12 @@ const campSchema = new Schema(
       type: String,
       required: true,
       unique: true,
+    },
+    status: {
+      type: String,
+      required: true,
+      default: "draft",
+      enum: ["draft", "published", "archived"],
     },
     startDate: Date,
     endDate: Date,
