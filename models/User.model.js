@@ -42,7 +42,7 @@ const userSchema = new Schema({
   role: {
     type: [String],
     enum: ["admin", "accompagnant", "parent", "enfant"],
-    default: "enfant",
+    default: "parent",
     required: true,
   },
   lastname: {
