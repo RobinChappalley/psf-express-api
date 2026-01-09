@@ -5,12 +5,30 @@ import { deleteImage } from "../utils/cloudinaryHelper.js";
 
 class HikeController {
   async getAllHikes(req, res) {
+    // Pagination parameters
+    const page = req.query.page ? parseInt(req.query.page) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit) : 6;
+    const skip = (page - 1) * limit;
+
+    // Count all for pagination metadata used in response
+    const total = await Hike.countDocuments();
+
     const hikes = await Hike.find()
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate("user", "username email")
       .lean();
 
-    res.status(200).json(hikes);
+    res.status(200).json({
+      data: hikes,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   }
   async createHike(req, res) {
     const payload = matchedData(req);
