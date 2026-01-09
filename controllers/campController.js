@@ -127,8 +127,8 @@ class CampController {
       { _id: campId, "itemsList.item": itemId },
       {
         $set: {
-          "itemsList.$.quantity": quantity
-        }
+          "itemsList.$.quantity": quantity,
+        },
       },
       { new: true }
     ).populate("itemsList.item");
@@ -261,7 +261,6 @@ class CampController {
     const savedTraining = camp.trainings.find((t) => t.number === number);
 
     // Debug pour te rassurer
-    console.log("Saved:", savedTraining);
 
     res.status(201).json(savedTraining);
   }
