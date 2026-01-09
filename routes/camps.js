@@ -82,9 +82,9 @@ router.post(
 );
 
 router.put(
+  "/:campId/item/:itemId",
   authenticate,
   restrictTo("admin"),
-  "/:campId/item/:itemId",
   [
     ...validateObjectId("campId"),
     ...validateObjectId("itemId"),
