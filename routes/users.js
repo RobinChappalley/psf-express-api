@@ -5,12 +5,24 @@ import {
 } from "../validators/userValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import validateObjectId from "../validators/commonValidator.js";
+import {
+  validateFilterReference,
+  validateFilterRoles,
+  validateFilterHasPaid,
+} from "../validators/filtersValidator.js";
 import UserController from "../controllers/userController.js";
 import { authenticate, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.get("/", UserController.getAllUsers);
+router.get(
+  "/",
+  validateFilterReference("parentId", "campId"),
+  validateFilterRoles,
+  validateFilterHasPaid,
+  validateRequest,
+  UserController.getAllUsers
+);
 
 router.get(
   "/:id",

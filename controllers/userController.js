@@ -3,7 +3,16 @@ import UserModel from "../models/User.model.js";
 
 class UserController {
   async getAllUsers(req, res) {
-    const users = await UserModel.find();
+    const { parentId, campId, role, hasPaid } = req.query;
+    const filter = {};
+
+    if (parentId) filter.parent = parentId;
+    if (campId) filter.camps = { $in: [campId] };
+    if (role) filter.role = role;
+    if (hasPaid != undefined) filter.hasPaid = hasPaid === true;
+
+    const users = await UserModel.find(filter);
+
     res.status(200).json(users);
   }
 
