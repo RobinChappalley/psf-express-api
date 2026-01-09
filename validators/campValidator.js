@@ -7,6 +7,14 @@ export const validateCreateCamp = [
   // Title validation
   body("title").trim().notEmpty().withMessage("Title is required"),
 
+  // Status validation
+  body("status")
+    .optional() //If no status sent, mongoose applies default ("draft")
+    .isString()
+    .trim()
+    .isIn(["draft", "published", "archived"])
+    .withMessage("Status must be one of: draft, published, archived"),
+
   // Dates validation
   body("startDate")
     .optional()
@@ -309,6 +317,13 @@ export const validateUpdateCamp = [
     .trim()
     .notEmpty()
     .withMessage("Title cannot be empty"),
+
+  body("status")
+    .optional() //If no status sent, mongoose applies default ("draft")
+    .isString()
+    .trim()
+    .isIn(["draft", "published", "archived"])
+    .withMessage("Status must be one of: draft, published, archived"),
 
   body("startDate")
     .optional()

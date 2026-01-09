@@ -9,10 +9,12 @@ import createError from "http-errors";
 
 class CampController {
   async getAllCamps(req, res) {
-    const camps = await CampModel.find();
-    if (!camps) {
-      return res.status(404).json({ error: "No camps found" });
-    }
+    const { status } = req.query;
+    const filter = {};
+
+    if (status) filter.status = status;
+
+    const camps = await CampModel.find(filter);
 
     res.status(200).json(camps);
   }
@@ -127,8 +129,8 @@ class CampController {
       { _id: campId, "itemsList.item": itemId },
       {
         $set: {
-          "itemsList.$.quantity": quantity
-        }
+          "itemsList.$.quantity": quantity,
+        },
       },
       { new: true }
     ).populate("itemsList.item");
