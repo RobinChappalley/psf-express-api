@@ -13,8 +13,10 @@ class CampController {
     const filter = {};
 
     if (status) filter.status = status;
-
     const camps = await CampModel.find(filter);
+    if (!camps) {
+      return res.status(404).json({ error: "No camps found" });
+    }
 
     res.status(200).json(camps);
   }
