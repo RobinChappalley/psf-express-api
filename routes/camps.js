@@ -149,7 +149,7 @@ router.post(
 router.put(
   "/:campId/trainings/:trainingId",
   authenticate,
-  restrictTo("parent", "accompagnant", "admin"),
+  restrictTo("admin"),
   validateUpdateTraining,
   validateRequest,
   CampController.updateCampTraining
@@ -158,7 +158,7 @@ router.put(
 router.delete(
   "/:campId/trainings/:trainingId",
   authenticate,
-  restrictTo("parent", "accompagnant", "admin"),
+  restrictTo("admin"),
   [...validateObjectId("campId"), validateObjectId("trainingId")],
   validateRequest,
   CampController.deleteCampTraining
