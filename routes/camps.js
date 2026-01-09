@@ -14,12 +14,18 @@ import CampController from "../controllers/campController.js";
 import validateObjectId from "../validators/commonValidator.js";
 import multer from "multer";
 import { authenticate, restrictTo } from "../middlewares/auth.js";
+import { validateFilterStatus } from "../validators/filtersValidator.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router();
 
-router.get("/", CampController.getAllCamps);
+router.get(
+  "/",
+  validateFilterStatus,
+  validateRequest,
+  CampController.getAllCamps
+);
 
 router.get(
   "/:id",
