@@ -37,3 +37,24 @@ export const restrictTo = (...roles) => {
     next();
   };
 };
+
+// Middleware to ensure user can only modify their own profile (unless admin)
+export const restrictToSelfOrAdmin = (req, res, next) => {
+  const isAdmin = req.user.role.includes("admin");
+  const isSelf = req.user._id.toString() === req.params.id;
+
+  if (!isAdmin && !isSelf) {
+    return res.status(403).json({ message: "You can only modify your own profile" });
+  }
+  next();
+};
+
+// Middleware to force "parent" role when creating a user (for non-admin)
+export const forceParentRole = (req, res, next) => {
+  const isAdmin = req.user.role.includes("admin");
+
+  if (!isAdmin) {
+    req.body.role = ["parent"];
+  }
+  next();
+};
