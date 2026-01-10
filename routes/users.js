@@ -11,12 +11,19 @@ import {
   validateFilterHasPaid,
 } from "../validators/filtersValidator.js";
 import UserController from "../controllers/userController.js";
-import { authenticate, restrictTo } from "../middlewares/auth.js";
+import {
+  authenticate,
+  restrictTo,
+  restrictToSelfOrAdmin,
+  forceParentRole,
+} from "../middlewares/auth.js";
 
 const router = express.Router();
 
 router.get(
   "/",
+  authenticate,
+  restrictTo("parent"),
   validateFilterReference("parentId", "campId"),
   validateFilterRoles,
   validateFilterHasPaid,
@@ -26,6 +33,8 @@ router.get(
 
 router.get(
   "/:id",
+  authenticate,
+  restrictTo("parent"),
   validateObjectId(),
   validateRequest,
   UserController.getOneUser
@@ -33,6 +42,9 @@ router.get(
 
 router.post(
   "/",
+  authenticate,
+  restrictTo("parent"),
+  forceParentRole,
   validateCreateUser,
   validateRequest,
   UserController.createUser
@@ -40,6 +52,9 @@ router.post(
 
 router.put(
   "/:id",
+  authenticate,
+  restrictTo("parent"),
+  restrictToSelfOrAdmin,
   validateObjectId(),
   validateUpdateUser,
   validateRequest,

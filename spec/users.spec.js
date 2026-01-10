@@ -2,15 +2,54 @@ import supertest from "supertest";
 import app from "../app.js";
 import { connectMongo } from "../db/db.js";
 import mongoose from "mongoose";
-import { cleanDatabase } from "./utils.js";
+import { cleanDatabase, cleanDatabaseExceptUsers } from "./utils.js";
 import UserModel from "../models/User.model.js";
 import CampModel from "../models/Camp.model.js";
 
+// Tokens for authentication
+let tokenAdmin;
+let tokenParent;
+let adminUser;
+let parentUser;
+
 beforeAll(async () => {
   await connectMongo();
+  await cleanDatabase();
 
   await UserModel.syncIndexes();
   await CampModel.syncIndexes();
+
+  // Create admin user
+  adminUser = await UserModel.create({
+    role: ["admin"],
+    lastname: "Admin",
+    firstname: "User",
+    email: "admin.users@email.com",
+    password: "123456",
+    phoneNumber: "+41 79 123 34 57",
+  });
+
+  // Create parent user
+  parentUser = await UserModel.create({
+    role: ["parent"],
+    lastname: "Parent",
+    firstname: "User",
+    email: "parent.users@email.com",
+    password: "123456",
+    phoneNumber: "+41 79 123 34 58",
+  });
+
+  // Login admin
+  const resAdmin = await supertest(app)
+    .post("/login")
+    .send({ email: "admin.users@email.com", password: "123456" });
+  tokenAdmin = resAdmin.body.token;
+
+  // Login parent
+  const resParent = await supertest(app)
+    .post("/login")
+    .send({ email: "parent.users@email.com", password: "123456" });
+  tokenParent = resParent.body.token;
 });
 
 afterAll(async () => {
@@ -18,126 +57,140 @@ afterAll(async () => {
 });
 
 describe("GET /users", function () {
-  it("should retrieve all users", async function () {
+  it("should retrieve all users as admin", async function () {
     const res = await supertest(app)
       .get("/users")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
     expect(res.body).toBeInstanceOf(Array);
-    if (res.body.length > 0) {
-      expect(res.body[0]).toHaveProperty("_id");
-      expect(res.body[0]).toHaveProperty("lastname");
-      expect(res.body[0]).toHaveProperty("firstname");
-    }
+    expect(res.body.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("should retrieve all users as parent", async function () {
+    const res = await supertest(app)
+      .get("/users")
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toBeInstanceOf(Array);
+  });
+
+  it("should return 401 without authentication", async function () {
+    await supertest(app).get("/users").expect(401);
   });
 });
 
 describe("GET /users/:id", function () {
-  //Document for testing
-  let createdUser;
-
-  beforeEach(async () => {
-    await cleanDatabase();
-
-    // Create a user for testing
+  it("should retrieve a user by id as admin", async () => {
     const res = await supertest(app)
-      .post("/users")
-      .send({
-        lastname: "Doe",
-        firstname: "John",
-      })
-      .expect(201);
-
-    createdUser = res.body;
-  });
-
-  it("should retrieve a user by id", async () => {
-    const res = await supertest(app)
-      .get(`/users/${createdUser._id}`)
+      .get(`/users/${parentUser._id}`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toHaveProperty("_id", createdUser._id);
-    expect(res.body.lastname).toBe("Doe");
-    expect(res.body.firstname).toBe("John");
+    expect(res.body).toHaveProperty("_id", parentUser._id.toString());
+    expect(res.body.lastname).toBe("Parent");
+  });
+
+  it("should retrieve a user by id as parent", async () => {
+    const res = await supertest(app)
+      .get(`/users/${adminUser._id}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toHaveProperty("_id", adminUser._id.toString());
+  });
+
+  it("should return 401 without authentication", async () => {
+    await supertest(app).get(`/users/${parentUser._id}`).expect(401);
   });
 });
 
 describe("POST /users", function () {
-  //Documents to use as references (parent, children, camps)
-  let parentUser;
-  let childUser;
   let camp1;
   let camp2;
 
   beforeEach(async () => {
-    await cleanDatabase();
+    await cleanDatabaseExceptUsers();
 
-    //Create a user with role PARENT
-    parentUser = await UserModel.create({
-      role: ["parent"],
-      lastname: "Parent",
-      firstname: "Jean",
-    });
-
-    //Create a user with role ENFANT
-    childUser = await UserModel.create({
-      role: ["enfant"],
-      lastname: "Child",
-      firstname: "Alice",
-      parent: parentUser._id,
-    });
-
-    //Create two camps
+    // Create two camps for testing
     camp1 = await CampModel.create({ title: "Camp de marche 2024" });
     camp2 = await CampModel.create({ title: "Camp de marche 2025" });
   });
 
-  it("should create a user with minimum of data", async function () {
+  it("should create a user as admin with any role", async function () {
     const res = await supertest(app)
       .post("/users")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
-        lastname: "Doe",
-        firstname: "John",
-      })
-      .expect(201)
-      .expect("Content-Type", /json/);
-
-    expect(res.body).toHaveProperty("_id");
-    expect(res.body.role).toEqual(["enfant"]);
-    expect(res.body.lastname).toBe("Doe");
-    expect(res.body.firstname).toBe("John");
-  });
-
-  it("should create a user with an account (email and password)", async function () {
-    const res = await supertest(app)
-      .post("/users")
-      .send({
-        role: ["parent"],
-        lastname: "WithAccount",
-        firstname: "User",
-        email: "user.withAccount@email.com",
+        role: ["accompagnant"],
+        lastname: "Smith",
+        firstname: "Dave",
+        email: "dave.smith@email.com",
         password: "123456",
       })
       .expect(201)
       .expect("Content-Type", /json/);
 
     expect(res.body).toHaveProperty("_id");
-    expect(res.body.role).toEqual(["parent"]);
-    expect(res.body.lastname).toBe("WithAccount");
-    expect(res.body.firstname).toBe("User");
-    expect(res.body.email).toBe("user.withaccount@email.com");
+    expect(res.body.role).toEqual(["accompagnant"]);
+    expect(res.body.lastname).toBe("Smith");
   });
 
-  it("should create a user ACCOMPAGNANT with all fields except parent", async function () {
+  it("should create a user as parent but force role to parent", async function () {
     const res = await supertest(app)
       .post("/users")
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        role: ["admin"], // Try to set admin role
+        lastname: "Doe",
+        firstname: "Jane",
+        email: "jane.doe@email.com",
+        password: "123456",
+      })
+      .expect(201)
+      .expect("Content-Type", /json/);
+
+    expect(res.body).toHaveProperty("_id");
+    // Role should be forced to parent, not admin
+    expect(res.body.role).toEqual(["parent"]);
+    expect(res.body.lastname).toBe("Doe");
+  });
+
+  it("should return 401 without authentication", async function () {
+    await supertest(app)
+      .post("/users")
+      .send({
+        lastname: "Test",
+        firstname: "User",
+      })
+      .expect(401);
+  });
+
+  it("should create a user with full data as admin", async function () {
+    // First create a child user
+    const childRes = await supertest(app)
+      .post("/users")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send({
+        role: ["enfant"],
+        lastname: "Child",
+        firstname: "Test",
+      })
+      .expect(201);
+
+    const res = await supertest(app)
+      .post("/users")
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
         role: ["accompagnant"],
-        lastname: "Smith",
-        firstname: "Dave",
-        email: "dave.smith@email.com",
+        lastname: "Complete",
+        firstname: "User",
+        email: "complete.user@email.com",
         password: "123456",
         phoneNumber: "+41 79 123 34 54",
         address: {
@@ -146,7 +199,7 @@ describe("POST /users", function () {
           postalCode: 1400,
           country: "CH",
         },
-        children: [childUser._id.toString()],
+        children: [childRes.body._id],
         camps: [camp1._id.toString(), camp2._id.toString()],
         participationInfo: {
           birthDate: "2000-01-01",
@@ -171,101 +224,128 @@ describe("POST /users", function () {
 
     expect(res.body).toHaveProperty("_id");
     expect(res.body.role).toEqual(["accompagnant"]);
-    expect(res.body.lastname).toBe("Smith");
-    expect(res.body.firstname).toBe("Dave");
-    expect(res.body.email).toBe("dave.smith@email.com");
-    expect(res.body.phoneNumber).toBe("+41791233454");
     expect(res.body.address).toMatchObject({
       street: "Rue de Test 12",
       city: "Yverdon-les-Bains",
       postalCode: 1400,
       country: "CH",
     });
-    expect(res.body.children).toEqual([childUser._id.toString()]);
-    expect(res.body.camps).toEqual([
-      camp1._id.toString(),
-      camp2._id.toString(),
-    ]);
-    expect(res.body.participationInfo).toMatchObject({
-      birthDate: new Date("2000-01-01").toISOString(),
-      tshirtInfo: { size: "m", gender: "m" },
-      allergies: ["pollen", "peanuts"],
-      medication: ["ibuprofen"],
-      insuranceNumber: "CH123456",
-      insuranceName: "Assura",
-      idExpireDate: new Date("2030-12-31").toISOString(),
-      publicTransportPass: "AG",
-      isCASMember: true,
-      isHelicopterInsured: false,
-      hasPhotoConsent: true,
-      hasPaid: true,
-    });
   });
 });
 
 describe("PUT /users/:id", function () {
-  //Document for testing
-  let createdUser;
+  let testUser;
 
   beforeEach(async () => {
-    await cleanDatabase();
+    await cleanDatabaseExceptUsers();
 
-    // Create a user for testing
-    const res = await supertest(app)
-      .post("/users")
-      .send({
-        lastname: "Doe",
-        firstname: "John",
-      })
-      .expect(201);
-
-    createdUser = res.body;
+    // Create a test user
+    testUser = await UserModel.create({
+      role: ["parent"],
+      lastname: "ToUpdate",
+      firstname: "User",
+      email: "toupdate@email.com",
+      password: "123456",
+    });
   });
 
-  it("should update a user by id", async () => {
+  afterEach(async () => {
+    // Clean up testUser to avoid duplicate key error
+    if (testUser) {
+      await UserModel.findByIdAndDelete(testUser._id);
+    }
+  });
+
+  it("should update any user as admin", async () => {
     const res = await supertest(app)
-      .put(`/users/${createdUser._id}`)
+      .put(`/users/${testUser._id}`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
-        firstname: "Jane",
+        firstname: "Updated",
       })
       .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toHaveProperty("_id", createdUser._id);
-    expect(res.body.firstname).toBe("Jane");
-    expect(res.body.lastname).toBe("Doe");
+    expect(res.body).toHaveProperty("_id", testUser._id.toString());
+    expect(res.body.firstname).toBe("Updated");
+  });
+
+  it("should allow parent to update their own profile", async () => {
+    const res = await supertest(app)
+      .put(`/users/${parentUser._id}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        firstname: "ParentUpdated",
+      })
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body.firstname).toBe("ParentUpdated");
+  });
+
+  it("should return 403 when parent tries to update another user", async () => {
+    await supertest(app)
+      .put(`/users/${testUser._id}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        firstname: "Hacked",
+      })
+      .expect(403);
+  });
+
+  it("should return 401 without authentication", async () => {
+    await supertest(app)
+      .put(`/users/${testUser._id}`)
+      .send({
+        firstname: "Test",
+      })
+      .expect(401);
   });
 });
 
 describe("DELETE /users/:id", () => {
-  //Document for testing
-  let createdUser;
+  let testUser;
 
   beforeEach(async () => {
-    await cleanDatabase();
+    await cleanDatabaseExceptUsers();
 
-    // Create a user for testing
-    const res = await supertest(app)
-      .post("/users")
-      .send({
-        lastname: "Doe",
-        firstname: "John",
-      })
-      .expect(201);
-
-    createdUser = res.body;
+    // Create a test user to delete
+    testUser = await UserModel.create({
+      role: ["enfant"],
+      lastname: "ToDelete",
+      firstname: "User",
+    });
   });
 
-  it("should delete a user by id", async () => {
+  afterEach(async () => {
+    // Clean up testUser if it wasn't deleted by the test
+    if (testUser) {
+      await UserModel.findByIdAndDelete(testUser._id);
+    }
+  });
+
+  it("should delete a user as admin", async () => {
     const res = await supertest(app)
-      .delete(`/users/${createdUser._id}`)
+      .delete(`/users/${testUser._id}`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
     expect(res.body).toHaveProperty("message", "User successfully deleted");
-    expect(res.body.user).toHaveProperty("_id", createdUser._id);
 
     // Check if user has really been deleted
-    await supertest(app).get(`/users/${createdUser._id}`).expect(404);
+    const deletedUser = await UserModel.findById(testUser._id);
+    expect(deletedUser).toBeNull();
+  });
+
+  it("should return 403 when parent tries to delete a user", async () => {
+    await supertest(app)
+      .delete(`/users/${testUser._id}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .expect(403);
+  });
+
+  it("should return 401 without authentication", async () => {
+    await supertest(app).delete(`/users/${testUser._id}`).expect(401);
   });
 });

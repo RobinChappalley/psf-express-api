@@ -14,7 +14,7 @@ class CampController {
 
     if (status) filter.status = status;
 
-    const camps = await CampModel.find(filter);
+    const camps = await CampModel.find(filter).populate("itemsList.item");
 
     res.status(200).json(camps);
   }
@@ -42,23 +42,27 @@ class CampController {
   }
 
   async updateCamp(req, res) {
-    // 1. On récupère tout ce qui est validé (params et body mélangés souvent)
+    //Retrieve validated data from param and body
     const data = matchedData(req);
-    // On extrait l'ID pour la recherche, et le reste pour la mise à jour
     const { id, ...updateData } = data;
 
-    // 2. On cherche et update
-    const updatedCamp = await CampModel.findByIdAndUpdate(id, updateData, {
-      new: true,
-    });
-
-    // 3. On vérifie l'existence
-    if (!updatedCamp) {
+    //Retrieve camp
+    const camp = await CampModel.findById(id);
+    if (!camp) {
       return res.status(404).json({ error: "Camp not found" });
     }
 
-    // 4. On renvoie
-    res.status(200).json(updatedCamp);
+    //Check old status for notifications
+    const oldStatus = camp.status;
+
+    //Update camp with new data
+    Object.assign(camp, updateData);
+    await camp.save();
+
+    //Notification
+    //if (updateData.status === "published" && oldStatus !== "published")
+
+    res.status(200).json(camp);
   }
 
   async deleteCamp(req, res) {
@@ -214,12 +218,6 @@ class CampController {
     const camp = await CampModel.findById(campId);
     if (!camp) throw createError(404, "Camp not found");
 
-    // 2. Logique numéro
-    const number = data.number || camp.getNextTrainingNumber(); // Supposons que cette méthode existe
-    if (camp.trainings.some((t) => t.number === number)) {
-      throw createError(409, `Training number ${number} already exists`);
-    }
-
     let gpsTrack = undefined;
     if (req.file) {
       const coords = await parseGpxToCoordinates(req.file.buffer);
@@ -231,7 +229,6 @@ class CampController {
     // 3. Construction de l'objet (Mapping Input -> Mongoose Schema)
     const newTrainingPayload = {
       // Champs directs (noms identiques Input/Schema)
-      number,
       date: data.date,
       year: new Date(data.date).getFullYear(),
       distance: data.distance,
@@ -255,17 +252,12 @@ class CampController {
 
     // 4. Push & Save
     camp.trainings.push(newTrainingPayload);
-    camp.trainings.sort((a, b) => a.number - b.number);
-
     await camp.save();
 
     // 5. Récupération & Réponse
-    const savedTraining = camp.trainings.find((t) => t.number === number);
+    const createdTraining = camp.trainings[camp.trainings.length - 1];
 
-    // Debug pour te rassurer
-    console.log("Saved:", savedTraining);
-
-    res.status(201).json(savedTraining);
+    res.status(201).json(createdTraining);
   }
 
   async updateCampTraining(req, res) {

@@ -106,19 +106,6 @@ export const validateCreateCamp = [
     .isArray()
     .withMessage("Trainings must be an array"),
 
-  body("trainings.*.number")
-    .if((value, { req }) => {
-      const trainings = req.body.trainings || [];
-      return (
-        trainings.length > 0 &&
-        trainings[trainings.indexOf(value)] !== undefined
-      );
-    })
-    .notEmpty()
-    .withMessage("Training number is required")
-    .isInt({ min: 1 })
-    .withMessage("Training number must be a positive integer"),
-
   body("trainings.*.date")
     .optional()
     .isISO8601()
@@ -197,16 +184,6 @@ export const validateCreateCamp = [
     .isArray()
     .withMessage("Fundraisings must be an array"),
 
-  body("fundraisings.*.number")
-    .if((value, { req }) => {
-      const fundraisings = req.body.fundraisings || [];
-      return fundraisings.length > 0;
-    })
-    .notEmpty()
-    .withMessage("Fundraising number is required")
-    .isInt({ min: 1 })
-    .withMessage("Fundraising number must be a positive integer"),
-
   body("fundraisings.*.dateTime")
     .optional()
     .isISO8601()
@@ -259,16 +236,6 @@ export const validateCreateCamp = [
 
   // Stages validation
   body("stages").optional().isArray().withMessage("Stages must be an array"),
-
-  body("stages.*.number")
-    .if((value, { req }) => {
-      const stages = req.body.stages || [];
-      return stages.length > 0;
-    })
-    .notEmpty()
-    .withMessage("Stage number is required")
-    .isInt({ min: 1 })
-    .withMessage("Stage number must be a positive integer"),
 
   body("stages.*.date")
     .optional()
@@ -408,16 +375,6 @@ export const validateUpdateCamp = [
     .isArray()
     .withMessage("Trainings must be an array"),
 
-  body("trainings.*.number")
-    .if((value, { req }) => {
-      const trainings = req.body.trainings || [];
-      return trainings.length > 0;
-    })
-    .notEmpty()
-    .withMessage("Training number is required")
-    .isInt({ min: 1 })
-    .withMessage("Training number must be a positive integer"),
-
   body("trainings.*.date")
     .optional()
     .isISO8601()
@@ -555,16 +512,6 @@ export const validateUpdateCamp = [
     .withMessage("Number of participants must be a non-negative integer"),
 
   body("stages").optional().isArray().withMessage("Stages must be an array"),
-
-  body("stages.*.number")
-    .if((value, { req }) => {
-      const stages = req.body.stages || [];
-      return stages.length > 0;
-    })
-    .notEmpty()
-    .withMessage("Stage number is required")
-    .isInt({ min: 1 })
-    .withMessage("Stage number must be a positive integer"),
 
   body("stages.*.date")
     .optional()
