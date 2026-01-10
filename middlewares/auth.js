@@ -5,6 +5,21 @@ import UserModel from "../models/User.model.js";
 const JWT_SECRET =
   process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+// Hiérarchie des rôles : admin hérite d'accompagnant, accompagnant hérite de parent
+const ROLE_HIERARCHY = {
+  admin: ["admin", "accompagnant", "parent"],
+  accompagnant: ["accompagnant", "parent"],
+  parent: ["parent"],
+  enfant: ["enfant"],
+};
+
+const hasRole = (userRoles, requiredRole) => {
+  return userRoles.some((role) => {
+    const inheritedRoles = ROLE_HIERARCHY[role] || [];
+    return inheritedRoles.includes(requiredRole);
+  });
+};
+
 export const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -31,9 +46,34 @@ export const authenticate = async (req, res, next) => {
 
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
-    if (!req.user || !roles.some((role) => req.user.role.includes(role))) {
+    if (!req.user) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    const hasPermission = roles.some((role) => hasRole(req.user.role, role));
+    if (!hasPermission) {
       return res.status(403).json({ message: "Access denied" });
     }
     next();
   };
+};
+
+// Middleware to ensure user can only modify their own profile (unless admin)
+export const restrictToSelfOrAdmin = (req, res, next) => {
+  const isAdmin = req.user.role.includes("admin");
+  const isSelf = req.user._id.toString() === req.params.id;
+
+  if (!isAdmin && !isSelf) {
+    return res.status(403).json({ message: "You can only modify your own profile" });
+  }
+  next();
+};
+
+// Middleware to force "parent" role when creating a user (for non-admin)
+export const forceParentRole = (req, res, next) => {
+  const isAdmin = req.user.role.includes("admin");
+
+  if (!isAdmin) {
+    req.body.role = ["parent"];
+  }
+  next();
 };

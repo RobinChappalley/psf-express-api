@@ -62,8 +62,8 @@ router.delete(
 // Camp Items Routes
 router.get(
   "/:campId/items",
-  //authenticate,
-  //restrictTo("parent", "accompagnant", "admin"),
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   validateObjectId("campId"),
   validateRequest,
   CampController.getCampItems
@@ -71,8 +71,8 @@ router.get(
 
 router.get(
   "/:campId/item/:itemId",
-  //authenticate,
-  //restrictTo("parent", "accompagnant", "admin"),
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
   [...validateObjectId("campId"), ...validateObjectId("itemId")],
   validateRequest,
   CampController.getCampItemById
@@ -80,6 +80,8 @@ router.get(
 
 router.post(
   "/:campId/items",
+  authenticate,
+  restrictTo("admin"),
   [...validateObjectId("campId"), ...validateCampItem],
   validateRequest,
   CampController.addCampItem
@@ -87,6 +89,8 @@ router.post(
 
 router.put(
   "/:campId/item/:itemId",
+  authenticate,
+  restrictTo("admin"),
   [
     ...validateObjectId("campId"),
     ...validateObjectId("itemId"),
@@ -98,6 +102,8 @@ router.put(
 
 router.delete(
   "/:campId/item/:itemId",
+  authenticate,
+  restrictTo("admin"),
   [...validateObjectId("campId"), ...validateObjectId("itemId")],
   validateRequest,
   CampController.deleteCampItem
@@ -143,7 +149,7 @@ router.post(
 router.put(
   "/:campId/trainings/:trainingId",
   authenticate,
-  restrictTo("parent", "accompagnant", "admin"),
+  restrictTo("admin"),
   validateUpdateTraining,
   validateRequest,
   CampController.updateCampTraining
@@ -152,7 +158,7 @@ router.put(
 router.delete(
   "/:campId/trainings/:trainingId",
   authenticate,
-  restrictTo("parent", "accompagnant", "admin"),
+  restrictTo("admin"),
   [...validateObjectId("campId"), validateObjectId("trainingId")],
   validateRequest,
   CampController.deleteCampTraining

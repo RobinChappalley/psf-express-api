@@ -263,7 +263,6 @@ class CampController {
     const savedTraining = camp.trainings.find((t) => t.number === number);
 
     // Debug pour te rassurer
-    console.log("Saved:", savedTraining);
 
     res.status(201).json(savedTraining);
   }

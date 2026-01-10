@@ -2,9 +2,14 @@ import supertest from "supertest";
 import app from "../app.js";
 import { connectMongo } from "../db/db.js";
 import mongoose from "mongoose";
-import { cleanDatabase } from "./utils.js";
+import { cleanDatabase, cleanDatabaseExceptUsers } from "./utils.js";
 import CampModel from "../models/Camp.model.js";
 import ItemModel from "../models/Item.model.js";
+import UserModel from "../models/User.model.js";
+
+// Tokens for authentication
+let tokenAdmin;
+let tokenParent;
 
 describe("Camp Items API", function () {
   let testCamp;
@@ -13,6 +18,39 @@ describe("Camp Items API", function () {
 
   beforeAll(async () => {
     await connectMongo();
+    await cleanDatabase();
+
+    // Create admin user
+    await UserModel.create({
+      role: ["admin"],
+      lastname: "Admin",
+      firstname: "CampItems",
+      email: "admin.campitems@email.com",
+      password: "123456",
+      phoneNumber: "+41 79 123 34 57",
+    });
+
+    // Create parent user
+    await UserModel.create({
+      role: ["parent"],
+      lastname: "Parent",
+      firstname: "CampItems",
+      email: "parent.campitems@email.com",
+      password: "123456",
+      phoneNumber: "+41 79 123 34 58",
+    });
+
+    // Login admin
+    const resAdmin = await supertest(app)
+      .post("/login")
+      .send({ email: "admin.campitems@email.com", password: "123456" });
+    tokenAdmin = resAdmin.body.token;
+
+    // Login parent
+    const resParent = await supertest(app)
+      .post("/login")
+      .send({ email: "parent.campitems@email.com", password: "123456" });
+    tokenParent = resParent.body.token;
   });
 
   afterAll(async () => {
@@ -20,10 +58,9 @@ describe("Camp Items API", function () {
   });
 
   beforeEach(async () => {
-    await cleanDatabase();
+    await cleanDatabaseExceptUsers();
 
     // Create test items with unique slugs
-    const timestamp = Date.now();
     testItem1 = await ItemModel.create({
       slug: `tente-2-places`,
       name: `Tente 2 places`,
@@ -50,10 +87,6 @@ describe("Camp Items API", function () {
     });
   });
 
-  afterEach(async () => {
-    await cleanDatabase();
-  });
-
   describe("GET /camps/:id", function () {
     it("should retrieve a camp by ID", async function () {
       const res = await supertest(app)
@@ -67,9 +100,10 @@ describe("Camp Items API", function () {
   });
 
   describe("GET /camps/:id/items", function () {
-    it("should retrieve all items from a camp", async function () {
+    it("should retrieve all items from a camp as admin", async function () {
       const res = await supertest(app)
         .get(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -80,14 +114,34 @@ describe("Camp Items API", function () {
       expect(res.body[0].quantity).toBe(5);
     });
 
+    it("should retrieve all items from a camp as parent", async function () {
+      const res = await supertest(app)
+        .get(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .expect(200)
+        .expect("Content-Type", /json/);
+
+      expect(res.body).toBeInstanceOf(Array);
+      expect(res.body.length).toBe(1);
+    });
+
+    it("should return 401 without authentication", async function () {
+      await supertest(app)
+        .get(`/camps/${testCamp._id}/items`)
+        .expect(401);
+    });
+
     it("should return 404 for non-existent camp", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app).get(`/camps/${fakeId}/items`).expect(404);
+      await supertest(app)
+        .get(`/camps/${fakeId}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
+        .expect(404);
     });
   });
 
   describe("POST /camps/:id/items", function () {
-    it("should add a new item to camp", async function () {
+    it("should add a new item to camp as admin", async function () {
       const newItem = {
         item_id: testItem2._id.toString(),
         quantity: 10,
@@ -95,6 +149,7 @@ describe("Camp Items API", function () {
 
       const res = await supertest(app)
         .post(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(newItem)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -107,6 +162,31 @@ describe("Camp Items API", function () {
       expect(updatedCamp.itemsList.length).toBe(2);
     });
 
+    it("should return 401 without authentication", async function () {
+      const newItem = {
+        item_id: testItem2._id.toString(),
+        quantity: 10,
+      };
+
+      await supertest(app)
+        .post(`/camps/${testCamp._id}/items`)
+        .send(newItem)
+        .expect(401);
+    });
+
+    it("should return 403 for non-admin user", async function () {
+      const newItem = {
+        item_id: testItem2._id.toString(),
+        quantity: 10,
+      };
+
+      await supertest(app)
+        .post(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .send(newItem)
+        .expect(403);
+    });
+
     it("should fail without required item_id", async function () {
       const invalidItem = {
         quantity: 10,
@@ -114,6 +194,7 @@ describe("Camp Items API", function () {
 
       await supertest(app)
         .post(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(invalidItem)
         .expect(400);
     });
@@ -125,6 +206,7 @@ describe("Camp Items API", function () {
 
       await supertest(app)
         .post(`/camps/${testCamp._id}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(invalidItem)
         .expect(400);
     });
@@ -138,13 +220,14 @@ describe("Camp Items API", function () {
 
       await supertest(app)
         .post(`/camps/${fakeId}/items`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(newItem)
         .expect(404);
     });
   });
 
   describe("PUT /camps/:id/item/:id2", function () {
-    it("should update quantity of existing item in camp", async function () {
+    it("should update quantity of existing item in camp as admin", async function () {
       const updates = {
         item_id: testItem1._id.toString(),
         quantity: 15,
@@ -152,6 +235,7 @@ describe("Camp Items API", function () {
 
       const res = await supertest(app)
         .put(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -163,6 +247,31 @@ describe("Camp Items API", function () {
       expect(updatedItem.quantity).toBe(15);
     });
 
+    it("should return 401 without authentication", async function () {
+      const updates = {
+        item_id: testItem1._id.toString(),
+        quantity: 15,
+      };
+
+      await supertest(app)
+        .put(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .send(updates)
+        .expect(401);
+    });
+
+    it("should return 403 for non-admin user", async function () {
+      const updates = {
+        item_id: testItem1._id.toString(),
+        quantity: 15,
+      };
+
+      await supertest(app)
+        .put(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .send(updates)
+        .expect(403);
+    });
+
     it("should return 404 for non-existent item in camp", async function () {
       const updates = {
         item_id: testItem2._id.toString(),
@@ -170,7 +279,8 @@ describe("Camp Items API", function () {
       };
 
       await supertest(app)
-        .put(`/camps/${testCamp._id}/item`)
+        .put(`/camps/${testCamp._id}/item/${testItem2._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(404);
     });
@@ -183,20 +293,18 @@ describe("Camp Items API", function () {
       };
 
       await supertest(app)
-        .put(`/camps/${fakeId}/item`)
+        .put(`/camps/${fakeId}/item/${testItem1._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(404);
     });
   });
 
   describe("DELETE /camps/:id/item/:id2", function () {
-    it("should remove an item from camp", async function () {
-      const itemToDelete = {
-        item_id: testItem1._id.toString(),
-      };
-
+    it("should remove an item from camp as admin", async function () {
       const res = await supertest(app)
         .delete(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -207,26 +315,32 @@ describe("Camp Items API", function () {
       expect(updatedCamp.itemsList.length).toBe(0);
     });
 
+    it("should return 401 without authentication", async function () {
+      await supertest(app)
+        .delete(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .expect(401);
+    });
+
+    it("should return 403 for non-admin user", async function () {
+      await supertest(app)
+        .delete(`/camps/${testCamp._id}/item/${testItem1._id}`)
+        .set("Authorization", `Bearer ${tokenParent}`)
+        .expect(403);
+    });
+
     it("should return 404 for non-existent camp", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      const itemToDelete = {
-        item_id: testItem1._id.toString(),
-      };
 
       await supertest(app)
         .delete(`/camps/${fakeId}/item/${testItem1._id}`)
-        .send(itemToDelete)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(404);
     });
 
     it("should succeed even if item not in camp", async function () {
-      const itemToDelete = {
-        item_id: testItem2._id.toString(),
-      };
-
       await supertest(app)
         .delete(`/camps/${testCamp._id}/item/${testItem2._id}`)
-        .send(itemToDelete)
+        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200);
     });
   });
