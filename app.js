@@ -2,9 +2,18 @@ import express from "express";
 import createError from "http-errors";
 import logger from "morgan";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import yaml from "js-yaml";
 import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middlewares/errorHandler.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 2. On construit le chemin absolu vers le fichier
+// Si openapi.yml est dans le MEME dossier que app.js :
+const openApiPath = path.join(__dirname, "openapi.yml");
 
 import indexRouter from "./routes/index.js";
 import authRouter from "./routes/auth.js";
@@ -15,7 +24,7 @@ import itemsRouter from "./routes/items.js";
 
 const app = express();
 // Parse the OpenAPI document.
-const openApiDocument = yaml.load(fs.readFileSync("./openapi.yml"));
+const openApiDocument = yaml.load(fs.readFileSync(openApiPath, "utf8"));
 // Serve the Swagger UI documentation.
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 

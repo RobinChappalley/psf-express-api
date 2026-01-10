@@ -32,6 +32,7 @@ COPY --chown=nodejs:nodejs routes ./routes
 COPY --chown=nodejs:nodejs utils ./utils
 COPY --chown=nodejs:nodejs validators ./validators
 COPY --chown=nodejs:nodejs app.js .
+COPY --chown=nodejs:nodejs openapi.yml .
 
 # Switch to non-root user
 USER nodejs
@@ -39,4 +40,4 @@ USER nodejs
 EXPOSE 3000
 
 # Run the application (not through npm, directly with node)
-CMD ["node", "./bin/start.js"]
+CMD ["node", "run" "start"]
