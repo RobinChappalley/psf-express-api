@@ -1,6 +1,5 @@
 services:
   express-api:
-    # Build de l’image (peut être surchargé via DOCKERFILE)
     build:
       context: .
       dockerfile: Dockerfile.dev
