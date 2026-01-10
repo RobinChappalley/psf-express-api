@@ -60,42 +60,39 @@ const GPXTrackSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const trainingSchema = new Schema({
-  number: { type: Number, required: true },
-  year: { type: Number },
-  date: Date,
-  trainGoingTime: String,
-  trainReturnTime: String,
-  meetingTime: String,
-  meetingPoint: String,
-  returnTime: String,
-  distance: Number,
-  elevationGain: Number,
-  elevationLoss: Number,
-  gpsTrack: {
-    type: GPXTrackSchema,
-  },
-  responsiblePerson: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-  },
-  itemsList: [
-    {
-      itemId: {
-        type: Schema.Types.ObjectId,
-        ref: "Item",
-      },
-      quantity: Number,
+const trainingSchema = new Schema(
+  {
+    date: Date,
+    trainGoingTime: String,
+    trainReturnTime: String,
+    meetingTime: String,
+    meetingPoint: String,
+    returnTime: String,
+    distance: Number,
+    elevationGain: Number,
+    elevationLoss: Number,
+    gpsTrack: {
+      type: GPXTrackSchema,
     },
-  ],
-  remark: String,
-});
-
-trainingSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
+    responsiblePerson: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    itemsList: [
+      {
+        itemId: {
+          type: Schema.Types.ObjectId,
+          ref: "Item",
+        },
+        quantity: Number,
+      },
+    ],
+    remark: String,
+  },
+  { _id: true }
+);
 
 const fundraisingSchema = new Schema({
-  number: { type: Number, required: true },
-  year: { type: Number },
   dateTime: Date,
   location: String,
   participants: [
@@ -105,8 +102,6 @@ const fundraisingSchema = new Schema({
     },
   ],
 });
-
-fundraisingSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const generalMeetingSchema = new Schema({
   dateTime: Date,
@@ -127,8 +122,6 @@ const generalMeetingSchema = new Schema({
 generalMeetingSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
 
 const stageSchema = new Schema({
-  number: { type: Number, required: true },
-  year: { type: Number },
   date: Date,
   startPoint: String,
   endPoint: String,
@@ -137,8 +130,6 @@ const stageSchema = new Schema({
   elevationLoss: Number,
   routeDescription: String,
 });
-
-stageSchema.index({ number: 1, year: 1 }, { unique: true, sparse: true });
 
 const campSchema = new Schema(
   {

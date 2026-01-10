@@ -93,7 +93,6 @@ describe("Camp Trainings API", function () {
       endDate: "2025-07-15",
       trainings: [
         {
-          number: 1,
           date: "2025-06-15",
           trainGoingTime: "08:00",
           trainReturnTime: "18:00",
@@ -122,7 +121,6 @@ describe("Camp Trainings API", function () {
 
       expect(res.body).toBeInstanceOf(Array);
       expect(res.body.length).toBe(1);
-      expect(res.body[0]).toHaveProperty("number");
       expect(res.body[0]).toHaveProperty("meetingPoint");
       expect(res.body[0].meetingPoint).toBe("Gare centrale");
     });
@@ -248,7 +246,6 @@ describe("Camp Trainings API", function () {
         .attach("gpxFile", Buffer.from(mockGpx), "track.gpx");
 
       expect(res.status).toBe(201);
-      expect(res.body.number).toBe(2); // Auto-incrémenté
       expect(res.body.gpsTrack.coordinates).toBeDefined();
       expect(res.body.gpsTrack.coordinates[0]).toEqual([2.35, 48.85]);
     });

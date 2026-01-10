@@ -218,12 +218,6 @@ class CampController {
     const camp = await CampModel.findById(campId);
     if (!camp) throw createError(404, "Camp not found");
 
-    // 2. Logique numéro
-    const number = data.number || camp.getNextTrainingNumber(); // Supposons que cette méthode existe
-    if (camp.trainings.some((t) => t.number === number)) {
-      throw createError(409, `Training number ${number} already exists`);
-    }
-
     let gpsTrack = undefined;
     if (req.file) {
       const coords = await parseGpxToCoordinates(req.file.buffer);
@@ -235,7 +229,6 @@ class CampController {
     // 3. Construction de l'objet (Mapping Input -> Mongoose Schema)
     const newTrainingPayload = {
       // Champs directs (noms identiques Input/Schema)
-      number,
       date: data.date,
       year: new Date(data.date).getFullYear(),
       distance: data.distance,
@@ -259,16 +252,12 @@ class CampController {
 
     // 4. Push & Save
     camp.trainings.push(newTrainingPayload);
-    camp.trainings.sort((a, b) => a.number - b.number);
-
     await camp.save();
 
     // 5. Récupération & Réponse
-    const savedTraining = camp.trainings.find((t) => t.number === number);
+    const createdTraining = camp.trainings[camp.trainings.length - 1];
 
-    // Debug pour te rassurer
-
-    res.status(201).json(savedTraining);
+    res.status(201).json(createdTraining);
   }
 
   async updateCampTraining(req, res) {
