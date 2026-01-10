@@ -33,6 +33,8 @@ COPY --chown=nodejs:nodejs utils ./utils
 COPY --chown=nodejs:nodejs validators ./validators
 COPY --chown=nodejs:nodejs app.js .
 COPY --chown=nodejs:nodejs openapi.yml .
+COPY --chown=nodejs:nodejs seeders ./seeders
+COPY --chown=nodejs:nodejs run-seeders.js .
 
 # Switch to non-root user
 USER nodejs
