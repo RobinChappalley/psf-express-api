@@ -4,7 +4,7 @@ import logger from 'morgan'
 import fs from 'fs'
 import yaml from 'js-yaml'
 import swaggerUi from 'swagger-ui-express'
-import cors from 'cors' // ✅ AJOUT
+import cors from 'cors'
 import errorHandler from './middlewares/errorHandler.js'
 
 import indexRouter from './routes/index.js'
@@ -21,7 +21,7 @@ const openApiDocument = yaml.load(fs.readFileSync('./openapi.yml'))
 // Serve the Swagger UI documentation.
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument))
 
-// ✅ AJOUT CORS (AVANT les routes)
+//AJOUT CORS (AVANT les routes)
 app.use(
   cors({
     origin: 'http://localhost:5173',
