@@ -8,8 +8,9 @@ const errorHandler = (err, req, res, next) => {
 
   // 1. Doublons (unique: true)
   if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
-    return res.status(409).json({ error: `Le champ '${field}' existe déjà.` });
+    return res.status(409).json({
+      message: "Cette ressource existe déjà.",
+    });
   }
 
   // 2. Validation (required, minlength, etc.)
