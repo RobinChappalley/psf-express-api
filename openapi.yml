@@ -426,7 +426,7 @@ paths:
         - in: query
           name: status
           schema: { type: string }
-          description: "Filtre par statut du camp (ex: published, draft)"
+          description: "Filtre par statut du camp (ex: published, draft, archived)"
       responses:
         "200":
           description: Liste de camps
@@ -441,6 +441,9 @@ paths:
     post:
       tags: [Camps]
       summary: Ajouter un camp
+      description: Crée un nouveau camp. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -465,6 +468,10 @@ paths:
                 $ref: "#/components/schemas/Camp"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "500":
           description: Erreur interne du serveur
 
@@ -492,6 +499,9 @@ paths:
     put:
       tags: [Camps]
       summary: Mettre à jour un camp
+      description: Met à jour un camp existant. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -518,6 +528,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Camp"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp non trouvé
         "500":
@@ -525,6 +539,9 @@ paths:
     delete:
       tags: [Camps]
       summary: Supprimer un camp
+      description: Supprime un camp. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -534,6 +551,10 @@ paths:
       responses:
         "200":
           description: Camp supprimé
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp non trouvé
         "500":
@@ -547,6 +568,9 @@ paths:
     get:
       tags: [Items]
       summary: Récupérer tous les objets d'un camp
+      description: Retourne la liste des objets d'un camp. Nécessite authentification (rôle parent, accompagnant ou admin).
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: campId
@@ -562,6 +586,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CampItem"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Camp non trouvé
         "500":
@@ -569,6 +597,9 @@ paths:
     post:
       tags: [Items]
       summary: Ajouter un objet à un camp
+      description: Ajoute un objet à un camp. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: campId
@@ -605,6 +636,10 @@ paths:
                 $ref: "#/components/schemas/CampItem"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp non trouvé
         "500":
@@ -614,6 +649,9 @@ paths:
     get:
       tags: [Items]
       summary: Récupérer un objet spécifique d'un camp
+      description: Retourne un objet spécifique d'un camp. Nécessite authentification (rôle parent, accompagnant ou admin).
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: campId
@@ -632,6 +670,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CampItem"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Camp ou objet non trouvé
         "500":
@@ -639,6 +681,9 @@ paths:
     put:
       tags: [Items]
       summary: Mettre à jour un objet d'un camp
+      description: Met à jour un objet d'un camp. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: campId
@@ -682,6 +727,10 @@ paths:
                   $ref: "#/components/schemas/CampItem"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp ou objet non trouvé
         "500":
@@ -689,6 +738,9 @@ paths:
     delete:
       tags: [Items]
       summary: Supprimer un objet d'un camp
+      description: Supprime un objet d'un camp. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: campId
@@ -703,6 +755,10 @@ paths:
       responses:
         "200":
           description: Objet supprimé
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp ou objet non trouvé
         "500":
@@ -820,7 +876,7 @@ paths:
                 elevationGain: { type: integer, minimum: 0 }
                 elevationLoss: { type: integer, minimum: 0 }
                 remark: { type: string }
-                responsiblePersonId:
+                responsiblePerson:
                   {
                     type: string,
                     description: "ID de l'utilisateur responsable (ObjectId)",
@@ -887,7 +943,7 @@ paths:
     put:
       tags: [Trainings]
       summary: Modifier un entraînement
-      description: Met à jour un entraînement existant. Nécessite authentification (parent, accompagnant ou admin)
+      description: Met à jour un entraînement existant. Nécessite authentification avec rôle admin.
       security:
         - bearerAuth: []
       parameters:
@@ -936,7 +992,7 @@ paths:
         "401":
           description: Non authentifié
         "403":
-          description: Accès refusé
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp ou entraînement non trouvé
         "500":
@@ -944,7 +1000,7 @@ paths:
     delete:
       tags: [Trainings]
       summary: Supprimer un entraînement
-      description: Supprime un entraînement. Nécessite authentification (parent, accompagnant ou admin)
+      description: Supprime un entraînement. Nécessite authentification avec rôle admin.
       security:
         - bearerAuth: []
       parameters:
@@ -964,7 +1020,7 @@ paths:
         "401":
           description: Non authentifié
         "403":
-          description: Accès refusé
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Camp ou entraînement non trouvé
         "500":
@@ -1174,10 +1230,10 @@ paths:
             schema:
               type: object
               required:
-                - userId
+                - user
                 - content
               properties:
-                userId:
+                user:
                   {
                     type: string,
                     description: "ID de l'utilisateur (ObjectId)",
