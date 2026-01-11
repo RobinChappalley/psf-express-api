@@ -56,7 +56,6 @@ export async function seedCamps() {
       },
       trainings: [
         {
-          number: 1,
           date: new Date("2025-06-07"),
           trainGoingTime: "08:45",
           trainReturnTime: "18:30",
@@ -89,7 +88,6 @@ export async function seedCamps() {
           remark: "Premier entraînement - niveau facile",
         },
         {
-          number: 2,
           date: new Date("2025-06-14"),
           trainGoingTime: "08:30",
           trainReturnTime: "19:00",
@@ -123,7 +121,6 @@ export async function seedCamps() {
           remark: "Entraînement intermédiaire - dénivelé important",
         },
         {
-          number: 3,
           date: new Date("2025-06-21"),
           trainGoingTime: "08:00",
           trainReturnTime: "19:30",
@@ -156,13 +153,11 @@ export async function seedCamps() {
       ],
       fundraisings: [
         {
-          number: 1,
           dateTime: new Date("2025-05-10T10:00:00Z"),
           location: "Place de la Palud, Lausanne",
           participants: [enfants[0]._id, enfants[1]._id, enfants[2]._id],
         },
         {
-          number: 2,
           dateTime: new Date("2025-06-01T14:00:00Z"),
           location: "Marché de Vevey",
           participants: [enfants[3]._id, enfants[4]._id],
@@ -170,7 +165,6 @@ export async function seedCamps() {
       ],
       stages: [
         {
-          number: 1,
           date: new Date("2025-07-06"),
           startPoint: "Lausanne",
           endPoint: "Montreux",
@@ -180,7 +174,6 @@ export async function seedCamps() {
           routeDescription: "Parcours le long du lac Léman via Lavaux",
         },
         {
-          number: 2,
           date: new Date("2025-07-07"),
           startPoint: "Montreux",
           endPoint: "Col de Jaman",
@@ -190,7 +183,6 @@ export async function seedCamps() {
           routeDescription: "Montée technique vers le col",
         },
         {
-          number: 3,
           date: new Date("2025-07-08"),
           startPoint: "Col de Jaman",
           endPoint: "Gruyères",
@@ -222,7 +214,6 @@ export async function seedCamps() {
       ],
       trainings: [
         {
-          number: 1,
           date: new Date("2024-07-05"),
           trainGoingTime: "07:30",
           trainReturnTime: "20:00",
@@ -252,7 +243,6 @@ export async function seedCamps() {
           remark: "Reconnaissance Val d'Hérens",
         },
         {
-          number: 2,
           date: new Date("2024-07-19"),
           trainGoingTime: "07:00",
           trainReturnTime: "20:30",
@@ -284,7 +274,6 @@ export async function seedCamps() {
       ],
       stages: [
         {
-          number: 1,
           date: new Date("2024-08-03"),
           startPoint: "Sion",
           endPoint: "Cabane des Dix",
@@ -294,7 +283,6 @@ export async function seedCamps() {
           routeDescription: "Montée à la cabane via Val d'Hérémence",
         },
         {
-          number: 2,
           date: new Date("2024-08-04"),
           startPoint: "Cabane des Dix",
           endPoint: "Arolla",
