@@ -6,6 +6,32 @@ const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-producti
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 class AuthController {
+  async signup(req, res) {
+    const data = matchedData(req);
+
+    const user = await UserModel.create({
+      ...data,
+      role: ["parent"],
+    });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        role: user.role,
+      },
+    });
+  }
+
   async login(req, res) {
     const data = matchedData(req);
 

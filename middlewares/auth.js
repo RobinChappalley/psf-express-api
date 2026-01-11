@@ -57,23 +57,36 @@ export const restrictTo = (...roles) => {
   };
 };
 
-// Middleware to ensure user can only modify their own profile (unless admin)
-export const restrictToSelfOrAdmin = (req, res, next) => {
+// Middleware to ensure user can only modify their own profile, their children's profiles, or is admin
+export const restrictToSelfOrAdmin = async (req, res, next) => {
   const isAdmin = req.user.role.includes("admin");
   const isSelf = req.user._id.toString() === req.params.id;
 
-  if (!isAdmin && !isSelf) {
-    return res.status(403).json({ message: "You can only modify your own profile" });
+  if (isAdmin || isSelf) {
+    return next();
   }
-  next();
+
+  // Check if the target user is a child of the current user
+  const targetUser = await UserModel.findById(req.params.id);
+  if (!targetUser) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  const isParentOfTarget = targetUser.parent?.toString() === req.user._id.toString();
+  if (isParentOfTarget) {
+    return next();
+  }
+
+  return res.status(403).json({ message: "You can only modify your own profile or your children's profiles" });
 };
 
-// Middleware to force "parent" role when creating a user (for non-admin)
+// Middleware to set child role and parent reference when a parent creates a user
 export const forceParentRole = (req, res, next) => {
   const isAdmin = req.user.role.includes("admin");
 
   if (!isAdmin) {
-    req.body.role = ["parent"];
+    req.body.role = ["enfant"];
+    req.body.parent = req.user._id;
   }
   next();
 };
