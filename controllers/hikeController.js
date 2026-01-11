@@ -17,7 +17,7 @@ class HikeController {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("user", "username email")
+      .populate("user", "username firstname lastname")
       .lean();
 
     res.status(200).json({
@@ -53,7 +53,7 @@ class HikeController {
     delete payload.userId;
 
     const hike = await Hike.create(payload);
-    await hike.populate("user", "username email");
+    await hike.populate("user", "username firstname lastname");
 
     res.status(201).json(hike);
   }
