@@ -271,7 +271,10 @@ class CampController {
     camp.trainings.push(newTrainingPayload);
     await camp.save();
 
-    // 5. Récupération & Réponse
+    // 5. Populate responsiblePerson pour retourner l'objet User complet
+    await camp.populate("trainings.responsiblePerson");
+
+    // 6. Récupération & Réponse
     const createdTraining = camp.trainings[camp.trainings.length - 1];
 
     res.status(201).json(createdTraining);
