@@ -5,17 +5,17 @@ import webPush from "../webpush.js";
 const router = express.Router();
 
 // Route test pour envoyer une notification push
-router.post("/test", async (req, res) => {
+router.post("/welcome", async (req, res) => {
   try {
     const subs = await PushSubscription.find();
 
     if (!subs.length) {
-      return res.status(400).json({ error: "Aucune subscription enregistrée" });
+      return res.status(400).json({ error: "Zero subscription saved" });
     }
 
     const payload = JSON.stringify({
-      title: "Test notification",
-      body: "Notification test envoyée depuis le backend",
+      title: "Bienvenue",
+      body: "Merci d'avoir accepté les notifications",
       url: "/",
     });
 
@@ -25,7 +25,7 @@ router.post("/test", async (req, res) => {
       } catch (err) {
         if (err.statusCode === 410 || err.statusCode === 404) {
           // Subscription expirée, on la supprime
-          console.warn("Subscription expirée, suppression:", sub.endpoint);
+          console.warn("Subscription expired, suppression:", sub.endpoint);
           await PushSubscription.deleteOne({ endpoint: sub.endpoint });
         } else {
           // Toute autre erreur : on la remonte
@@ -36,8 +36,8 @@ router.post("/test", async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    console.error("Erreur notification test:", err);
-    res.status(500).json({ error: "Échec de la notification" });
+    console.error("Error notification :", err);
+    res.status(500).json({ error: "Failed to send notification" });
   }
 });
 
@@ -56,6 +56,28 @@ router.post("/subscribe", async (req, res) => {
     res.status(201).json({ success: true });
   } catch (err) {
     res.status(500).json({ error: "Subscription failed" });
+  }
+});
+
+router.post("/unsubscribe", async (req, res) => {
+  const endpoint = req.body?.endpoint;
+
+  if (!endpoint) {
+    console.warn("Missing endpoint in request body:", req.body);
+    return res.status(400).json({ error: "Missing subscription endpoint" });
+  }
+
+  try {
+    const result = await PushSubscription.deleteOne({ endpoint });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Subscription not found" });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error unsubscribing:", err);
+    res.status(500).json({ error: "Failed to unsubscribe" });
   }
 });
 
