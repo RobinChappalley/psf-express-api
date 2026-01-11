@@ -60,6 +60,71 @@ paths:
         "500":
           description: Erreur interne du serveur
 
+  /signup:
+    post:
+      tags: [Authentication]
+      summary: Inscription d'un nouveau parent
+      description: |
+        Crée un nouveau compte utilisateur avec le rôle "parent".
+        Cette route est publique (pas d'authentification requise).
+        Retourne un token JWT permettant une connexion immédiate.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - firstname
+                - lastname
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: "Email unique de l'utilisateur"
+                password:
+                  type: string
+                  minLength: 6
+                  description: "Mot de passe (minimum 6 caractères)"
+                firstname:
+                  type: string
+                  minLength: 1
+                  maxLength: 20
+                  description: "Prénom"
+                lastname:
+                  type: string
+                  minLength: 1
+                  maxLength: 20
+                  description: "Nom de famille"
+      responses:
+        "201":
+          description: Compte créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: "JWT token valide 7 jours"
+                  user:
+                    type: object
+                    properties:
+                      id: { type: string }
+                      email: { type: string }
+                      firstname: { type: string }
+                      lastname: { type: string }
+                      role:
+                        type: array
+                        items: { type: string }
+                        example: ["parent"]
+        "400":
+          description: Données invalides (email déjà utilisé, champs manquants, etc.)
+        "500":
+          description: Erreur interne du serveur
+
   ########################
   # CAMPS
   ########################
@@ -1577,7 +1642,9 @@ paths:
     get:
       tags: [Users]
       summary: Récupérer la liste de tous les utilisateurs
-      description: Retourne tous les utilisateurs. Aucune authentification requise.
+      description: Retourne tous les utilisateurs. Nécessite authentification (rôle parent minimum).
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: Liste des utilisateurs
@@ -1587,12 +1654,23 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/User"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "500":
           description: Erreur interne du serveur
     post:
       tags: [Users]
-      summary: Créer un utilisateur
-      description: Crée un nouvel utilisateur. Aucune authentification requise.
+      summary: Créer un enfant (pour un parent authentifié)
+      security:
+        - bearerAuth: []
+      description: |
+        Crée un nouvel utilisateur enfant. Nécessite authentification (rôle parent minimum).
+
+        **Comportement selon le rôle :**
+        - **Parent** : Le rôle est forcé à "enfant" et la propriété `parent` est automatiquement définie avec l'ID du parent créateur.
+        - **Admin** : Peut créer un utilisateur avec n'importe quel rôle.
       requestBody:
         required: true
         content:
@@ -1678,6 +1756,10 @@ paths:
                 $ref: "#/components/schemas/User"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "500":
           description: Erreur interne du serveur
 
@@ -1685,7 +1767,9 @@ paths:
     get:
       tags: [Users]
       summary: Récupérer un utilisateur
-      description: Retourne un utilisateur par son ID. Aucune authentification requise.
+      description: Retourne un utilisateur par son ID. Nécessite authentification (rôle parent minimum).
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -1699,6 +1783,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
         "404":
           description: Utilisateur non trouvé
         "500":
@@ -1706,7 +1794,15 @@ paths:
     put:
       tags: [Users]
       summary: Modifier un utilisateur
-      description: Met à jour un utilisateur existant. Aucune authentification requise.
+      security:
+        - bearerAuth: []
+      description: |
+        Met à jour un utilisateur existant. Nécessite authentification (rôle parent minimum).
+
+        **Permissions :**
+        - Un **admin** peut modifier n'importe quel utilisateur.
+        - Un **parent** peut modifier son propre profil ou celui de ses enfants (utilisateurs ayant son ID comme propriété `parent`).
+        - Toute autre tentative retourne une erreur 403.
       parameters:
         - in: path
           name: id
@@ -1782,6 +1878,10 @@ paths:
                 $ref: "#/components/schemas/User"
         "400":
           description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (vous ne pouvez modifier que votre profil ou celui de vos enfants)
         "404":
           description: Utilisateur non trouvé
         "500":
@@ -1789,7 +1889,9 @@ paths:
     delete:
       tags: [Users]
       summary: Supprimer un utilisateur
-      description: Supprime un utilisateur. Aucune authentification requise.
+      description: Supprime un utilisateur. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -1799,6 +1901,10 @@ paths:
       responses:
         "200":
           description: Utilisateur supprimé
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
         "404":
           description: Utilisateur non trouvé
         "500":
