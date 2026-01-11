@@ -6,6 +6,8 @@ import {
   getMinDistanceToLineString,
 } from "../utils/geoUtils.js";
 import createError from "http-errors";
+import webPush from "../webpush.js";
+import PushSubscriptionModel from "../models/PushSubscription.model.js";
 
 class CampController {
   async getAllCamps(req, res) {
@@ -60,7 +62,22 @@ class CampController {
     await camp.save();
 
     //Notification
-    //if (updateData.status === "published" && oldStatus !== "published")
+    if (updateData.status === "published" && oldStatus !== "published") {
+      const subs = await PushSubscriptionModel.find();
+
+      const payload = JSON.stringify({
+        title: "Nouveau camp publié",
+        body: camp.title,
+      });
+
+      for (const sub of subs) {
+        try {
+          await webPush.sendNotification(sub, payload);
+        } catch (err) {
+          console.error("Push error", err);
+        }
+      }
+    }
 
     res.status(200).json(camp);
   }
