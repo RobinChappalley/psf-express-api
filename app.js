@@ -15,7 +15,6 @@ const __dirname = path.dirname(__filename);
 // Si openapi.yml est dans le MEME dossier que app.js :
 const openApiPath = path.join(__dirname, "openapi.yml");
 
-import indexRouter from "./routes/index.js";
 import pushRouter from "./routes/push.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
@@ -33,7 +32,6 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.use("/", indexRouter);
 app.use("/push", pushRouter);
 app.use("/", authRouter);
 app.use("/items", itemsRouter);
