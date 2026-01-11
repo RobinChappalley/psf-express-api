@@ -125,6 +125,295 @@ paths:
         "500":
           description: Erreur interne du serveur
 
+  /users:
+    get:
+      tags: [Users]
+      summary: Récupérer la liste de tous les utilisateurs
+      description: Retourne tous les utilisateurs. Nécessite authentification (rôle parent minimum).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: parentId
+          schema: { type: string }
+          description: "Filtre par ID du parent (ObjectId)"
+        - in: query
+          name: campId
+          schema: { type: string }
+          description: "Filtre par ID du camp (ObjectId) - retourne les utilisateurs inscrits à ce camp"
+        - in: query
+          name: role
+          schema: { type: string }
+          description: "Filtre par rôle (admin, accompagnant, parent, enfant)"
+        - in: query
+          name: hasPaid
+          schema: { type: boolean }
+          description: "Filtre par statut de paiement (true/false)"
+      responses:
+        "200":
+          description: Liste des utilisateurs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
+        "500":
+          description: Erreur interne du serveur
+    post:
+      tags: [Users]
+      summary: Créer un enfant (pour un parent authentifié)
+      security:
+        - bearerAuth: []
+      description: |
+        Crée un nouvel utilisateur enfant. Nécessite authentification (rôle parent minimum).
+
+        **Comportement selon le rôle :**
+        - **Parent** : Le rôle est forcé à "enfant" et la propriété `parent` est automatiquement définie avec l'ID du parent créateur.
+        - **Admin** : Peut créer un utilisateur avec n'importe quel rôle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - lastname
+                - firstname
+              properties:
+                role:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["admin", "accompagnant", "parent", "enfant"]
+                  description: "Tableau de rôles (défaut: [enfant])"
+                lastname: { type: string, minLength: 1, maxLength: 20 }
+                firstname: { type: string, minLength: 1, maxLength: 20 }
+                email:
+                  {
+                    type: string,
+                    format: email,
+                    description: "Email unique (optionnel)",
+                  }
+                password:
+                  {
+                    type: string,
+                    minLength: 6,
+                    description: "Requis si email fourni",
+                  }
+                phoneNumber:
+                  { type: string, description: "Format: +41794567895" }
+                address:
+                  type: object
+                  properties:
+                    street: { type: string }
+                    city: { type: string }
+                    postalCode: { type: integer }
+                    country: { type: string }
+                parent: { type: string, description: "ID du parent (ObjectId)" }
+                children:
+                  type: array
+                  items: { type: string }
+                  description: "IDs des enfants (ObjectIds)"
+                camps:
+                  type: array
+                  items: { type: string }
+                  description: "IDs des camps (ObjectIds)"
+                participationInfo:
+                  type: object
+                  properties:
+                    birthDate: { type: string, format: date }
+                    tshirtInfo:
+                      type: object
+                      properties:
+                        size:
+                          {
+                            type: string,
+                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
+                          }
+                        gender: { type: string, enum: ["m", "f"] }
+                    allergies:
+                      type: array
+                      items: { type: string }
+                    medication:
+                      type: array
+                      items: { type: string }
+                    insuranceNumber: { type: string }
+                    insuranceName: { type: string }
+                    idExpireDate: { type: string, format: date }
+                    publicTransportPass:
+                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
+                    isCASMember: { type: boolean }
+                    isHelicopterInsured: { type: boolean }
+                    hasPhotoConsent: { type: boolean }
+                    hasPaid: { type: boolean }
+      responses:
+        "201":
+          description: Utilisateur créé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
+        "500":
+          description: Erreur interne du serveur
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Récupérer un utilisateur
+      description: Retourne un utilisateur par son ID. Nécessite authentification (rôle parent minimum).
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      responses:
+        "200":
+          description: Utilisateur trouvé
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+    put:
+      tags: [Users]
+      summary: Modifier un utilisateur
+      security:
+        - bearerAuth: []
+      description: |
+        Met à jour un utilisateur existant. Nécessite authentification (rôle parent minimum).
+
+        **Permissions :**
+        - Un **admin** peut modifier n'importe quel utilisateur.
+        - Un **parent** peut modifier son propre profil ou celui de ses enfants (utilisateurs ayant son ID comme propriété `parent`).
+        - Toute autre tentative retourne une erreur 403.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "Tous les champs sont optionnels (mêmes propriétés que POST)"
+              properties:
+                role:
+                  type: array
+                  items:
+                    type: string
+                    enum: ["admin", "accompagnant", "parent", "enfant"]
+                lastname: { type: string, minLength: 1, maxLength: 20 }
+                firstname: { type: string, minLength: 1, maxLength: 20 }
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+                phoneNumber: { type: string }
+                address:
+                  type: object
+                  properties:
+                    street: { type: string }
+                    city: { type: string }
+                    postalCode: { type: integer }
+                    country: { type: string }
+                parent: { type: string }
+                children:
+                  type: array
+                  items: { type: string }
+                camps:
+                  type: array
+                  items: { type: string }
+                participationInfo:
+                  type: object
+                  properties:
+                    birthDate: { type: string, format: date }
+                    tshirtInfo:
+                      type: object
+                      properties:
+                        size:
+                          {
+                            type: string,
+                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
+                          }
+                        gender: { type: string, enum: ["m", "f"] }
+                    allergies:
+                      type: array
+                      items: { type: string }
+                    medication:
+                      type: array
+                      items: { type: string }
+                    insuranceNumber: { type: string }
+                    insuranceName: { type: string }
+                    idExpireDate: { type: string, format: date }
+                    publicTransportPass:
+                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
+                    isCASMember: { type: boolean }
+                    isHelicopterInsured: { type: boolean }
+                    hasPhotoConsent: { type: boolean }
+                    hasPaid: { type: boolean }
+      responses:
+        "200":
+          description: Utilisateur modifié
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Données invalides
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (vous ne pouvez modifier que votre profil ou celui de vos enfants)
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+    delete:
+      tags: [Users]
+      summary: Supprimer un utilisateur
+      description: Supprime un utilisateur. Nécessite authentification avec rôle admin.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          description: ID de l'utilisateur
+      responses:
+        "200":
+          description: Utilisateur supprimé
+        "401":
+          description: Non authentifié
+        "403":
+          description: Accès refusé (rôle admin requis)
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+
   ########################
   # CAMPS
   ########################
@@ -1680,299 +1969,6 @@ paths:
         "500":
           description: Erreur interne du serveur
 
-  ########################
-  # USERS
-  ########################
-
-  /users:
-    get:
-      tags: [Users]
-      summary: Récupérer la liste de tous les utilisateurs
-      description: Retourne tous les utilisateurs. Nécessite authentification (rôle parent minimum).
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: query
-          name: parentId
-          schema: { type: string }
-          description: "Filtre par ID du parent (ObjectId)"
-        - in: query
-          name: campId
-          schema: { type: string }
-          description: "Filtre par ID du camp (ObjectId) - retourne les utilisateurs inscrits à ce camp"
-        - in: query
-          name: role
-          schema: { type: string }
-          description: "Filtre par rôle (admin, accompagnant, parent, enfant)"
-        - in: query
-          name: hasPaid
-          schema: { type: boolean }
-          description: "Filtre par statut de paiement (true/false)"
-      responses:
-        "200":
-          description: Liste des utilisateurs
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/User"
-        "401":
-          description: Non authentifié
-        "403":
-          description: Accès refusé
-        "500":
-          description: Erreur interne du serveur
-    post:
-      tags: [Users]
-      summary: Créer un enfant (pour un parent authentifié)
-      security:
-        - bearerAuth: []
-      description: |
-        Crée un nouvel utilisateur enfant. Nécessite authentification (rôle parent minimum).
-
-        **Comportement selon le rôle :**
-        - **Parent** : Le rôle est forcé à "enfant" et la propriété `parent` est automatiquement définie avec l'ID du parent créateur.
-        - **Admin** : Peut créer un utilisateur avec n'importe quel rôle.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - lastname
-                - firstname
-              properties:
-                role:
-                  type: array
-                  items:
-                    type: string
-                    enum: ["admin", "accompagnant", "parent", "enfant"]
-                  description: "Tableau de rôles (défaut: [enfant])"
-                lastname: { type: string, minLength: 1, maxLength: 20 }
-                firstname: { type: string, minLength: 1, maxLength: 20 }
-                email:
-                  {
-                    type: string,
-                    format: email,
-                    description: "Email unique (optionnel)",
-                  }
-                password:
-                  {
-                    type: string,
-                    minLength: 6,
-                    description: "Requis si email fourni",
-                  }
-                phoneNumber:
-                  { type: string, description: "Format: +41794567895" }
-                address:
-                  type: object
-                  properties:
-                    street: { type: string }
-                    city: { type: string }
-                    postalCode: { type: integer }
-                    country: { type: string }
-                parent: { type: string, description: "ID du parent (ObjectId)" }
-                children:
-                  type: array
-                  items: { type: string }
-                  description: "IDs des enfants (ObjectIds)"
-                camps:
-                  type: array
-                  items: { type: string }
-                  description: "IDs des camps (ObjectIds)"
-                participationInfo:
-                  type: object
-                  properties:
-                    birthDate: { type: string, format: date }
-                    tshirtInfo:
-                      type: object
-                      properties:
-                        size:
-                          {
-                            type: string,
-                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
-                          }
-                        gender: { type: string, enum: ["m", "f"] }
-                    allergies:
-                      type: array
-                      items: { type: string }
-                    medication:
-                      type: array
-                      items: { type: string }
-                    insuranceNumber: { type: string }
-                    insuranceName: { type: string }
-                    idExpireDate: { type: string, format: date }
-                    publicTransportPass:
-                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
-                    isCASMember: { type: boolean }
-                    isHelicopterInsured: { type: boolean }
-                    hasPhotoConsent: { type: boolean }
-                    hasPaid: { type: boolean }
-      responses:
-        "201":
-          description: Utilisateur créé
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          description: Données invalides
-        "401":
-          description: Non authentifié
-        "403":
-          description: Accès refusé
-        "500":
-          description: Erreur interne du serveur
-
-  /users/{id}:
-    get:
-      tags: [Users]
-      summary: Récupérer un utilisateur
-      description: Retourne un utilisateur par son ID. Nécessite authentification (rôle parent minimum).
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-          description: ID de l'utilisateur
-      responses:
-        "200":
-          description: Utilisateur trouvé
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "401":
-          description: Non authentifié
-        "403":
-          description: Accès refusé
-        "404":
-          description: Utilisateur non trouvé
-        "500":
-          description: Erreur interne du serveur
-    put:
-      tags: [Users]
-      summary: Modifier un utilisateur
-      security:
-        - bearerAuth: []
-      description: |
-        Met à jour un utilisateur existant. Nécessite authentification (rôle parent minimum).
-
-        **Permissions :**
-        - Un **admin** peut modifier n'importe quel utilisateur.
-        - Un **parent** peut modifier son propre profil ou celui de ses enfants (utilisateurs ayant son ID comme propriété `parent`).
-        - Toute autre tentative retourne une erreur 403.
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-          description: ID de l'utilisateur
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              description: "Tous les champs sont optionnels (mêmes propriétés que POST)"
-              properties:
-                role:
-                  type: array
-                  items:
-                    type: string
-                    enum: ["admin", "accompagnant", "parent", "enfant"]
-                lastname: { type: string, minLength: 1, maxLength: 20 }
-                firstname: { type: string, minLength: 1, maxLength: 20 }
-                email: { type: string, format: email }
-                password: { type: string, minLength: 6 }
-                phoneNumber: { type: string }
-                address:
-                  type: object
-                  properties:
-                    street: { type: string }
-                    city: { type: string }
-                    postalCode: { type: integer }
-                    country: { type: string }
-                parent: { type: string }
-                children:
-                  type: array
-                  items: { type: string }
-                camps:
-                  type: array
-                  items: { type: string }
-                participationInfo:
-                  type: object
-                  properties:
-                    birthDate: { type: string, format: date }
-                    tshirtInfo:
-                      type: object
-                      properties:
-                        size:
-                          {
-                            type: string,
-                            enum: ["xxs", "xs", "s", "m", "l", "xl", "xxl"],
-                          }
-                        gender: { type: string, enum: ["m", "f"] }
-                    allergies:
-                      type: array
-                      items: { type: string }
-                    medication:
-                      type: array
-                      items: { type: string }
-                    insuranceNumber: { type: string }
-                    insuranceName: { type: string }
-                    idExpireDate: { type: string, format: date }
-                    publicTransportPass:
-                      { type: string, enum: ["AG", "demi-tarif", "aucun"] }
-                    isCASMember: { type: boolean }
-                    isHelicopterInsured: { type: boolean }
-                    hasPhotoConsent: { type: boolean }
-                    hasPaid: { type: boolean }
-      responses:
-        "200":
-          description: Utilisateur modifié
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          description: Données invalides
-        "401":
-          description: Non authentifié
-        "403":
-          description: Accès refusé (vous ne pouvez modifier que votre profil ou celui de vos enfants)
-        "404":
-          description: Utilisateur non trouvé
-        "500":
-          description: Erreur interne du serveur
-    delete:
-      tags: [Users]
-      summary: Supprimer un utilisateur
-      description: Supprime un utilisateur. Nécessite authentification avec rôle admin.
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema: { type: string }
-          description: ID de l'utilisateur
-      responses:
-        "200":
-          description: Utilisateur supprimé
-        "401":
-          description: Non authentifié
-        "403":
-          description: Accès refusé (rôle admin requis)
-        "404":
-          description: Utilisateur non trouvé
-        "500":
-          description: Erreur interne du serveur
-
 #############################
 # SCHEMAS
 #############################
@@ -2359,6 +2355,8 @@ components:
 tags:
   - name: Authentication
     description: Authentification utilisateur
+  - name: Users
+    description: Gestion des utilisateurs
   - name: Camps
     description: Gestion des camps
   - name: Trainings
@@ -2375,5 +2373,3 @@ tags:
     description: Assemblées générales du camp
   - name: InformationEvening
     description: Soirées d'information du camp
-  - name: Users
-    description: Gestion des utilisateurs
