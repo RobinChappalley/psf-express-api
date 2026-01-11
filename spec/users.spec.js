@@ -141,7 +141,7 @@ describe("POST /users", function () {
     expect(res.body.lastname).toBe("Smith");
   });
 
-  it("should create a user as parent but force role to parent", async function () {
+  it("should create a child user when parent creates a user", async function () {
     const res = await supertest(app)
       .post("/users")
       .set("Authorization", `Bearer ${tokenParent}`)
@@ -149,15 +149,15 @@ describe("POST /users", function () {
         role: ["admin"], // Try to set admin role
         lastname: "Doe",
         firstname: "Jane",
-        email: "jane.doe@email.com",
-        password: "123456",
       })
       .expect(201)
       .expect("Content-Type", /json/);
 
     expect(res.body).toHaveProperty("_id");
-    // Role should be forced to parent, not admin
-    expect(res.body.role).toEqual(["parent"]);
+    // Role should be forced to enfant, not admin
+    expect(res.body.role).toEqual(["enfant"]);
+    // Parent should be set to the creating user
+    expect(res.body.parent).toBe(parentUser._id.toString());
     expect(res.body.lastname).toBe("Doe");
   });
 
@@ -291,6 +291,67 @@ describe("PUT /users/:id", function () {
         firstname: "Hacked",
       })
       .expect(403);
+  });
+
+  it("should allow parent to update their own child", async () => {
+    // Create a child for the parent
+    const childRes = await supertest(app)
+      .post("/users")
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        lastname: "Child",
+        firstname: "MyOwn",
+      })
+      .expect(201);
+
+    const childId = childRes.body._id;
+
+    // Parent should be able to update their child
+    const res = await supertest(app)
+      .put(`/users/${childId}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        firstname: "UpdatedChild",
+      })
+      .expect(200)
+      .expect("Content-Type", /json/);
+
+    expect(res.body.firstname).toBe("UpdatedChild");
+
+    // Cleanup
+    await UserModel.findByIdAndDelete(childId);
+  });
+
+  it("should return 403 when parent tries to update another parent's child", async () => {
+    // Create another parent
+    const otherParent = await UserModel.create({
+      role: ["parent"],
+      lastname: "Other",
+      firstname: "Parent",
+      email: "other.parent@email.com",
+      password: "123456",
+    });
+
+    // Create a child for the other parent
+    const otherChild = await UserModel.create({
+      role: ["enfant"],
+      lastname: "Other",
+      firstname: "Child",
+      parent: otherParent._id,
+    });
+
+    // Our parent should NOT be able to update the other parent's child
+    await supertest(app)
+      .put(`/users/${otherChild._id}`)
+      .set("Authorization", `Bearer ${tokenParent}`)
+      .send({
+        firstname: "Hacked",
+      })
+      .expect(403);
+
+    // Cleanup
+    await UserModel.findByIdAndDelete(otherChild._id);
+    await UserModel.findByIdAndDelete(otherParent._id);
   });
 
   it("should return 401 without authentication", async () => {
