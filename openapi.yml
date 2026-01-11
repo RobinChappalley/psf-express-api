@@ -679,7 +679,8 @@ paths:
   /camps/{id}/trainings/{trainingId}/items:
     get:
       tags: [Items]
-      summary: Récupérer les objets d'un entraînement
+      summary: Récupérer les objets d'un entraînement (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -706,7 +707,8 @@ paths:
           description: Erreur interne du serveur
     post:
       tags: [Items]
-      summary: Ajouter un objet d'entraînement
+      summary: Ajouter un objet d'entraînement (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -748,7 +750,8 @@ paths:
   /camps/{id}/trainings/{trainingId}/items/{itemId}:
     put:
       tags: [Items]
-      summary: Modifier un objet d'entraînement
+      summary: Modifier un objet d'entraînement (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
@@ -793,7 +796,8 @@ paths:
           description: Erreur interne du serveur
     delete:
       tags: [Items]
-      summary: Supprimer un objet d'entraînement
+      summary: Supprimer un objet d'entraînement (NON IMPLÉMENTÉ)
+      description: Cette route n'est pas encore implémentée dans le code
       parameters:
         - in: path
           name: id
