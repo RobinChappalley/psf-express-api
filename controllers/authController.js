@@ -2,7 +2,8 @@ import jwt from "jsonwebtoken";
 import { matchedData } from "express-validator";
 import UserModel from "../models/User.model.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) throw new Error("JWT_SECRET is required");
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
 class AuthController {
@@ -35,7 +36,9 @@ class AuthController {
   async login(req, res) {
     const data = matchedData(req);
 
-    const user = await UserModel.findOne({ email: data.email }).select("+password");
+    const user = await UserModel.findOne({ email: data.email }).select(
+      "+password"
+    );
     if (!user || !(await user.comparePassword(data.password))) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
