@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import yaml from "js-yaml";
 import swaggerUi from "swagger-ui-express";
 import errorHandler from "./middlewares/errorHandler.js";
+import loginLimiter from "./utils/rateLimiter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/push", pushRouter);
-app.use("/", authRouter);
+app.use("/", loginLimiter, authRouter);
 app.use("/items", itemsRouter);
 app.use("/users", usersRouter);
 app.use("/camps", campsRouter);
