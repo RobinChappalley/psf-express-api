@@ -40,7 +40,7 @@ class AuthController {
       "+password"
     );
     if (!user || !(await user.comparePassword(data.password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Identifiants invalides" });
     }
 
     const token = jwt.sign(
@@ -62,7 +62,7 @@ class AuthController {
   }
 
   async logout(req, res) {
-    res.status(200).json({ message: "Logout successful" });
+    res.status(200).json({ message: "Déconnexion réussie" });
   }
 
   async changePassword(req, res) {
@@ -71,18 +71,18 @@ class AuthController {
     const user = await UserModel.findById(req.user._id).select("+password");
 
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) {
-      return res.status(401).json({ message: "Current password is incorrect" });
+      return res.status(401).json({ message: "Mot de passe actuel incorrect" });
     }
 
     user.password = newPassword;
     await user.save();
 
-    res.status(200).json({ message: "Password changed successfully" });
+    res.status(200).json({ message: "Mot de passe modifié avec succès" });
   }
 }
 

@@ -36,7 +36,7 @@ class CampController {
 
     // 3. On vérifie l'existence (C'est le job du contrôleur !)
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // 4. On renvoie
@@ -51,7 +51,7 @@ class CampController {
     //Retrieve camp
     const camp = await CampModel.findById(id);
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     //Check old status for notifications
@@ -85,10 +85,10 @@ class CampController {
   async deleteCamp(req, res) {
     const deletedCamp = await CampModel.findByIdAndDelete(req.params.id);
     if (!deletedCamp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
-    res.status(200).json({ message: "Camp deleted" });
+    res.status(200).json({ message: "Camp supprimé" });
   }
 
   // Camp Items Methods
@@ -97,7 +97,7 @@ class CampController {
     const camp = await CampModel.findById(campId).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     res.status(200).json(camp.itemsList);
@@ -108,7 +108,7 @@ class CampController {
     const camp = await CampModel.findById(campId).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // On cherche par l'ID de l'item référencé (pas l'ID du sous-document)
@@ -117,7 +117,7 @@ class CampController {
     );
 
     if (!itemEntry) {
-      return res.status(404).json({ error: "Item not found in camp" });
+      return res.status(404).json({ error: "Objet non trouvé dans le camp" });
     }
 
     res.status(200).json(itemEntry);
@@ -134,7 +134,7 @@ class CampController {
     ).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // Retourner le dernier item ajouté
@@ -157,7 +157,7 @@ class CampController {
     ).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp or item not found" });
+      return res.status(404).json({ error: "Camp ou objet non trouvé" });
     }
 
     // Retourner toute la liste des items (comme attendu par les tests)
@@ -180,10 +180,10 @@ class CampController {
     );
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
-    res.status(200).json({ message: "Item deleted from camp" });
+    res.status(200).json({ message: "Objet supprimé du camp" });
   }
 
   //Pourquoi est-ce qu'on doit destructurer ici ? Parce que matchedData nous renvoie un objet contenant tous les champs validés,
@@ -196,7 +196,7 @@ class CampController {
       .select("trainings")
       .populate("trainings.responsiblePerson");
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     res.status(200).json(camp.trainings);
@@ -212,7 +212,7 @@ class CampController {
       .populate("trainings.responsiblePerson");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // 3. On trouve l'entraînement spécifique dans le tableau
@@ -221,7 +221,7 @@ class CampController {
     const training = camp.trainings.id(trainingId);
 
     if (!training) {
-      return res.status(404).json({ error: "Training not found" });
+      return res.status(404).json({ error: "Entraînement non trouvé" });
     }
 
     res.status(200).json(training);
@@ -233,7 +233,7 @@ class CampController {
     const { campId } = req.params;
 
     const camp = await CampModel.findById(campId);
-    if (!camp) throw createError(404, "Camp not found");
+    if (!camp) throw createError(404, "Camp non trouvé");
 
     let gpsTrack = undefined;
     if (req.file) {
@@ -327,7 +327,7 @@ class CampController {
     ).populate("trainings.responsiblePerson");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp or training not found" });
+      return res.status(404).json({ error: "Camp ou entraînement non trouvé" });
     }
 
     // 4. Extraction propre avec .id()
@@ -346,14 +346,14 @@ class CampController {
     );
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // Si l'ID du training n'existait pas, mongo renvoie quand même le camp
     // (juste sans modif). Pour une suppression, c'est souvent le comportement
     // désiré (Idempotence : "Assure-toi que c'est parti").
 
-    res.status(200).json({ message: "Training deleted" });
+    res.status(200).json({ message: "Entraînement supprimé" });
   }
 
   async getNearestTraining(req, res) {
@@ -401,7 +401,7 @@ class CampController {
     // 4. Si aucun entraînement trouvé
     if (!nearestTraining) {
       return res.status(404).json({
-        error: `No training found within ${maxDistance}km of the given location`,
+        error: `Aucun entraînement trouvé dans un rayon de ${maxDistance}km`,
       });
     }
 
