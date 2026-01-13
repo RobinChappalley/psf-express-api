@@ -1,6 +1,7 @@
 import express from "express";
 import createError from "http-errors";
 import logger from "morgan";
+import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -30,6 +31,17 @@ const openApiDocument = yaml.load(fs.readFileSync(openApiPath, "utf8"));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
 app.use(logger("dev"));
+
+// CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS;
+console.log("Allowed Origins:", allowedOrigins);
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
