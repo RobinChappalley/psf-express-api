@@ -2,8 +2,7 @@ import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import UserModel from "../models/User.model.js";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Hiérarchie des rôles : admin hérite d'accompagnant, accompagnant hérite de parent
 const ROLE_HIERARCHY = {
@@ -72,12 +71,18 @@ export const restrictToSelfOrAdmin = async (req, res, next) => {
     return res.status(404).json({ message: "User not found" });
   }
 
-  const isParentOfTarget = targetUser.parent?.toString() === req.user._id.toString();
+  const isParentOfTarget =
+    targetUser.parent?.toString() === req.user._id.toString();
   if (isParentOfTarget) {
     return next();
   }
 
-  return res.status(403).json({ message: "You can only modify your own profile or your children's profiles" });
+  return res
+    .status(403)
+    .json({
+      message:
+        "You can only modify your own profile or your children's profiles",
+    });
 };
 
 // Middleware to set child role and parent reference when a parent creates a user
