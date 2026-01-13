@@ -142,3 +142,104 @@ describe("POST /login", function () {
       .expect("Content-Type", /json/);
   });
 });
+
+describe("PUT /change-password", function () {
+  const testUser = {
+    firstname: "Change",
+    lastname: "Password",
+    email: "changepass@test.com",
+    password: "oldpassword123",
+    role: ["parent"],
+  };
+  let authToken;
+
+  beforeAll(async () => {
+    await cleanDatabase();
+    await User.create(testUser);
+
+    const loginRes = await supertest(app)
+      .post("/login")
+      .send({ email: testUser.email, password: testUser.password });
+    authToken = loginRes.body.token;
+  });
+
+  it("should change password successfully with valid current password", async function () {
+    const res = await supertest(app)
+      .put("/change-password")
+      .set("Authorization", `Bearer ${authToken}`)
+      .send({
+        currentPassword: "oldpassword123",
+        newPassword: "newpassword456",
+      })
+      .expect(200);
+
+    expect(res.body.message).toBe("Password changed successfully");
+
+    // Verify new password works
+    const loginRes = await supertest(app)
+      .post("/login")
+      .send({ email: testUser.email, password: "newpassword456" })
+      .expect(200);
+
+    expect(loginRes.body).toHaveProperty("token");
+  });
+
+  it("should fail with incorrect current password", async function () {
+    // Re-login with new password from previous test
+    const loginRes = await supertest(app)
+      .post("/login")
+      .send({ email: testUser.email, password: "newpassword456" });
+    const token = loginRes.body.token;
+
+    await supertest(app)
+      .put("/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "wrongpassword",
+        newPassword: "anotherpassword789",
+      })
+      .expect(401);
+  });
+
+  it("should fail without authentication", async function () {
+    await supertest(app)
+      .put("/change-password")
+      .send({
+        currentPassword: "newpassword456",
+        newPassword: "anotherpassword789",
+      })
+      .expect(401);
+  });
+
+  it("should fail if new password is too short", async function () {
+    const loginRes = await supertest(app)
+      .post("/login")
+      .send({ email: testUser.email, password: "newpassword456" });
+    const token = loginRes.body.token;
+
+    await supertest(app)
+      .put("/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "newpassword456",
+        newPassword: "short",
+      })
+      .expect(400);
+  });
+
+  it("should fail if new password is same as current", async function () {
+    const loginRes = await supertest(app)
+      .post("/login")
+      .send({ email: testUser.email, password: "newpassword456" });
+    const token = loginRes.body.token;
+
+    await supertest(app)
+      .put("/change-password")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        currentPassword: "newpassword456",
+        newPassword: "newpassword456",
+      })
+      .expect(400);
+  });
+});
