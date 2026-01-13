@@ -2,6 +2,7 @@ import express from "express";
 import createError from "http-errors";
 import logger from "morgan";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -42,6 +43,7 @@ app.use(
   })
 );
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

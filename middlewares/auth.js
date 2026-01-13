@@ -20,13 +20,20 @@ const hasRole = (userRoles, requiredRole) => {
 };
 
 export const authenticate = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // Priorité : cookie > header Authorization
+  let token = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Aucun token fourni" });
+  // Fallback sur le header Authorization (rétrocompatibilité)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
   }
 
-  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Aucun token fourni" });
+  }
 
   const decoded = await promisify(jwt.verify)(token, JWT_SECRET).catch(() => {
     const err = new Error("Token invalide ou expiré");

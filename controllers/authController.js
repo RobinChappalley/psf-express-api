@@ -6,6 +6,14 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) throw new Error("JWT_SECRET is required");
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 
+// Configuration du cookie
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+};
+
 class AuthController {
   async signup(req, res) {
     const data = matchedData(req);
@@ -21,8 +29,9 @@ class AuthController {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    res.cookie("token", token, COOKIE_OPTIONS);
+
     res.status(201).json({
-      token,
       user: {
         id: user._id,
         email: user.email,
@@ -49,8 +58,9 @@ class AuthController {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    res.cookie("token", token, COOKIE_OPTIONS);
+
     res.status(200).json({
-      token,
       user: {
         id: user._id,
         email: user.email,
@@ -62,6 +72,11 @@ class AuthController {
   }
 
   async logout(req, res) {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
     res.status(200).json({ message: "Déconnexion réussie" });
   }
 
