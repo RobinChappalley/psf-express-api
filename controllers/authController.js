@@ -64,6 +64,26 @@ class AuthController {
   async logout(req, res) {
     res.status(200).json({ message: "Logout successful" });
   }
+
+  async changePassword(req, res) {
+    const { currentPassword, newPassword } = matchedData(req);
+
+    const user = await UserModel.findById(req.user._id).select("+password");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  }
 }
 
 export default new AuthController();
