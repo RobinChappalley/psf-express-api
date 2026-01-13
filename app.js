@@ -34,7 +34,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use("/push", pushRouter);
-app.use("/", loginLimiter, authRouter);
+
+if (process.env.NODE_ENV === "test") {
+  app.use("/", authRouter);
+} else {
+  app.use("/", loginLimiter, authRouter);
+}
 app.use("/items", itemsRouter);
 app.use("/users", usersRouter);
 app.use("/camps", campsRouter);
