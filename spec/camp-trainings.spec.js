@@ -11,17 +11,17 @@ describe("Camp Trainings API", function () {
   let testUser;
   let trainingId;
 
-  //Declare tokens used for login
-  let tokenAdmin;
-  let tokenParent;
-  let tokenAccompagnant;
+  // Agents for authenticated requests (maintain cookies)
+  let agentAdmin;
+  let agentParent;
+  let agentAccompagnant;
 
   beforeAll(async () => {
     await connectMongo();
     await cleanDatabase();
 
     //Create a user with role ADMIN
-    const adminUser = await UserModel.create({
+    await UserModel.create({
       role: ["admin"],
       lastname: "Admin",
       firstname: "Person",
@@ -31,7 +31,7 @@ describe("Camp Trainings API", function () {
     });
 
     //Create a user with role PARENT
-    const parentUser = await UserModel.create({
+    await UserModel.create({
       role: ["parent"],
       lastname: "Doe",
       firstname: "John",
@@ -41,7 +41,7 @@ describe("Camp Trainings API", function () {
     });
 
     //Create a user with role ACCOMPAGNANT
-    const accompagnantUser = await UserModel.create({
+    await UserModel.create({
       role: ["accompagnant"],
       lastname: "Guide",
       firstname: "Anna",
@@ -50,23 +50,23 @@ describe("Camp Trainings API", function () {
       phoneNumber: "+41 79 123 34 59",
     });
 
-    //Login admin
-    const resAdmin = await supertest(app)
+    //Login admin with agent
+    agentAdmin = supertest.agent(app);
+    await agentAdmin
       .post("/login")
       .send({ email: "person.admin@email.com", password: "123456" });
-    tokenAdmin = resAdmin.body.token;
 
-    //Login parent
-    const resParent = await supertest(app)
+    //Login parent with agent
+    agentParent = supertest.agent(app);
+    await agentParent
       .post("/login")
       .send({ email: "john.doe@email.com", password: "123456" });
-    tokenParent = resParent.body.token;
 
-    //Login accompagnant
-    const resAccompagnant = await supertest(app)
+    //Login accompagnant with agent
+    agentAccompagnant = supertest.agent(app);
+    await agentAccompagnant
       .post("/login")
       .send({ email: "anna.guide@email.com", password: "123456" });
-    tokenAccompagnant = resAccompagnant.body.token;
   });
 
   afterAll(async () => {
@@ -113,9 +113,8 @@ describe("Camp Trainings API", function () {
 
   describe("GET /camps/:campId/trainings", function () {
     it("should retrieve all trainings from a camp", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .get(`/camps/${testCamp._id}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -132,9 +131,8 @@ describe("Camp Trainings API", function () {
         endDate: "2025-08-15",
       });
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .get(`/camps/${emptyTestCamp._id}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -142,9 +140,8 @@ describe("Camp Trainings API", function () {
     });
 
     it("should return one specific training by ID", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .get(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -154,10 +151,7 @@ describe("Camp Trainings API", function () {
 
     it("should return 404 for non-existent camp", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app)
-        .get(`/camps/${fakeId}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
-        .expect(404);
+      await agentAdmin.get(`/camps/${fakeId}/trainings`).expect(404);
     });
   });
 
@@ -177,9 +171,8 @@ describe("Camp Trainings API", function () {
         remark: "Entraînement difficile",
       };
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(`/camps/${testCamp._id}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(newTraining)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -201,9 +194,8 @@ describe("Camp Trainings API", function () {
         date: "2025-07-01",
       };
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(`/camps/${testCamp._id}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(minimalTraining)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -219,9 +211,8 @@ describe("Camp Trainings API", function () {
         "meeting-point": "Somewhere",
       };
 
-      await supertest(app)
+      await agentAdmin
         .post(`/camps/${fakeId}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(newTraining)
         .expect(404);
     });
@@ -232,14 +223,13 @@ describe("Camp Trainings API", function () {
         <trk>
           <trkseg>
             <trkpt lat="48.85" lon="2.35"></trkpt>
-            <trkpt lat="48.86" lon="2.36"></trkpt> 
+            <trkpt lat="48.86" lon="2.36"></trkpt>
           </trkseg>
         </trk>
       </gpx>`;
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(`/camps/${testCamp._id}/trainings`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .field("date", "2024-07-15")
         .field("distance", "10")
         .field("meetingPoint", "Base")
@@ -258,9 +248,8 @@ describe("Camp Trainings API", function () {
         distance: 18.5,
         remark: "Modification de l'itinéraire",
       };
-      const res = await supertest(app)
+      const res = await agentAdmin
         .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -276,9 +265,8 @@ describe("Camp Trainings API", function () {
         distance: 20.0,
       };
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -293,9 +281,8 @@ describe("Camp Trainings API", function () {
         distance: 20.0,
       };
 
-      await supertest(app)
+      await agentAdmin
         .put(`/camps/${testCamp._id}/trainings/${fakeTrainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(404);
     });
@@ -306,9 +293,8 @@ describe("Camp Trainings API", function () {
         distance: 20.0,
       };
 
-      await supertest(app)
+      await agentAdmin
         .put(`/camps/${fakeCampId}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(404);
     });
@@ -318,9 +304,8 @@ describe("Camp Trainings API", function () {
         distance: 20.0,
       };
 
-      await supertest(app)
+      await agentAdmin
         .put(`/camps/${testCamp._id}/trainings/invalid-id`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(400);
     });
@@ -330,9 +315,8 @@ describe("Camp Trainings API", function () {
         meetingPoint: "Unauthorized update",
       };
 
-      await supertest(app)
+      await agentParent
         .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenParent}`)
         .send(updates)
         .expect(403);
     });
@@ -342,9 +326,8 @@ describe("Camp Trainings API", function () {
         meetingPoint: "Unauthorized update",
       };
 
-      await supertest(app)
+      await agentAccompagnant
         .put(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAccompagnant}`)
         .send(updates)
         .expect(403);
     });
@@ -363,9 +346,8 @@ describe("Camp Trainings API", function () {
 
   describe("DELETE /camps/:campId/trainings/:trainingId", function () {
     it("should delete a training from camp", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200);
 
       expect(res.body).toHaveProperty("message");
@@ -378,39 +360,34 @@ describe("Camp Trainings API", function () {
     it("should return 404 for non-existent training", async function () {
       const fakeTrainingId = new mongoose.Types.ObjectId();
 
-      await supertest(app)
+      await agentAdmin
         .delete(`/camps/${testCamp._id}/trainings/${fakeTrainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200); // Mongoose $pull succeeds even if item doesn't exist
     });
 
     it("should return 404 for non-existent camp", async function () {
       const fakeCampId = new mongoose.Types.ObjectId();
 
-      await supertest(app)
+      await agentAdmin
         .delete(`/camps/${fakeCampId}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(404);
     });
 
     it("should return 400 for invalid training ID", async function () {
-      await supertest(app)
+      await agentAdmin
         .delete(`/camps/${testCamp._id}/trainings/invalid-id`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(400);
     });
 
     it("should return 403 when parent tries to delete training", async function () {
-      await supertest(app)
+      await agentParent
         .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenParent}`)
         .expect(403);
     });
 
     it("should return 403 when accompagnant tries to delete training", async function () {
-      await supertest(app)
+      await agentAccompagnant
         .delete(`/camps/${testCamp._id}/trainings/${trainingId}`)
-        .set("Authorization", `Bearer ${tokenAccompagnant}`)
         .expect(403);
     });
 

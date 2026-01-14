@@ -6,9 +6,9 @@ import { cleanDatabase, cleanDatabaseExceptUsers } from "./utils.js";
 import UserModel from "../models/User.model.js";
 import CampModel from "../models/Camp.model.js";
 
-// Tokens for authentication
-let tokenAdmin;
-let tokenParent;
+// Agents for authenticated requests (maintain cookies)
+let agentAdmin;
+let agentParent;
 let adminUser;
 let parentUser;
 
@@ -39,17 +39,17 @@ beforeAll(async () => {
     phoneNumber: "+41 79 123 34 58",
   });
 
-  // Login admin
-  const resAdmin = await supertest(app)
+  // Login admin with agent (cookies are automatically maintained)
+  agentAdmin = supertest.agent(app);
+  await agentAdmin
     .post("/login")
     .send({ email: "admin.users@email.com", password: "123456" });
-  tokenAdmin = resAdmin.body.token;
 
-  // Login parent
-  const resParent = await supertest(app)
+  // Login parent with agent
+  agentParent = supertest.agent(app);
+  await agentParent
     .post("/login")
     .send({ email: "parent.users@email.com", password: "123456" });
-  tokenParent = resParent.body.token;
 });
 
 afterAll(async () => {
@@ -58,9 +58,8 @@ afterAll(async () => {
 
 describe("GET /users", function () {
   it("should retrieve all users as admin", async function () {
-    const res = await supertest(app)
+    const res = await agentAdmin
       .get("/users")
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
@@ -69,9 +68,8 @@ describe("GET /users", function () {
   });
 
   it("should retrieve all users as parent", async function () {
-    const res = await supertest(app)
+    const res = await agentParent
       .get("/users")
-      .set("Authorization", `Bearer ${tokenParent}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
@@ -85,9 +83,8 @@ describe("GET /users", function () {
 
 describe("GET /users/:id", function () {
   it("should retrieve a user by id as admin", async () => {
-    const res = await supertest(app)
+    const res = await agentAdmin
       .get(`/users/${parentUser._id}`)
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
@@ -96,9 +93,8 @@ describe("GET /users/:id", function () {
   });
 
   it("should retrieve a user by id as parent", async () => {
-    const res = await supertest(app)
+    const res = await agentParent
       .get(`/users/${adminUser._id}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
@@ -123,9 +119,8 @@ describe("POST /users", function () {
   });
 
   it("should create a user as admin with any role", async function () {
-    const res = await supertest(app)
+    const res = await agentAdmin
       .post("/users")
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
         role: ["accompagnant"],
         lastname: "Smith",
@@ -142,9 +137,8 @@ describe("POST /users", function () {
   });
 
   it("should create a child user when parent creates a user", async function () {
-    const res = await supertest(app)
+    const res = await agentParent
       .post("/users")
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         role: ["admin"], // Try to set admin role
         lastname: "Doe",
@@ -173,9 +167,8 @@ describe("POST /users", function () {
 
   it("should create a user with full data as admin", async function () {
     // First create a child user
-    const childRes = await supertest(app)
+    const childRes = await agentAdmin
       .post("/users")
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
         role: ["enfant"],
         lastname: "Child",
@@ -183,9 +176,8 @@ describe("POST /users", function () {
       })
       .expect(201);
 
-    const res = await supertest(app)
+    const res = await agentAdmin
       .post("/users")
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
         role: ["accompagnant"],
         lastname: "Complete",
@@ -257,9 +249,8 @@ describe("PUT /users/:id", function () {
   });
 
   it("should update any user as admin", async () => {
-    const res = await supertest(app)
+    const res = await agentAdmin
       .put(`/users/${testUser._id}`)
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .send({
         firstname: "Updated",
       })
@@ -271,9 +262,8 @@ describe("PUT /users/:id", function () {
   });
 
   it("should allow parent to update their own profile", async () => {
-    const res = await supertest(app)
+    const res = await agentParent
       .put(`/users/${parentUser._id}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         firstname: "ParentUpdated",
       })
@@ -284,9 +274,8 @@ describe("PUT /users/:id", function () {
   });
 
   it("should return 403 when parent tries to update another user", async () => {
-    await supertest(app)
+    await agentParent
       .put(`/users/${testUser._id}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         firstname: "Hacked",
       })
@@ -295,9 +284,8 @@ describe("PUT /users/:id", function () {
 
   it("should allow parent to update their own child", async () => {
     // Create a child for the parent
-    const childRes = await supertest(app)
+    const childRes = await agentParent
       .post("/users")
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         lastname: "Child",
         firstname: "MyOwn",
@@ -307,9 +295,8 @@ describe("PUT /users/:id", function () {
     const childId = childRes.body._id;
 
     // Parent should be able to update their child
-    const res = await supertest(app)
+    const res = await agentParent
       .put(`/users/${childId}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         firstname: "UpdatedChild",
       })
@@ -341,9 +328,8 @@ describe("PUT /users/:id", function () {
     });
 
     // Our parent should NOT be able to update the other parent's child
-    await supertest(app)
+    await agentParent
       .put(`/users/${otherChild._id}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
       .send({
         firstname: "Hacked",
       })
@@ -386,13 +372,15 @@ describe("DELETE /users/:id", () => {
   });
 
   it("should delete a user as admin", async () => {
-    const res = await supertest(app)
+    const res = await agentAdmin
       .delete(`/users/${testUser._id}`)
-      .set("Authorization", `Bearer ${tokenAdmin}`)
       .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toHaveProperty("message", "User successfully deleted");
+    expect(res.body).toHaveProperty(
+      "message",
+      "Utilisateur supprimé avec succès"
+    );
 
     // Check if user has really been deleted
     const deletedUser = await UserModel.findById(testUser._id);
@@ -400,10 +388,7 @@ describe("DELETE /users/:id", () => {
   });
 
   it("should return 403 when parent tries to delete a user", async () => {
-    await supertest(app)
-      .delete(`/users/${testUser._id}`)
-      .set("Authorization", `Bearer ${tokenParent}`)
-      .expect(403);
+    await agentParent.delete(`/users/${testUser._id}`).expect(403);
   });
 
   it("should return 401 without authentication", async () => {

@@ -60,6 +60,52 @@ paths:
         "500":
           description: Erreur interne du serveur
 
+  /change-password:
+    put:
+      tags: [Authentication]
+      summary: Changer le mot de passe
+      description: |
+        Permet à un utilisateur authentifié de changer son mot de passe.
+        Nécessite le mot de passe actuel pour vérification.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                  description: "Mot de passe actuel"
+                newPassword:
+                  type: string
+                  minLength: 6
+                  description: "Nouveau mot de passe (minimum 6 caractères, doit être différent de l'actuel)"
+      responses:
+        "200":
+          description: Mot de passe changé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Password changed successfully"
+        "400":
+          description: Validation échouée (mot de passe trop court ou identique à l'ancien)
+        "401":
+          description: Non authentifié ou mot de passe actuel incorrect
+        "404":
+          description: Utilisateur non trouvé
+        "500":
+          description: Erreur interne du serveur
+
   /signup:
     post:
       tags: [Authentication]

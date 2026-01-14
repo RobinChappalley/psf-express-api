@@ -62,7 +62,7 @@ class HikeController {
     const hike = await Hike.findById(req.params.hikeId);
 
     if (!hike) {
-      throw createError(404, "Hike not found");
+      throw createError(404, "Randonnée non trouvée");
     }
 
     // ÉTAPE 1 : Suppression externe (Point de défaillance possible)

@@ -25,7 +25,7 @@ class ItemController {
     });
 
     if (!updatedItem) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(404).json({ error: "Objet non trouvé" });
     }
 
     res.status(200).json(updatedItem);
@@ -34,10 +34,10 @@ class ItemController {
   async deleteItem(req, res) {
     const deletedItem = await ItemModel.findByIdAndDelete(req.params.id);
     if (!deletedItem) {
-      return res.status(404).json({ error: "Item not found" });
+      return res.status(404).json({ error: "Objet non trouvé" });
     }
 
-    res.status(200).json({ message: "Item deleted" });
+    res.status(200).json({ message: "Objet supprimé" });
   }
 }
 
