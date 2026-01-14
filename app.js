@@ -34,7 +34,6 @@ app.use(logger("dev"));
 
 // CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS;
-console.log("Allowed Origins:", allowedOrigins);
 app.use(
   cors({
     origin: allowedOrigins,
