@@ -13,12 +13,20 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
+// Helper pour extraire le cookie token
+function getTokenCookie(res) {
+  const cookies = res.headers["set-cookie"];
+  if (!cookies) return null;
+  const tokenCookie = cookies.find((c) => c.startsWith("token="));
+  return tokenCookie || null;
+}
+
 describe("POST /signup", function () {
   beforeAll(async () => {
     await cleanDatabase();
   });
 
-  it("should create a new parent account and return a token", async function () {
+  it("should create a new parent account and set token cookie", async function () {
     const res = await supertest(app)
       .post("/signup")
       .send({
@@ -30,7 +38,8 @@ describe("POST /signup", function () {
       .expect(201)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toHaveProperty("token");
+    // Token is now in cookie, not in body
+    expect(getTokenCookie(res)).toBeTruthy();
     expect(res.body).toHaveProperty("user");
     expect(res.body.user.role).toEqual(["parent"]);
     expect(res.body.user.email).toBe("newparent@test.com");
@@ -103,10 +112,12 @@ describe("POST /login", function () {
       .expect(200)
       .expect("Content-Type", /json/);
 
-    expect(res.body).toHaveProperty("token");
+    // Token is now in cookie
+    expect(getTokenCookie(res)).toBeTruthy();
+    expect(res.body).toHaveProperty("user");
   });
 
-  it("should return a JWT token on successful login", async function () {
+  it("should set a valid token cookie on successful login", async function () {
     const res = await supertest(app)
       .post("/login")
       .send({
@@ -116,9 +127,12 @@ describe("POST /login", function () {
       .expect(200)
       .expect("Content-Type", /json/);
 
-    if (!res.body.token) {
-      throw new Error("La propriété 'token' est manquante dans la réponse");
+    const tokenCookie = getTokenCookie(res);
+    if (!tokenCookie) {
+      throw new Error("Le cookie 'token' est manquant dans la réponse");
     }
+    // Verify cookie has httpOnly flag
+    expect(tokenCookie).toContain("HttpOnly");
   });
 
   it("should fail with incorrect password", async function () {
@@ -151,29 +165,30 @@ describe("PUT /change-password", function () {
     password: "oldpassword123",
     role: ["parent"],
   };
-  let authToken;
+
+  // Use agent to maintain cookies across requests
+  let agent;
 
   beforeAll(async () => {
     await cleanDatabase();
     await User.create(testUser);
 
-    const loginRes = await supertest(app)
+    agent = supertest.agent(app);
+    await agent
       .post("/login")
       .send({ email: testUser.email, password: testUser.password });
-    authToken = loginRes.body.token;
   });
 
   it("should change password successfully with valid current password", async function () {
-    const res = await supertest(app)
+    const res = await agent
       .put("/change-password")
-      .set("Authorization", `Bearer ${authToken}`)
       .send({
         currentPassword: "oldpassword123",
         newPassword: "newpassword456",
       })
       .expect(200);
 
-    expect(res.body.message).toBe("Password changed successfully");
+    expect(res.body.message).toBe("Mot de passe modifié avec succès");
 
     // Verify new password works
     const loginRes = await supertest(app)
@@ -181,19 +196,18 @@ describe("PUT /change-password", function () {
       .send({ email: testUser.email, password: "newpassword456" })
       .expect(200);
 
-    expect(loginRes.body).toHaveProperty("token");
+    expect(getTokenCookie(loginRes)).toBeTruthy();
   });
 
   it("should fail with incorrect current password", async function () {
     // Re-login with new password from previous test
-    const loginRes = await supertest(app)
+    const newAgent = supertest.agent(app);
+    await newAgent
       .post("/login")
       .send({ email: testUser.email, password: "newpassword456" });
-    const token = loginRes.body.token;
 
-    await supertest(app)
+    await newAgent
       .put("/change-password")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         currentPassword: "wrongpassword",
         newPassword: "anotherpassword789",
@@ -212,14 +226,13 @@ describe("PUT /change-password", function () {
   });
 
   it("should fail if new password is too short", async function () {
-    const loginRes = await supertest(app)
+    const newAgent = supertest.agent(app);
+    await newAgent
       .post("/login")
       .send({ email: testUser.email, password: "newpassword456" });
-    const token = loginRes.body.token;
 
-    await supertest(app)
+    await newAgent
       .put("/change-password")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         currentPassword: "newpassword456",
         newPassword: "short",
@@ -228,14 +241,13 @@ describe("PUT /change-password", function () {
   });
 
   it("should fail if new password is same as current", async function () {
-    const loginRes = await supertest(app)
+    const newAgent = supertest.agent(app);
+    await newAgent
       .post("/login")
       .send({ email: testUser.email, password: "newpassword456" });
-    const token = loginRes.body.token;
 
-    await supertest(app)
+    await newAgent
       .put("/change-password")
-      .set("Authorization", `Bearer ${token}`)
       .send({
         currentPassword: "newpassword456",
         newPassword: "newpassword456",

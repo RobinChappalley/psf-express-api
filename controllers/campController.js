@@ -401,7 +401,7 @@ class CampController {
     // 4. Si aucun entraînement trouvé
     if (!nearestTraining) {
       return res.status(404).json({
-        error: `Aucun entraînement trouvé dans un rayon de ${maxDistance}km`,
+        error: `Aucun entraînement trouvé dans un rayon de ${maxDistance} km`,
       });
     }
 
