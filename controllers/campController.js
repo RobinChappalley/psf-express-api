@@ -414,6 +414,378 @@ class CampController {
 
     res.status(200).json(response);
   }
+
+  // ==================== STAGES METHODS ====================
+
+  async getCampStages(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("stages");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json(camp.stages);
+  }
+
+  async getCampStageById(req, res) {
+    const { campId, stageId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("stages");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    const stage = camp.stages.id(stageId);
+
+    if (!stage) {
+      return res.status(404).json({ error: "Étape non trouvée" });
+    }
+
+    res.status(200).json(stage);
+  }
+
+  async addCampStage(req, res) {
+    const data = matchedData(req);
+    const { campId, ...stageData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // Auto-generate year from date
+    if (stageData.date) {
+      stageData.year = new Date(stageData.date).getFullYear();
+    }
+
+    camp.stages.push(stageData);
+    await camp.save();
+
+    const createdStage = camp.stages[camp.stages.length - 1];
+    res.status(201).json(createdStage);
+  }
+
+  async updateCampStage(req, res) {
+    const data = matchedData(req);
+    const { campId, stageId, ...updateData } = data;
+
+    // Build the $set object dynamically
+    const updates = {};
+    if (updateData.date !== undefined) {
+      updates["stages.$.date"] = updateData.date;
+      updates["stages.$.year"] = new Date(updateData.date).getFullYear();
+    }
+    if (updateData.startPoint !== undefined) updates["stages.$.startPoint"] = updateData.startPoint;
+    if (updateData.endPoint !== undefined) updates["stages.$.endPoint"] = updateData.endPoint;
+    if (updateData.distance !== undefined) updates["stages.$.distance"] = updateData.distance;
+    if (updateData.elevationGain !== undefined) updates["stages.$.elevationGain"] = updateData.elevationGain;
+    if (updateData.elevationLoss !== undefined) updates["stages.$.elevationLoss"] = updateData.elevationLoss;
+    if (updateData.routeDescription !== undefined) updates["stages.$.routeDescription"] = updateData.routeDescription;
+
+    const camp = await CampModel.findOneAndUpdate(
+      { _id: campId, "stages._id": stageId },
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp ou étape non trouvé" });
+    }
+
+    const stage = camp.stages.id(stageId);
+    res.status(200).json(stage);
+  }
+
+  async deleteCampStage(req, res) {
+    const { campId, stageId } = matchedData(req);
+
+    const camp = await CampModel.findByIdAndUpdate(
+      campId,
+      { $pull: { stages: { _id: stageId } } },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json({ message: "Étape supprimée" });
+  }
+
+  // ==================== FUNDRAISINGS METHODS ====================
+
+  async getCampFundraisings(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId)
+      .select("fundraisings")
+      .populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json(camp.fundraisings);
+  }
+
+  async getCampFundraisingById(req, res) {
+    const { campId, fundraisingId } = matchedData(req);
+    const camp = await CampModel.findById(campId)
+      .select("fundraisings")
+      .populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    const fundraising = camp.fundraisings.id(fundraisingId);
+
+    if (!fundraising) {
+      return res.status(404).json({ error: "Collecte de fonds non trouvée" });
+    }
+
+    res.status(200).json(fundraising);
+  }
+
+  async addCampFundraising(req, res) {
+    const data = matchedData(req);
+    const { campId, ...fundraisingData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // Ensure participants is an array (even if empty)
+    if (!fundraisingData.participants) {
+      fundraisingData.participants = [];
+    }
+
+    camp.fundraisings.push(fundraisingData);
+    await camp.save();
+
+    // Populate participants for the response
+    await camp.populate("fundraisings.participants");
+
+    const createdFundraising = camp.fundraisings[camp.fundraisings.length - 1];
+    res.status(201).json(createdFundraising);
+  }
+
+  async updateCampFundraising(req, res) {
+    const data = matchedData(req);
+    const { campId, fundraisingId, ...updateData } = data;
+
+    // Build the $set object dynamically
+    const updates = {};
+    if (updateData.dateTime !== undefined) updates["fundraisings.$.dateTime"] = updateData.dateTime;
+    if (updateData.location !== undefined) updates["fundraisings.$.location"] = updateData.location;
+    if (updateData.participants !== undefined) updates["fundraisings.$.participants"] = updateData.participants;
+
+    const camp = await CampModel.findOneAndUpdate(
+      { _id: campId, "fundraisings._id": fundraisingId },
+      { $set: updates },
+      { new: true }
+    ).populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp ou collecte de fonds non trouvé" });
+    }
+
+    const fundraising = camp.fundraisings.id(fundraisingId);
+    res.status(200).json(fundraising);
+  }
+
+  async deleteCampFundraising(req, res) {
+    const { campId, fundraisingId } = matchedData(req);
+
+    const camp = await CampModel.findByIdAndUpdate(
+      campId,
+      { $pull: { fundraisings: { _id: fundraisingId } } },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json({ message: "Collecte de fonds supprimée" });
+  }
+
+  // ==================== GENERAL MEETING METHODS (Singleton) ====================
+
+  async getGeneralMeeting(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("generalMeeting");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    res.status(200).json(camp.generalMeeting);
+  }
+
+  async updateGeneralMeeting(req, res) {
+    const data = matchedData(req);
+    const { campId, ...meetingData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // If no existing generalMeeting, create it
+    if (!camp.generalMeeting) {
+      camp.generalMeeting = meetingData;
+    } else {
+      // Update only provided fields
+      if (meetingData.dateTime !== undefined) {
+        camp.generalMeeting.dateTime = meetingData.dateTime;
+      }
+      if (meetingData.location !== undefined) {
+        camp.generalMeeting.location = meetingData.location;
+      }
+      if (meetingData.participants !== undefined) {
+        camp.generalMeeting.participants = meetingData.participants;
+      }
+    }
+
+    await camp.save();
+    res.status(200).json(camp.generalMeeting);
+  }
+
+  async deleteGeneralMeeting(req, res) {
+    const { campId } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    camp.generalMeeting = undefined;
+    await camp.save();
+
+    res.status(200).json({ message: "Assemblée générale supprimée" });
+  }
+
+  // ==================== INFO EVENING METHODS (Singleton) ====================
+
+  async getInfoEvening(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("infoEvening");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    res.status(200).json(camp.infoEvening);
+  }
+
+  async updateInfoEvening(req, res) {
+    const data = matchedData(req);
+    const { campId, ...infoEveningData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // If no existing infoEvening, create it
+    if (!camp.infoEvening) {
+      camp.infoEvening = infoEveningData;
+    } else {
+      // Update only provided fields
+      if (infoEveningData.dateTime !== undefined) {
+        camp.infoEvening.dateTime = infoEveningData.dateTime;
+      }
+      if (infoEveningData.location !== undefined) {
+        camp.infoEvening.location = infoEveningData.location;
+      }
+      if (infoEveningData.participants !== undefined) {
+        camp.infoEvening.participants = infoEveningData.participants;
+      }
+    }
+
+    await camp.save();
+    res.status(200).json(camp.infoEvening);
+  }
+
+  async deleteInfoEvening(req, res) {
+    const { campId } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    camp.infoEvening = undefined;
+    await camp.save();
+
+    res.status(200).json({ message: "Soirée d'information supprimée" });
+  }
+
+  // ==================== PUBLIC REGISTRATION METHODS ====================
+
+  async registerToGeneralMeeting(req, res) {
+    const { campId, email, nbOfParticipants } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    // Always add a new entry (no upsert)
+    camp.generalMeeting.participants.push({ email, nbOfParticipants });
+    await camp.save();
+
+    res.status(201).json({
+      message: "Inscription enregistrée",
+      email,
+      nbOfParticipants,
+    });
+  }
+
+  async registerToInfoEvening(req, res) {
+    const { campId, email, nbOfParticipants } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    // Always add a new entry (no upsert)
+    camp.infoEvening.participants.push({ email, nbOfParticipants });
+    await camp.save();
+
+    res.status(201).json({
+      message: "Inscription enregistrée",
+      email,
+      nbOfParticipants,
+    });
+  }
 }
 
 export default new CampController();
