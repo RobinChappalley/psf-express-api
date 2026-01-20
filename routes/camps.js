@@ -268,7 +268,7 @@ router.delete(
 // ==================== GENERAL MEETING ROUTES (Singleton) ====================
 
 router.get(
-  "/:campId/general-meeting",
+  "/:campId/ag",
   authenticate,
   restrictTo("parent", "accompagnant", "admin"),
   validateObjectId("campId"),
@@ -277,7 +277,7 @@ router.get(
 );
 
 router.put(
-  "/:campId/general-meeting",
+  "/:campId/ag",
   authenticate,
   restrictTo("admin"),
   validateGeneralMeeting,
@@ -286,7 +286,7 @@ router.put(
 );
 
 router.delete(
-  "/:campId/general-meeting",
+  "/:campId/ag",
   authenticate,
   restrictTo("admin"),
   validateObjectId("campId"),
@@ -326,7 +326,7 @@ router.delete(
 // ==================== PUBLIC REGISTRATION ROUTES (No Auth) ====================
 
 router.post(
-  "/:campId/general-meeting/register",
+  "/:campId/ag/register",
   validatePublicRegistration,
   validateRequest,
   CampController.registerToGeneralMeeting
