@@ -70,7 +70,7 @@ describe("Public Registration API", function () {
   });
 
   // ==================== GENERAL MEETING PUBLIC REGISTER ====================
-  describe("POST /camps/:campId/general-meeting/register", function () {
+  describe("POST /camps/:campId/ag/register", function () {
     it("should register a participant without authentication", async function () {
       const registration = {
         email: "newparent@example.com",
@@ -78,7 +78,7 @@ describe("Public Registration API", function () {
       };
 
       const res = await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -100,7 +100,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithBoth._id}/general-meeting/register`)
+        .post(`/camps/${campWithBoth._id}/ag/register`)
         .send(registration)
         .expect(201);
 
@@ -118,7 +118,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(400);
     });
@@ -130,7 +130,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(400);
     });
@@ -141,7 +141,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(400);
     });
@@ -153,7 +153,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(400);
     });
@@ -165,7 +165,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(400);
     });
@@ -178,7 +178,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${fakeId}/general-meeting/register`)
+        .post(`/camps/${fakeId}/ag/register`)
         .send(registration)
         .expect(404);
     });
@@ -190,7 +190,7 @@ describe("Public Registration API", function () {
       };
 
       await supertest(app)
-        .post(`/camps/${campWithIE._id}/general-meeting/register`)
+        .post(`/camps/${campWithIE._id}/ag/register`)
         .send(registration)
         .expect(404);
     });
@@ -202,7 +202,7 @@ describe("Public Registration API", function () {
       };
 
       const res = await supertest(app)
-        .post(`/camps/${campWithGM._id}/general-meeting/register`)
+        .post(`/camps/${campWithGM._id}/ag/register`)
         .send(registration)
         .expect(201);
 

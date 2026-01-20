@@ -107,10 +107,10 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
   });
 
   // ==================== GET GENERAL MEETING ====================
-  describe("GET /camps/:campId/general-meeting", function () {
+  describe("GET /camps/:campId/ag", function () {
     it("should retrieve the general meeting from a camp", async function () {
       const res = await agentAdmin
-        .get(`/camps/${testCamp._id}/general-meeting`)
+        .get(`/camps/${testCamp._id}/ag`)
         .expect(200)
         .expect("Content-Type", /json/);
 
@@ -122,18 +122,18 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
 
     it("should return 404 if camp has no general meeting", async function () {
       await agentAdmin
-        .get(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .get(`/camps/${campWithoutMeeting._id}/ag`)
         .expect(404);
     });
 
     it("should return 404 for non-existent camp", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await agentAdmin.get(`/camps/${fakeId}/general-meeting`).expect(404);
+      await agentAdmin.get(`/camps/${fakeId}/ag`).expect(404);
     });
 
     it("should allow parent to view general meeting", async function () {
       const res = await agentParent
-        .get(`/camps/${testCamp._id}/general-meeting`)
+        .get(`/camps/${testCamp._id}/ag`)
         .expect(200);
 
       expect(res.body).toHaveProperty("location");
@@ -141,7 +141,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
 
     it("should allow accompagnant to view general meeting", async function () {
       const res = await agentAccompagnant
-        .get(`/camps/${testCamp._id}/general-meeting`)
+        .get(`/camps/${testCamp._id}/ag`)
         .expect(200);
 
       expect(res.body).toHaveProperty("location");
@@ -149,13 +149,13 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
 
     it("should return 401 without authentication", async function () {
       await supertest(app)
-        .get(`/camps/${testCamp._id}/general-meeting`)
+        .get(`/camps/${testCamp._id}/ag`)
         .expect(401);
     });
 
     it("should return participants with email and nbOfParticipants", async function () {
       const res = await agentAdmin
-        .get(`/camps/${testCamp._id}/general-meeting`)
+        .get(`/camps/${testCamp._id}/ag`)
         .expect(200);
 
       expect(res.body.participants[0]).toHaveProperty("email");
@@ -166,7 +166,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
   });
 
   // ==================== PUT (CREATE/UPDATE) GENERAL MEETING ====================
-  describe("PUT /camps/:campId/general-meeting", function () {
+  describe("PUT /camps/:campId/ag", function () {
     it("should create a general meeting on a camp without one", async function () {
       const newMeeting = {
         dateTime: "2025-06-01T18:00:00.000Z",
@@ -180,7 +180,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       const res = await agentAdmin
-        .put(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .put(`/camps/${campWithoutMeeting._id}/ag`)
         .send(newMeeting)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -201,7 +201,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       const res = await agentAdmin
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(200);
 
@@ -214,7 +214,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       const res = await agentAdmin
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(200);
 
@@ -234,7 +234,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       const res = await agentAdmin
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(200);
 
@@ -249,7 +249,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       await agentAdmin
-        .put(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .put(`/camps/${campWithoutMeeting._id}/ag`)
         .send(invalidMeeting)
         .expect(400);
     });
@@ -266,7 +266,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       await agentAdmin
-        .put(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .put(`/camps/${campWithoutMeeting._id}/ag`)
         .send(invalidMeeting)
         .expect(400);
     });
@@ -283,7 +283,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       await agentAdmin
-        .put(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .put(`/camps/${campWithoutMeeting._id}/ag`)
         .send(invalidMeeting)
         .expect(400);
     });
@@ -296,7 +296,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       };
 
       await agentAdmin
-        .put(`/camps/${fakeId}/general-meeting`)
+        .put(`/camps/${fakeId}/ag`)
         .send(newMeeting)
         .expect(404);
     });
@@ -305,7 +305,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       const updates = { location: "Unauthorized" };
 
       await agentParent
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(403);
     });
@@ -314,7 +314,7 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       const updates = { location: "Unauthorized" };
 
       await agentAccompagnant
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(403);
     });
@@ -323,17 +323,17 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       const updates = { location: "No auth" };
 
       await supertest(app)
-        .put(`/camps/${testCamp._id}/general-meeting`)
+        .put(`/camps/${testCamp._id}/ag`)
         .send(updates)
         .expect(401);
     });
   });
 
   // ==================== DELETE GENERAL MEETING ====================
-  describe("DELETE /camps/:campId/general-meeting", function () {
+  describe("DELETE /camps/:campId/ag", function () {
     it("should delete the general meeting from camp", async function () {
       const res = await agentAdmin
-        .delete(`/camps/${testCamp._id}/general-meeting`)
+        .delete(`/camps/${testCamp._id}/ag`)
         .expect(200);
 
       expect(res.body).toHaveProperty("message");
@@ -347,31 +347,31 @@ describe("Camp General Meeting API - TDD (Singleton)", function () {
       const fakeCampId = new mongoose.Types.ObjectId();
 
       await agentAdmin
-        .delete(`/camps/${fakeCampId}/general-meeting`)
+        .delete(`/camps/${fakeCampId}/ag`)
         .expect(404);
     });
 
     it("should return 404 if camp has no general meeting", async function () {
       await agentAdmin
-        .delete(`/camps/${campWithoutMeeting._id}/general-meeting`)
+        .delete(`/camps/${campWithoutMeeting._id}/ag`)
         .expect(404);
     });
 
     it("should return 403 when parent tries to delete general meeting", async function () {
       await agentParent
-        .delete(`/camps/${testCamp._id}/general-meeting`)
+        .delete(`/camps/${testCamp._id}/ag`)
         .expect(403);
     });
 
     it("should return 403 when accompagnant tries to delete general meeting", async function () {
       await agentAccompagnant
-        .delete(`/camps/${testCamp._id}/general-meeting`)
+        .delete(`/camps/${testCamp._id}/ag`)
         .expect(403);
     });
 
     it("should return 401 without authentication", async function () {
       await supertest(app)
-        .delete(`/camps/${testCamp._id}/general-meeting`)
+        .delete(`/camps/${testCamp._id}/ag`)
         .expect(401);
     });
   });
