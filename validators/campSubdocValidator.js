@@ -231,6 +231,104 @@ export const validateInformationEvening = [
     .withMessage("Number of participants must be a non-negative integer"),
 ];
 
+// Stage validation (camelCase - like trainings)
+export const validateStageBody = [
+  body("date")
+    .notEmpty()
+    .withMessage("La date est requise")
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("startPoint")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le point de départ doit être une chaîne de caractères"),
+
+  body("endPoint")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le point d'arrivée doit être une chaîne de caractères"),
+
+  body("distance")
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 0 })
+    .withMessage("La distance doit être un nombre positif")
+    .toFloat(),
+
+  body("elevationGain")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 0 })
+    .withMessage("Le dénivelé positif doit être un entier positif")
+    .toInt(),
+
+  body("elevationLoss")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 0 })
+    .withMessage("Le dénivelé négatif doit être un entier positif")
+    .toInt(),
+
+  body("routeDescription")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("La description de l'itinéraire doit être une chaîne de caractères"),
+];
+
+export const validateCreateStage = [
+  ...validateObjectId("campId"),
+  ...validateStageBody,
+];
+
+export const validateUpdateStage = [
+  ...validateObjectId("campId"),
+  ...validateObjectId("stageId"),
+  // For update, date is optional
+  body("date")
+    .optional()
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("startPoint")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le point de départ doit être une chaîne de caractères"),
+
+  body("endPoint")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le point d'arrivée doit être une chaîne de caractères"),
+
+  body("distance")
+    .optional({ checkFalsy: true })
+    .isFloat({ min: 0 })
+    .withMessage("La distance doit être un nombre positif")
+    .toFloat(),
+
+  body("elevationGain")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 0 })
+    .withMessage("Le dénivelé positif doit être un entier positif")
+    .toInt(),
+
+  body("elevationLoss")
+    .optional({ checkFalsy: true })
+    .isInt({ min: 0 })
+    .withMessage("Le dénivelé négatif doit être un entier positif")
+    .toInt(),
+
+  body("routeDescription")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("La description de l'itinéraire doit être une chaîne de caractères"),
+];
+
 // Validation pour la recherche d'entraînement le plus proche
 export const validateNearestTraining = [
   query("latitude")
@@ -252,4 +350,153 @@ export const validateNearestTraining = [
     .isFloat({ min: 0.1 })
     .withMessage("maxDistance must be a positive number")
     .toFloat(),
+];
+
+// ==================== FUNDRAISING VALIDATION ====================
+
+export const validateFundraisingBody = [
+  body("dateTime")
+    .notEmpty()
+    .withMessage("La date et l'heure sont requises")
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("location")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le lieu doit être une chaîne de caractères"),
+
+  body("participants")
+    .optional()
+    .isArray()
+    .withMessage("Les participants doivent être un tableau"),
+
+  body("participants.*")
+    .optional()
+    .isMongoId()
+    .withMessage("Chaque participant doit être un ObjectId MongoDB valide"),
+];
+
+export const validateCreateFundraising = [
+  ...validateObjectId("campId"),
+  ...validateFundraisingBody,
+];
+
+export const validateUpdateFundraising = [
+  ...validateObjectId("campId"),
+  ...validateObjectId("fundraisingId"),
+  // For update, dateTime is optional
+  body("dateTime")
+    .optional()
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("location")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le lieu doit être une chaîne de caractères"),
+
+  body("participants")
+    .optional()
+    .isArray()
+    .withMessage("Les participants doivent être un tableau"),
+
+  body("participants.*")
+    .optional()
+    .isMongoId()
+    .withMessage("Chaque participant doit être un ObjectId MongoDB valide"),
+];
+
+// ==================== GENERAL MEETING VALIDATION ====================
+
+export const validateGeneralMeeting = [
+  ...validateObjectId("campId"),
+
+  body("dateTime")
+    .optional()
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("location")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le lieu doit être une chaîne de caractères"),
+
+  body("participants")
+    .optional()
+    .isArray()
+    .withMessage("Les participants doivent être un tableau"),
+
+  body("participants.*.email")
+    .optional()
+    .isEmail()
+    .withMessage("L'email doit être valide")
+    .normalizeEmail(),
+
+  body("participants.*.nbOfParticipants")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Le nombre de participants doit être un entier positif")
+    .toInt(),
+];
+
+// ==================== INFO EVENING VALIDATION ====================
+
+export const validateInfoEvening = [
+  ...validateObjectId("campId"),
+
+  body("dateTime")
+    .optional()
+    .isISO8601()
+    .withMessage("La date doit être au format ISO8601 valide")
+    .toDate(),
+
+  body("location")
+    .optional()
+    .trim()
+    .isString()
+    .withMessage("Le lieu doit être une chaîne de caractères"),
+
+  body("participants")
+    .optional()
+    .isArray()
+    .withMessage("Les participants doivent être un tableau"),
+
+  body("participants.*.email")
+    .optional()
+    .isEmail()
+    .withMessage("L'email doit être valide")
+    .normalizeEmail(),
+
+  body("participants.*.nbOfParticipants")
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage("Le nombre de participants doit être un entier positif")
+    .toInt(),
+];
+
+// ==================== PUBLIC REGISTRATION VALIDATION ====================
+
+export const validatePublicRegistration = [
+  ...validateObjectId("campId"),
+
+  body("email")
+    .notEmpty()
+    .withMessage("L'email est requis")
+    .isEmail()
+    .withMessage("L'email doit être valide")
+    .normalizeEmail(),
+
+  body("nbOfParticipants")
+    .notEmpty()
+    .withMessage("Le nombre de participants est requis")
+    .isInt({ min: 1 })
+    .withMessage("Le nombre de participants doit être au moins 1")
+    .toInt(),
 ];

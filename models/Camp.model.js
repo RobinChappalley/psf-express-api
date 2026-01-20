@@ -123,12 +123,14 @@ generalMeetingSchema.index({ dateTime: 1 }, { unique: true, sparse: true });
 
 const stageSchema = new Schema({
   date: Date,
+  year: Number,
   startPoint: String,
   endPoint: String,
   distance: Number,
   elevationGain: Number,
   elevationLoss: Number,
   routeDescription: String,
+  gpsTrack: GPXTrackSchema,
 });
 
 const campSchema = new Schema(
@@ -148,7 +150,7 @@ const campSchema = new Schema(
     endDate: Date,
     subStartDatetime: Date,
     subEndDatetime: Date,
-    gpsTrack: {},
+    gpsTrack: GPXTrackSchema,
     itemsList: [itemSchema],
     infoEvening: infoEveningSchema,
     trainings: [trainingSchema],

@@ -19,6 +19,7 @@ services:
     command: npm run dev
     depends_on:
       - mongo
+      - mailpit
 
   mongo:
     image: ${MONGO_IMAGE:-mongo:7}
@@ -36,6 +37,15 @@ services:
     volumes:
       - "${MONGO_VOLUME:-mongo_data}:/data/db"
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"   # Interface web
+      - "1025:1025"   # SMTP
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
 
 # volumes nommés optionnels (si tu veux en déclarer un par défaut)
 volumes:

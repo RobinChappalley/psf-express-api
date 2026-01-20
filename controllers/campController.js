@@ -1,5 +1,6 @@
 import { matchedData } from "express-validator";
 import CampModel from "../models/Camp.model.js";
+import UserModel from "../models/User.model.js";
 import { parseGpxToCoordinates } from "../utils/gpxHandler.js";
 import {
   getBoundingBox,
@@ -8,6 +9,7 @@ import {
 import createError from "http-errors";
 import webPush from "../webpush.js";
 import PushSubscriptionModel from "../models/PushSubscription.model.js";
+import { sendTrainingNotification } from "../services/mailService.js";
 
 class CampController {
   async getAllCamps(req, res) {
@@ -36,7 +38,7 @@ class CampController {
 
     // 3. On vérifie l'existence (C'est le job du contrôleur !)
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // 4. On renvoie
@@ -51,7 +53,7 @@ class CampController {
     //Retrieve camp
     const camp = await CampModel.findById(id);
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     //Check old status for notifications
@@ -85,10 +87,10 @@ class CampController {
   async deleteCamp(req, res) {
     const deletedCamp = await CampModel.findByIdAndDelete(req.params.id);
     if (!deletedCamp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
-    res.status(200).json({ message: "Camp deleted" });
+    res.status(200).json({ message: "Camp supprimé" });
   }
 
   // Camp Items Methods
@@ -97,7 +99,7 @@ class CampController {
     const camp = await CampModel.findById(campId).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     res.status(200).json(camp.itemsList);
@@ -108,7 +110,7 @@ class CampController {
     const camp = await CampModel.findById(campId).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // On cherche par l'ID de l'item référencé (pas l'ID du sous-document)
@@ -117,7 +119,7 @@ class CampController {
     );
 
     if (!itemEntry) {
-      return res.status(404).json({ error: "Item not found in camp" });
+      return res.status(404).json({ error: "Objet non trouvé dans le camp" });
     }
 
     res.status(200).json(itemEntry);
@@ -134,7 +136,7 @@ class CampController {
     ).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // Retourner le dernier item ajouté
@@ -157,7 +159,7 @@ class CampController {
     ).populate("itemsList.item");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp or item not found" });
+      return res.status(404).json({ error: "Camp ou objet non trouvé" });
     }
 
     // Retourner toute la liste des items (comme attendu par les tests)
@@ -180,10 +182,10 @@ class CampController {
     );
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
-    res.status(200).json({ message: "Item deleted from camp" });
+    res.status(200).json({ message: "Objet supprimé du camp" });
   }
 
   //Pourquoi est-ce qu'on doit destructurer ici ? Parce que matchedData nous renvoie un objet contenant tous les champs validés,
@@ -196,7 +198,7 @@ class CampController {
       .select("trainings")
       .populate("trainings.responsiblePerson");
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     res.status(200).json(camp.trainings);
@@ -212,7 +214,7 @@ class CampController {
       .populate("trainings.responsiblePerson");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // 3. On trouve l'entraînement spécifique dans le tableau
@@ -221,7 +223,7 @@ class CampController {
     const training = camp.trainings.id(trainingId);
 
     if (!training) {
-      return res.status(404).json({ error: "Training not found" });
+      return res.status(404).json({ error: "Entraînement non trouvé" });
     }
 
     res.status(200).json(training);
@@ -233,7 +235,7 @@ class CampController {
     const { campId } = req.params;
 
     const camp = await CampModel.findById(campId);
-    if (!camp) throw createError(404, "Camp not found");
+    if (!camp) throw createError(404, "Camp non trouvé");
 
     let gpsTrack = undefined;
     if (req.file) {
@@ -277,6 +279,40 @@ class CampController {
     // 6. Récupération & Réponse
     const createdTraining = camp.trainings[camp.trainings.length - 1];
 
+    // 7. Envoyer les notifications par email (async, non-bloquant)
+    // Récupérer les utilisateurs inscrits au camp (avec email)
+    // On cherche les parents qui sont inscrits OU dont les enfants sont inscrits
+    const usersWithCamp = await UserModel.find({
+      camps: campId,
+      email: { $exists: true, $ne: null },
+    }).select("email firstname lastname");
+
+    // Récupérer aussi les parents des enfants inscrits
+    const childrenWithCamp = await UserModel.find({
+      camps: campId,
+      parent: { $exists: true },
+    }).select("parent");
+
+    const parentIds = childrenWithCamp.map((c) => c.parent).filter(Boolean);
+
+    const parentsOfChildren = await UserModel.find({
+      _id: { $in: parentIds },
+      email: { $exists: true, $ne: null },
+    }).select("email firstname lastname");
+
+    // Combiner et dédupliquer les destinataires
+    const allRecipients = [...usersWithCamp, ...parentsOfChildren];
+    const uniqueRecipients = Array.from(
+      new Map(allRecipients.map((u) => [u.email, u])).values()
+    );
+
+    // Envoyer les emails (sans bloquer la réponse)
+    sendTrainingNotification({
+      training: createdTraining,
+      camp,
+      recipients: uniqueRecipients,
+    }).catch((err) => console.error("Erreur envoi emails training:", err));
+
     res.status(201).json(createdTraining);
   }
 
@@ -319,6 +355,14 @@ class CampController {
     if (elevationGain) updates["trainings.$.elevationGain"] = elevationGain;
     if (elevationLoss) updates["trainings.$.elevationLoss"] = elevationLoss;
 
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        updates["trainings.$.gpsTrack"] = { type: "LineString", coordinates: coords };
+      }
+    }
+
     // 3. Exécution de la mise à jour
     const camp = await CampModel.findOneAndUpdate(
       { _id: campId, "trainings._id": trainingId },
@@ -327,7 +371,7 @@ class CampController {
     ).populate("trainings.responsiblePerson");
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp or training not found" });
+      return res.status(404).json({ error: "Camp ou entraînement non trouvé" });
     }
 
     // 4. Extraction propre avec .id()
@@ -346,14 +390,14 @@ class CampController {
     );
 
     if (!camp) {
-      return res.status(404).json({ error: "Camp not found" });
+      return res.status(404).json({ error: "Camp non trouvé" });
     }
 
     // Si l'ID du training n'existait pas, mongo renvoie quand même le camp
     // (juste sans modif). Pour une suppression, c'est souvent le comportement
     // désiré (Idempotence : "Assure-toi que c'est parti").
 
-    res.status(200).json({ message: "Training deleted" });
+    res.status(200).json({ message: "Entraînement supprimé" });
   }
 
   async getNearestTraining(req, res) {
@@ -401,7 +445,7 @@ class CampController {
     // 4. Si aucun entraînement trouvé
     if (!nearestTraining) {
       return res.status(404).json({
-        error: `No training found within ${maxDistance}km of the given location`,
+        error: `Aucun entraînement trouvé dans un rayon de ${maxDistance} km`,
       });
     }
 
@@ -413,6 +457,394 @@ class CampController {
     };
 
     res.status(200).json(response);
+  }
+
+  // ==================== STAGES METHODS ====================
+
+  async getCampStages(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("stages");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json(camp.stages);
+  }
+
+  async getCampStageById(req, res) {
+    const { campId, stageId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("stages");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    const stage = camp.stages.id(stageId);
+
+    if (!stage) {
+      return res.status(404).json({ error: "Étape non trouvée" });
+    }
+
+    res.status(200).json(stage);
+  }
+
+  async addCampStage(req, res) {
+    const data = matchedData(req);
+    const { campId, ...stageData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // Auto-generate year from date
+    if (stageData.date) {
+      stageData.year = new Date(stageData.date).getFullYear();
+    }
+
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        stageData.gpsTrack = { type: "LineString", coordinates: coords };
+      }
+    }
+
+    camp.stages.push(stageData);
+    await camp.save();
+
+    const createdStage = camp.stages[camp.stages.length - 1];
+    res.status(201).json(createdStage);
+  }
+
+  async updateCampStage(req, res) {
+    const data = matchedData(req);
+    const { campId, stageId, ...updateData } = data;
+
+    // Build the $set object dynamically
+    const updates = {};
+    if (updateData.date !== undefined) {
+      updates["stages.$.date"] = updateData.date;
+      updates["stages.$.year"] = new Date(updateData.date).getFullYear();
+    }
+    if (updateData.startPoint !== undefined) updates["stages.$.startPoint"] = updateData.startPoint;
+    if (updateData.endPoint !== undefined) updates["stages.$.endPoint"] = updateData.endPoint;
+    if (updateData.distance !== undefined) updates["stages.$.distance"] = updateData.distance;
+    if (updateData.elevationGain !== undefined) updates["stages.$.elevationGain"] = updateData.elevationGain;
+    if (updateData.elevationLoss !== undefined) updates["stages.$.elevationLoss"] = updateData.elevationLoss;
+    if (updateData.routeDescription !== undefined) updates["stages.$.routeDescription"] = updateData.routeDescription;
+
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        updates["stages.$.gpsTrack"] = { type: "LineString", coordinates: coords };
+      }
+    }
+
+    const camp = await CampModel.findOneAndUpdate(
+      { _id: campId, "stages._id": stageId },
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp ou étape non trouvé" });
+    }
+
+    const stage = camp.stages.id(stageId);
+    res.status(200).json(stage);
+  }
+
+  async deleteCampStage(req, res) {
+    const { campId, stageId } = matchedData(req);
+
+    const camp = await CampModel.findByIdAndUpdate(
+      campId,
+      { $pull: { stages: { _id: stageId } } },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json({ message: "Étape supprimée" });
+  }
+
+  // ==================== FUNDRAISINGS METHODS ====================
+
+  async getCampFundraisings(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId)
+      .select("fundraisings")
+      .populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json(camp.fundraisings);
+  }
+
+  async getCampFundraisingById(req, res) {
+    const { campId, fundraisingId } = matchedData(req);
+    const camp = await CampModel.findById(campId)
+      .select("fundraisings")
+      .populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    const fundraising = camp.fundraisings.id(fundraisingId);
+
+    if (!fundraising) {
+      return res.status(404).json({ error: "Collecte de fonds non trouvée" });
+    }
+
+    res.status(200).json(fundraising);
+  }
+
+  async addCampFundraising(req, res) {
+    const data = matchedData(req);
+    const { campId, ...fundraisingData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // Ensure participants is an array (even if empty)
+    if (!fundraisingData.participants) {
+      fundraisingData.participants = [];
+    }
+
+    camp.fundraisings.push(fundraisingData);
+    await camp.save();
+
+    // Populate participants for the response
+    await camp.populate("fundraisings.participants");
+
+    const createdFundraising = camp.fundraisings[camp.fundraisings.length - 1];
+    res.status(201).json(createdFundraising);
+  }
+
+  async updateCampFundraising(req, res) {
+    const data = matchedData(req);
+    const { campId, fundraisingId, ...updateData } = data;
+
+    // Build the $set object dynamically
+    const updates = {};
+    if (updateData.dateTime !== undefined) updates["fundraisings.$.dateTime"] = updateData.dateTime;
+    if (updateData.location !== undefined) updates["fundraisings.$.location"] = updateData.location;
+    if (updateData.participants !== undefined) updates["fundraisings.$.participants"] = updateData.participants;
+
+    const camp = await CampModel.findOneAndUpdate(
+      { _id: campId, "fundraisings._id": fundraisingId },
+      { $set: updates },
+      { new: true }
+    ).populate("fundraisings.participants");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp ou collecte de fonds non trouvé" });
+    }
+
+    const fundraising = camp.fundraisings.id(fundraisingId);
+    res.status(200).json(fundraising);
+  }
+
+  async deleteCampFundraising(req, res) {
+    const { campId, fundraisingId } = matchedData(req);
+
+    const camp = await CampModel.findByIdAndUpdate(
+      campId,
+      { $pull: { fundraisings: { _id: fundraisingId } } },
+      { new: true }
+    );
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    res.status(200).json({ message: "Collecte de fonds supprimée" });
+  }
+
+  // ==================== GENERAL MEETING METHODS (Singleton) ====================
+
+  async getGeneralMeeting(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("generalMeeting");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    res.status(200).json(camp.generalMeeting);
+  }
+
+  async updateGeneralMeeting(req, res) {
+    const data = matchedData(req);
+    const { campId, ...meetingData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // If no existing generalMeeting, create it
+    if (!camp.generalMeeting) {
+      camp.generalMeeting = meetingData;
+    } else {
+      // Update only provided fields
+      if (meetingData.dateTime !== undefined) {
+        camp.generalMeeting.dateTime = meetingData.dateTime;
+      }
+      if (meetingData.location !== undefined) {
+        camp.generalMeeting.location = meetingData.location;
+      }
+      if (meetingData.participants !== undefined) {
+        camp.generalMeeting.participants = meetingData.participants;
+      }
+    }
+
+    await camp.save();
+    res.status(200).json(camp.generalMeeting);
+  }
+
+  async deleteGeneralMeeting(req, res) {
+    const { campId } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    camp.generalMeeting = undefined;
+    await camp.save();
+
+    res.status(200).json({ message: "Assemblée générale supprimée" });
+  }
+
+  // ==================== INFO EVENING METHODS (Singleton) ====================
+
+  async getInfoEvening(req, res) {
+    const { campId } = matchedData(req);
+    const camp = await CampModel.findById(campId).select("infoEvening");
+
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    res.status(200).json(camp.infoEvening);
+  }
+
+  async updateInfoEvening(req, res) {
+    const data = matchedData(req);
+    const { campId, ...infoEveningData } = data;
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    // If no existing infoEvening, create it
+    if (!camp.infoEvening) {
+      camp.infoEvening = infoEveningData;
+    } else {
+      // Update only provided fields
+      if (infoEveningData.dateTime !== undefined) {
+        camp.infoEvening.dateTime = infoEveningData.dateTime;
+      }
+      if (infoEveningData.location !== undefined) {
+        camp.infoEvening.location = infoEveningData.location;
+      }
+      if (infoEveningData.participants !== undefined) {
+        camp.infoEvening.participants = infoEveningData.participants;
+      }
+    }
+
+    await camp.save();
+    res.status(200).json(camp.infoEvening);
+  }
+
+  async deleteInfoEvening(req, res) {
+    const { campId } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    camp.infoEvening = undefined;
+    await camp.save();
+
+    res.status(200).json({ message: "Soirée d'information supprimée" });
+  }
+
+  // ==================== PUBLIC REGISTRATION METHODS ====================
+
+  async registerToGeneralMeeting(req, res) {
+    const { campId, email, nbOfParticipants } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.generalMeeting || !camp.generalMeeting.dateTime) {
+      return res.status(404).json({ error: "Assemblée générale non trouvée" });
+    }
+
+    // Always add a new entry (no upsert)
+    camp.generalMeeting.participants.push({ email, nbOfParticipants });
+    await camp.save();
+
+    res.status(201).json({
+      message: "Inscription enregistrée",
+      email,
+      nbOfParticipants,
+    });
+  }
+
+  async registerToInfoEvening(req, res) {
+    const { campId, email, nbOfParticipants } = matchedData(req);
+
+    const camp = await CampModel.findById(campId);
+    if (!camp) {
+      return res.status(404).json({ error: "Camp non trouvé" });
+    }
+
+    if (!camp.infoEvening || !camp.infoEvening.dateTime) {
+      return res.status(404).json({ error: "Soirée d'information non trouvée" });
+    }
+
+    // Always add a new entry (no upsert)
+    camp.infoEvening.participants.push({ email, nbOfParticipants });
+    await camp.save();
+
+    res.status(201).json({
+      message: "Inscription enregistrée",
+      email,
+      nbOfParticipants,
+    });
   }
 }
 

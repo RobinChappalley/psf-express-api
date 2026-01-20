@@ -2,8 +2,7 @@ import jwt from "jsonwebtoken";
 import { promisify } from "util";
 import UserModel from "../models/User.model.js";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Hiérarchie des rôles : admin hérite d'accompagnant, accompagnant hérite de parent
 const ROLE_HIERARCHY = {
@@ -21,23 +20,30 @@ const hasRole = (userRoles, requiredRole) => {
 };
 
 export const authenticate = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+  // Priorité : cookie > header Authorization
+  let token = req.cookies?.token;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "No token provided" });
+  // Fallback sur le header Authorization (rétrocompatibilité)
+  if (!token) {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
   }
 
-  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).json({ message: "Aucun token fourni" });
+  }
 
   const decoded = await promisify(jwt.verify)(token, JWT_SECRET).catch(() => {
-    const err = new Error("Invalid or expired token");
+    const err = new Error("Token invalide ou expiré");
     err.status = 401;
     throw err;
   });
   const user = await UserModel.findById(decoded.id);
 
   if (!user) {
-    return res.status(401).json({ message: "User not found" });
+    return res.status(401).json({ message: "Utilisateur non trouvé" });
   }
 
   req.user = user;
@@ -47,11 +53,11 @@ export const authenticate = async (req, res, next) => {
 export const restrictTo = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "Accès refusé" });
     }
     const hasPermission = roles.some((role) => hasRole(req.user.role, role));
     if (!hasPermission) {
-      return res.status(403).json({ message: "Access denied" });
+      return res.status(403).json({ message: "Accès refusé" });
     }
     next();
   };
@@ -69,15 +75,21 @@ export const restrictToSelfOrAdmin = async (req, res, next) => {
   // Check if the target user is a child of the current user
   const targetUser = await UserModel.findById(req.params.id);
   if (!targetUser) {
-    return res.status(404).json({ message: "User not found" });
+    return res.status(404).json({ message: "Utilisateur non trouvé" });
   }
 
-  const isParentOfTarget = targetUser.parent?.toString() === req.user._id.toString();
+  const isParentOfTarget =
+    targetUser.parent?.toString() === req.user._id.toString();
   if (isParentOfTarget) {
     return next();
   }
 
-  return res.status(403).json({ message: "You can only modify your own profile or your children's profiles" });
+  return res
+    .status(403)
+    .json({
+      message:
+        "Vous ne pouvez modifier que votre propre profil ou celui de vos enfants",
+    });
 };
 
 // Middleware to set child role and parent reference when a parent creates a user

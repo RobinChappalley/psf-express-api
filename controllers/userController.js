@@ -20,7 +20,7 @@ class UserController {
     const user = await UserModel.findById(req.params.id)
 
     if (!user) {
-      const error = new Error('User not found')
+      const error = new Error('Utilisateur non trouvé')
       error.status = 404
       throw error
     }
@@ -42,7 +42,7 @@ class UserController {
     })
 
     if (!updatedUser) {
-      const error = new Error('User not found')
+      const error = new Error('Utilisateur non trouvé')
       error.status = 404
       throw error
     }
@@ -54,12 +54,12 @@ class UserController {
     const deletedUser = await UserModel.findByIdAndDelete(req.params.id)
 
     if (!deletedUser) {
-      const error = new Error('User not found')
+      const error = new Error('Utilisateur non trouvé')
       error.status = 404
       throw error
     }
 
-    res.status(200).json({ message: 'User successfully deleted', user: deletedUser })
+    res.status(200).json({ message: 'Utilisateur supprimé avec succès', user: deletedUser })
   }
 }
 

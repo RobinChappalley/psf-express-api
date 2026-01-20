@@ -8,6 +8,13 @@ import {
   validateCreateTraining,
   validateUpdateTraining,
   validateNearestTraining,
+  validateCreateStage,
+  validateUpdateStage,
+  validateCreateFundraising,
+  validateUpdateFundraising,
+  validateGeneralMeeting,
+  validateInfoEvening,
+  validatePublicRegistration,
 } from "../validators/campSubdocValidator.js";
 import validateRequest from "../middlewares/handleValidationErrors.js";
 import CampController from "../controllers/campController.js";
@@ -150,6 +157,7 @@ router.put(
   "/:campId/trainings/:trainingId",
   authenticate,
   restrictTo("admin"),
+  upload.single("gpxFile"),
   validateUpdateTraining,
   validateRequest,
   CampController.updateCampTraining
@@ -162,6 +170,176 @@ router.delete(
   [...validateObjectId("campId"), validateObjectId("trainingId")],
   validateRequest,
   CampController.deleteCampTraining
+);
+
+// ==================== STAGES ROUTES ====================
+
+router.get(
+  "/:campId/stages",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.getCampStages
+);
+
+router.get(
+  "/:campId/stages/:stageId",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  [...validateObjectId("campId"), ...validateObjectId("stageId")],
+  validateRequest,
+  CampController.getCampStageById
+);
+
+router.post(
+  "/:campId/stages",
+  authenticate,
+  restrictTo("admin"),
+  upload.single("gpxFile"),
+  validateCreateStage,
+  validateRequest,
+  CampController.addCampStage
+);
+
+router.put(
+  "/:campId/stages/:stageId",
+  authenticate,
+  restrictTo("admin"),
+  upload.single("gpxFile"),
+  validateUpdateStage,
+  validateRequest,
+  CampController.updateCampStage
+);
+
+router.delete(
+  "/:campId/stages/:stageId",
+  authenticate,
+  restrictTo("admin"),
+  [...validateObjectId("campId"), ...validateObjectId("stageId")],
+  validateRequest,
+  CampController.deleteCampStage
+);
+
+// ==================== FUNDRAISINGS ROUTES ====================
+
+router.get(
+  "/:campId/fundraisings",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.getCampFundraisings
+);
+
+router.get(
+  "/:campId/fundraisings/:fundraisingId",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  [...validateObjectId("campId"), ...validateObjectId("fundraisingId")],
+  validateRequest,
+  CampController.getCampFundraisingById
+);
+
+router.post(
+  "/:campId/fundraisings",
+  authenticate,
+  restrictTo("admin"),
+  validateCreateFundraising,
+  validateRequest,
+  CampController.addCampFundraising
+);
+
+router.put(
+  "/:campId/fundraisings/:fundraisingId",
+  authenticate,
+  restrictTo("admin"),
+  validateUpdateFundraising,
+  validateRequest,
+  CampController.updateCampFundraising
+);
+
+router.delete(
+  "/:campId/fundraisings/:fundraisingId",
+  authenticate,
+  restrictTo("admin"),
+  [...validateObjectId("campId"), ...validateObjectId("fundraisingId")],
+  validateRequest,
+  CampController.deleteCampFundraising
+);
+
+// ==================== GENERAL MEETING ROUTES (Singleton) ====================
+
+router.get(
+  "/:campId/ag",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.getGeneralMeeting
+);
+
+router.put(
+  "/:campId/ag",
+  authenticate,
+  restrictTo("admin"),
+  validateGeneralMeeting,
+  validateRequest,
+  CampController.updateGeneralMeeting
+);
+
+router.delete(
+  "/:campId/ag",
+  authenticate,
+  restrictTo("admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.deleteGeneralMeeting
+);
+
+// ==================== INFO EVENING ROUTES (Singleton) ====================
+
+router.get(
+  "/:campId/info-evening",
+  authenticate,
+  restrictTo("parent", "accompagnant", "admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.getInfoEvening
+);
+
+router.put(
+  "/:campId/info-evening",
+  authenticate,
+  restrictTo("admin"),
+  validateInfoEvening,
+  validateRequest,
+  CampController.updateInfoEvening
+);
+
+router.delete(
+  "/:campId/info-evening",
+  authenticate,
+  restrictTo("admin"),
+  validateObjectId("campId"),
+  validateRequest,
+  CampController.deleteInfoEvening
+);
+
+// ==================== PUBLIC REGISTRATION ROUTES (No Auth) ====================
+
+router.post(
+  "/:campId/ag/register",
+  validatePublicRegistration,
+  validateRequest,
+  CampController.registerToGeneralMeeting
+);
+
+router.post(
+  "/:campId/info-evening/register",
+  validatePublicRegistration,
+  validateRequest,
+  CampController.registerToInfoEvening
 );
 
 export default router;

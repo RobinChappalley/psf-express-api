@@ -230,8 +230,8 @@ describe("GET /camps/trainings/nearest - Nearest Training API", function () {
       );
 
       expect(res.status).toBe(404);
-      expect(res.body.error).toContain("No training found within");
-      expect(res.body.error).toContain("50km");
+      expect(res.body.error).toContain("Aucun entraînement trouvé");
+      expect(res.body.error).toContain("50 km");
     });
 
     it("should return 404 if no trainings have gpsTrack", async () => {
@@ -246,7 +246,9 @@ describe("GET /camps/trainings/nearest - Nearest Training API", function () {
       );
 
       expect(res.status).toBe(404);
-      expect(res.body.error).toContain("No training found");
+      expect(res.body.error).toContain(
+        "Aucun entraînement trouvé dans un rayon de 50 km"
+      );
     });
   });
 

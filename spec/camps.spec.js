@@ -6,9 +6,9 @@ import { cleanDatabase, cleanDatabaseExceptUsers } from "./utils.js";
 import CampModel from "../models/Camp.model.js";
 import UserModel from "../models/User.model.js";
 
-//Declare tokens used for login
-let tokenAdmin;
-let tokenParent;
+// Agents for authenticated requests (maintain cookies)
+let agentAdmin;
+let agentParent;
 
 // --- CONFIGURATION GLOBALE ---
 beforeAll(async () => {
@@ -16,7 +16,7 @@ beforeAll(async () => {
   await cleanDatabase();
 
   //Create a user with role ADMIN
-  const adminUser = await UserModel.create({
+  await UserModel.create({
     role: ["admin"],
     lastname: "Admin",
     firstname: "Person",
@@ -26,7 +26,7 @@ beforeAll(async () => {
   });
 
   //Create a user with role PARENT
-  const parentUser = await UserModel.create({
+  await UserModel.create({
     role: ["parent"],
     lastname: "Doe",
     firstname: "John",
@@ -35,17 +35,17 @@ beforeAll(async () => {
     phoneNumber: "+41 79 123 34 57",
   });
 
-  //Login admin
-  const resAdmin = await supertest(app)
+  //Login admin with agent
+  agentAdmin = supertest.agent(app);
+  await agentAdmin
     .post("/login")
     .send({ email: "person.admin@email.com", password: "123456" });
-  tokenAdmin = resAdmin.body.token;
 
-  //Login parent
-  const resParent = await supertest(app)
+  //Login parent with agent
+  agentParent = supertest.agent(app);
+  await agentParent
     .post("/login")
     .send({ email: "john.doe@email.com", password: "123456" });
-  tokenParent = resParent.body.token;
 });
 
 afterAll(async () => {
@@ -75,9 +75,8 @@ describe("Camp API Basic Integration Tests", () => {
     });
 
     it("should create a new camp with basic info", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(campData1)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -91,24 +90,16 @@ describe("Camp API Basic Integration Tests", () => {
     });
 
     it("should fail to create camp because user is forbidden", async function () {
-      const res = await supertest(app)
-        .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenParent}`)
-        .send(campData1)
-        .expect(403);
+      await agentParent.post(BASE_URL).send(campData1).expect(403);
     });
 
     it("should fail to create a camp because token is missing", async function () {
-      const res = await supertest(app)
-        .post(BASE_URL)
-        .send(campData1)
-        .expect(401);
+      await supertest(app).post(BASE_URL).send(campData1).expect(401);
     });
 
     it("should create a second camp successfully", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(campData2)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -120,18 +111,13 @@ describe("Camp API Basic Integration Tests", () => {
       const invalidCamp = {
         startDate: "2024-07-01",
       };
-      await supertest(app)
-        .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
-        .send(invalidCamp)
-        .expect(400);
+      await agentAdmin.post(BASE_URL).send(invalidCamp).expect(400);
     });
 
     it("should fail because title is not unique", async function () {
       //Create a first camp
-      const res = await supertest(app)
+      const res = await agentAdmin
         .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(campData1)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -144,11 +130,7 @@ describe("Camp API Basic Integration Tests", () => {
       );
 
       //Create a second camp with same data
-      await supertest(app)
-        .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
-        .send(campData1)
-        .expect(409);
+      await agentAdmin.post(BASE_URL).send(campData1).expect(409);
     });
   });
 
@@ -160,9 +142,8 @@ describe("Camp API Basic Integration Tests", () => {
 
     it("should retrieve all camps", async function () {
       //Create a first camp
-      const camp1 = await supertest(app)
+      const camp1 = await agentAdmin
         .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(campData1)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -175,9 +156,8 @@ describe("Camp API Basic Integration Tests", () => {
       );
 
       //Create a second camp
-      const camp2 = await supertest(app)
+      const camp2 = await agentAdmin
         .post(BASE_URL)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(campData2)
         .expect(201)
         .expect("Content-Type", /json/);
@@ -243,9 +223,8 @@ describe("Camp API Basic Integration Tests", () => {
         title: "Camp Test Update MODIFIÉ",
       };
 
-      const res = await supertest(app)
+      const res = await agentAdmin
         .put(`${BASE_URL}/${testCampToUpdate._id}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send(updates)
         .expect(200)
         .expect("Content-Type", /json/);
@@ -260,9 +239,8 @@ describe("Camp API Basic Integration Tests", () => {
 
     it("should return 404 for non-existent camp ID", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app)
+      await agentAdmin
         .put(`${BASE_URL}/${fakeId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .send({ title: "New Title" })
         .expect(404);
     });
@@ -280,9 +258,8 @@ describe("Camp API Basic Integration Tests", () => {
     });
 
     it("should delete a camp", async function () {
-      const res = await supertest(app)
+      const res = await agentAdmin
         .delete(`${BASE_URL}/${testCampToDelete._id}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
         .expect(200);
 
       expect(res.body).toHaveProperty("message");
@@ -294,10 +271,7 @@ describe("Camp API Basic Integration Tests", () => {
 
     it("should return 404 if camp not found", async function () {
       const fakeId = new mongoose.Types.ObjectId();
-      await supertest(app)
-        .delete(`${BASE_URL}/${fakeId}`)
-        .set("Authorization", `Bearer ${tokenAdmin}`)
-        .expect(404);
+      await agentAdmin.delete(`${BASE_URL}/${fakeId}`).expect(404);
     });
   });
 });
