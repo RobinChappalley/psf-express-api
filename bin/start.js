@@ -5,9 +5,13 @@ import http from "node:http";
 
 import app from "../app.js";
 import { connectMongo } from "../db/db.js";
+import { initMailTransporter } from "../services/mailService.js";
 
 // Connect to MongoDB
 await connectMongo();
+
+// Initialize mail transporter
+await initMailTransporter();
 
 const debug = createDebugger("psf-express-api:server");
 
