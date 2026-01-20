@@ -1,0 +1,47 @@
+services:
+  express-api-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    env_file: ".env.demo"
+    environment:
+      NODE_ENV: production
+      APP_PORT: "${APP_PORT:-3000}"
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    restart: always
+    depends_on:
+      mongo-demo:
+        condition: service_healthy
+    command: npm run start-prod
+    networks:
+      - demo-network
+
+  mongo-demo:
+    image: ${MONGO_IMAGE:-mongo:7}
+    env_file: ".env.demo"
+    ports:
+      - "${MONGO_PORT:-27017}:${MONGO_PORT:-27017}"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+      MONGO_LOG_LEVEL: error
+    restart: always
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    volumes:
+      - "${MONGO_VOLUME:-mongo_data}:/data/db"
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+    networks:
+      - web-network
+
+networks:
+  web-network: # Mets ici le nom de ton réseau docker existant
+    external: true
+
+volumes:
+  mongo_data:
