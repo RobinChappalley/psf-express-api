@@ -319,6 +319,14 @@ class CampController {
     if (elevationGain) updates["trainings.$.elevationGain"] = elevationGain;
     if (elevationLoss) updates["trainings.$.elevationLoss"] = elevationLoss;
 
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        updates["trainings.$.gpsTrack"] = { type: "LineString", coordinates: coords };
+      }
+    }
+
     // 3. Exécution de la mise à jour
     const camp = await CampModel.findOneAndUpdate(
       { _id: campId, "trainings._id": trainingId },
@@ -490,6 +498,14 @@ class CampController {
     if (updateData.elevationGain !== undefined) updates["stages.$.elevationGain"] = updateData.elevationGain;
     if (updateData.elevationLoss !== undefined) updates["stages.$.elevationLoss"] = updateData.elevationLoss;
     if (updateData.routeDescription !== undefined) updates["stages.$.routeDescription"] = updateData.routeDescription;
+
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        updates["stages.$.gpsTrack"] = { type: "LineString", coordinates: coords };
+      }
+    }
 
     const camp = await CampModel.findOneAndUpdate(
       { _id: campId, "stages._id": stageId },

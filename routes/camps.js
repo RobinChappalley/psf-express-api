@@ -157,6 +157,7 @@ router.put(
   "/:campId/trainings/:trainingId",
   authenticate,
   restrictTo("admin"),
+  upload.single("gpxFile"),
   validateUpdateTraining,
   validateRequest,
   CampController.updateCampTraining
@@ -205,6 +206,7 @@ router.put(
   "/:campId/stages/:stageId",
   authenticate,
   restrictTo("admin"),
+  upload.single("gpxFile"),
   validateUpdateStage,
   validateRequest,
   CampController.updateCampStage
