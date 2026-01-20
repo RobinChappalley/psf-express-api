@@ -459,6 +459,14 @@ class CampController {
       stageData.year = new Date(stageData.date).getFullYear();
     }
 
+    // Parse GPX file if provided
+    if (req.file) {
+      const coords = await parseGpxToCoordinates(req.file.buffer);
+      if (coords && coords.length >= 2) {
+        stageData.gpsTrack = { type: "LineString", coordinates: coords };
+      }
+    }
+
     camp.stages.push(stageData);
     await camp.save();
 

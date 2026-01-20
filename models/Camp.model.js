@@ -130,6 +130,7 @@ const stageSchema = new Schema({
   elevationGain: Number,
   elevationLoss: Number,
   routeDescription: String,
+  gpsTrack: GPXTrackSchema,
 });
 
 const campSchema = new Schema(
@@ -149,7 +150,7 @@ const campSchema = new Schema(
     endDate: Date,
     subStartDatetime: Date,
     subEndDatetime: Date,
-    gpsTrack: {},
+    gpsTrack: GPXTrackSchema,
     itemsList: [itemSchema],
     infoEvening: infoEveningSchema,
     trainings: [trainingSchema],

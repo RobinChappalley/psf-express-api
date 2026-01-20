@@ -195,6 +195,7 @@ router.post(
   "/:campId/stages",
   authenticate,
   restrictTo("admin"),
+  upload.single("gpxFile"),
   validateCreateStage,
   validateRequest,
   CampController.addCampStage
