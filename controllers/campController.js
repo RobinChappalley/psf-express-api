@@ -1,5 +1,6 @@
 import { matchedData } from "express-validator";
 import CampModel from "../models/Camp.model.js";
+import UserModel from "../models/User.model.js";
 import { parseGpxToCoordinates } from "../utils/gpxHandler.js";
 import {
   getBoundingBox,
@@ -8,6 +9,7 @@ import {
 import createError from "http-errors";
 import webPush from "../webpush.js";
 import PushSubscriptionModel from "../models/PushSubscription.model.js";
+import { sendTrainingNotification } from "../services/mailService.js";
 
 class CampController {
   async getAllCamps(req, res) {
@@ -276,6 +278,40 @@ class CampController {
 
     // 6. Récupération & Réponse
     const createdTraining = camp.trainings[camp.trainings.length - 1];
+
+    // 7. Envoyer les notifications par email (async, non-bloquant)
+    // Récupérer les utilisateurs inscrits au camp (avec email)
+    // On cherche les parents qui sont inscrits OU dont les enfants sont inscrits
+    const usersWithCamp = await UserModel.find({
+      camps: campId,
+      email: { $exists: true, $ne: null },
+    }).select("email firstname lastname");
+
+    // Récupérer aussi les parents des enfants inscrits
+    const childrenWithCamp = await UserModel.find({
+      camps: campId,
+      parent: { $exists: true },
+    }).select("parent");
+
+    const parentIds = childrenWithCamp.map((c) => c.parent).filter(Boolean);
+
+    const parentsOfChildren = await UserModel.find({
+      _id: { $in: parentIds },
+      email: { $exists: true, $ne: null },
+    }).select("email firstname lastname");
+
+    // Combiner et dédupliquer les destinataires
+    const allRecipients = [...usersWithCamp, ...parentsOfChildren];
+    const uniqueRecipients = Array.from(
+      new Map(allRecipients.map((u) => [u.email, u])).values()
+    );
+
+    // Envoyer les emails (sans bloquer la réponse)
+    sendTrainingNotification({
+      training: createdTraining,
+      camp,
+      recipients: uniqueRecipients,
+    }).catch((err) => console.error("Erreur envoi emails training:", err));
 
     res.status(201).json(createdTraining);
   }
